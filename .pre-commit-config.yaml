@@ -1,0 +1,75 @@
+# Pre-commit hooks for code quality enforcement
+repos:
+  # Black code formatting
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=88]
+        files: '\.py$'
+        exclude: '^(\.venv/|\.claude/|logs/).*'
+
+  # Ruff linting and import sorting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.12
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: '\.py$'
+        exclude: '^(\.venv/|\.claude/|logs/).*'
+
+  # MyPy type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.17.1
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --disallow-untyped-defs]
+        additional_dependencies: [pandas-stubs, types-requests]
+        files: '^(backend/|tests/).*\.py$'
+        exclude: '^(\.venv/|\.claude/|logs/).*'
+
+  # Basic file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '^(\.venv/|\.claude/|logs/).*'
+      - id: end-of-file-fixer
+        exclude: '^(\.venv/|\.claude/|logs/).*'
+      - id: check-yaml
+        exclude: '^(\.venv/|\.claude/|logs/).*'
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: debug-statements
+        exclude: '^(\.venv/|\.claude/|logs/).*'
+
+  # Pytest testing (optional, can be resource intensive)
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        files: '^(backend/|tests/).*\.py$'
+        pass_filenames: false
+        args: [--maxfail=1, -x]
+        stages: [manual]  # Only run manually with --hook-stage manual
+
+# Configuration
+default_stages: [pre-commit]
+fail_fast: true
+
+# Exclude patterns
+exclude: |
+  (?x)(
+      /\.venv/|
+      /\.claude/|
+      /logs/|
+      /\.git/|
+      /\.pytest_cache/|
+      /\.ruff_cache/|
+      /__pycache__/|
+      \.pyc$
+  )

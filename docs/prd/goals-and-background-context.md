@@ -1,7 +1,7 @@
 # Goals and Background Context
 
 ## Goals
-- Eliminate 90% of manual KPI calculation time for dental practice staff  
+- Eliminate 90% of manual KPI calculation time for dental practice staff
 - Display 5 critical dental KPIs in real-time from Google Sheets data
 - Achieve zero-training deployment with immediate user adoption
 - Deliver complete solution in under 200 lines of production code

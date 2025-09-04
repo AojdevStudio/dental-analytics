@@ -321,7 +321,7 @@
       }
     },
     "humble": {
-      "display_name": "Humble Practice", 
+      "display_name": "Humble Practice",
       "operating_schedule": {
         "days_per_week": 4,
         "schedule_description": "Monday-Thursday only",
@@ -420,7 +420,7 @@
         "responsibilities": ["Social media management", "Marketing campaigns", "Brand management"]
       },
       "veronica_vaca": {
-        "name": "Veronica Vaca", 
+        "name": "Veronica Vaca",
         "role": "Insurance Coordinator",
         "location": "both",
         "responsibilities": ["Insurance verification", "Claims processing", "Benefit coordination"]
@@ -433,7 +433,7 @@
       },
       "bridget_pruett": {
         "name": "Bridget Pruett",
-        "role": "Office Manager/Treatment Coordinator", 
+        "role": "Office Manager/Treatment Coordinator",
         "location": "humble",
         "responsibilities": ["Office management", "Treatment coordination", "Staff supervision", "EOD form backup"]
       }
@@ -448,7 +448,7 @@
           "kpi_attribution": "Should receive credit for checkout-related conversions and reappointments"
         },
         "patience": {
-          "name": "Patience", 
+          "name": "Patience",
           "role": "Check-in Specialist",
           "primary_function": "checkin",
           "front_desk_contributions": ["Patient check-in", "Insurance verification", "Appointment confirmation", "Wait time management"],
@@ -470,7 +470,7 @@
           "location": "baytown"
         },
         "adriane_fontenot": {
-          "name": "Adriane Fontenot", 
+          "name": "Adriane Fontenot",
           "role": "Lead Hygienist",
           "location": "baytown"
         },
@@ -503,7 +503,7 @@
       "clinical_team": {
         "ralonda_palmer": {
           "name": "Ralonda Palmer",
-          "role": "Hygienist", 
+          "role": "Hygienist",
           "location": "humble"
         },
         "dental_assistants": [
@@ -534,7 +534,7 @@
     "core_values": {
       "patient_centric_positivity": "All interactions focused on positive patient experience",
       "integrity": "Honest, transparent communication with patients and team",
-      "teamwork": "Collaborative approach to patient care and practice success", 
+      "teamwork": "Collaborative approach to patient care and practice success",
       "continuous_improvement": "Ongoing learning and process optimization"
     }
   },

@@ -52,18 +52,44 @@ uv run pytest-watch
 ```
 
 ### Code Quality Commands
+
+**Quick Scripts (Recommended):**
 ```bash
-# Format code
-uv run black .
+# Run comprehensive quality checks (Black, Ruff, MyPy, pytest, coverage)
+./scripts/quality-check.sh
 
-# Check code style
-uv run flake8 backend/ frontend/
+# Quick test run (pytest + manual calculations, no coverage)
+./scripts/quick-test.sh
 
-# Type checking
-uv run mypy backend/ frontend/
+# Auto-format code (Black + Ruff fixes)
+./scripts/format-code.sh
+```
 
-# Run all quality checks
+**Individual Tools:**
+```bash
+# Format code with Black
+uv run black backend/ frontend/ tests/ test_calculations.py
+
+# Lint with Ruff
+uv run ruff check backend/ frontend/ tests/ test_calculations.py
+
+# Type checking with MyPy
+uv run mypy backend/ test_calculations.py
+
+# Run pre-commit hooks
 uv run pre-commit run --all-files
+
+# Install/update pre-commit hooks
+uv run pre-commit install
+```
+
+**Coverage Analysis:**
+```bash
+# Run tests with detailed coverage report
+uv run pytest --cov=backend --cov-report=html
+
+# View coverage report in browser
+open htmlcov/index.html
 ```
 
 ### Development Tools
@@ -219,10 +245,10 @@ class TestKPICalculations:
         test_data = pd.DataFrame({
             'Production': [1000, 2000, 1500]
         })
-        
+
         # Act
         result = calculate_production_total(test_data)
-        
+
         # Assert
         assert result == 4500
 
@@ -232,10 +258,10 @@ class TestKPICalculations:
             'Production': [1000, 2000],
             'Collections': [900, 1800]
         })
-        
+
         # Act
         result = calculate_collection_rate(test_data)
-        
+
         # Assert
         assert result == 90.0  # (2700/3000) * 100
 ```

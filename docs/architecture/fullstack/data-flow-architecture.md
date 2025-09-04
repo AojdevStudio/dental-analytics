@@ -10,7 +10,7 @@ sequenceDiagram
     participant Metrics
     participant SheetsReader
     participant GoogleAPI
-    
+
     User->>Browser: Open Dashboard
     Browser->>Streamlit: HTTP Request
     Streamlit->>Metrics: get_all_kpis()

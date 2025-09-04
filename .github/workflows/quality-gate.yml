@@ -1,0 +1,300 @@
+# Quality Gate Enforcement Workflow
+# Blocks PRs that don't meet quality standards
+
+name: Quality Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_call:
+
+env:
+  PYTHON_VERSION: "3.11"
+  MIN_COVERAGE: 90
+  MAX_COMPLEXITY: 10
+
+jobs:
+  # Enforce quality standards before any other jobs can run
+  enforce-quality-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      quality-passed: ${{ steps.quality-check.outputs.passed }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "0.5.20"
+        enable-cache: true
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: uv sync --all-extras --dev
+
+    - name: Quality Gate - Code Formatting
+      id: formatting
+      run: |
+        echo "🔍 Checking code formatting..."
+        if uv run black --check backend/ frontend/ tests/; then
+          echo "✅ Code formatting passed"
+          echo "formatting=passed" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Code formatting failed"
+          echo "formatting=failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+    - name: Quality Gate - Linting
+      id: linting
+      run: |
+        echo "🔍 Running linting checks..."
+        if uv run ruff check backend/ frontend/ tests/; then
+          echo "✅ Linting passed"
+          echo "linting=passed" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Linting failed"
+          echo "linting=failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+    - name: Quality Gate - Type Checking
+      id: typing
+      run: |
+        echo "🔍 Running type checks..."
+        if uv run mypy backend/ tests/; then
+          echo "✅ Type checking passed"
+          echo "typing=passed" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Type checking failed"
+          echo "typing=failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+    - name: Quality Gate - Test Coverage
+      id: coverage
+      run: |
+        echo "🔍 Checking test coverage..."
+        uv run pytest tests/ \
+          --cov=backend \
+          --cov=frontend \
+          --cov-report=term-missing \
+          --cov-report=xml \
+          --cov-fail-under=${{ env.MIN_COVERAGE }}
+
+        if [ $? -eq 0 ]; then
+          COVERAGE=$(python -c "
+        import xml.etree.ElementTree as ET
+        tree = ET.parse('coverage.xml')
+        coverage = float(tree.getroot().attrib.get('line-rate', 0)) * 100
+        print(f'{coverage:.1f}')
+        ")
+          echo "✅ Coverage: $COVERAGE% (minimum: ${{ env.MIN_COVERAGE }}%)"
+          echo "coverage=passed" >> $GITHUB_OUTPUT
+          echo "coverage_percentage=$COVERAGE" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Coverage below minimum threshold"
+          echo "coverage=failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+    - name: Quality Gate - Code Complexity
+      id: complexity
+      run: |
+        echo "🔍 Checking code complexity..."
+        uv add radon
+
+        # Check cyclomatic complexity
+        COMPLEX_FILES=$(uv run radon cc backend/ frontend/ -a -nc | grep -E "^[ABCDEF]" | grep -v "^A" || true)
+
+        if [ -z "$COMPLEX_FILES" ]; then
+          echo "✅ Code complexity within acceptable limits"
+          echo "complexity=passed" >> $GITHUB_OUTPUT
+        else
+          echo "❌ High complexity detected:"
+          echo "$COMPLEX_FILES"
+          echo "complexity=failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+    - name: Quality Gate - Security Scan
+      id: security
+      run: |
+        echo "🔍 Running security scan..."
+        uv add bandit[toml]
+
+        if uv run bandit -r backend/ -f json -o bandit-results.json; then
+          echo "✅ No security issues detected"
+          echo "security=passed" >> $GITHUB_OUTPUT
+        else
+          echo "⚠️ Security scan completed with warnings"
+          echo "security=warning" >> $GITHUB_OUTPUT
+          # Don't fail on security warnings, just report them
+        fi
+
+    - name: Quality Gate - Dead Code Detection
+      id: deadcode
+      run: |
+        echo "🔍 Checking for dead code..."
+        uv add vulture
+
+        # Create whitelist for known false positives
+        cat > vulture-whitelist.py << 'EOF'
+        # Streamlit app entry points
+        frontend.app.main
+        # Test fixtures and utilities
+        *.fixture
+        *.conftest
+        EOF
+
+        DEAD_CODE=$(uv run vulture backend/ frontend/ --whitelist vulture-whitelist.py || true)
+
+        if [ -z "$DEAD_CODE" ]; then
+          echo "✅ No dead code detected"
+          echo "deadcode=passed" >> $GITHUB_OUTPUT
+        else
+          echo "ℹ️ Potential dead code detected (review recommended):"
+          echo "$DEAD_CODE"
+          echo "deadcode=warning" >> $GITHUB_OUTPUT
+          # Don't fail on dead code, just report it
+        fi
+
+    - name: Generate Quality Report
+      id: quality-check
+      if: always()
+      run: |
+        echo "📊 Quality Gate Summary:"
+        echo "========================"
+        echo "Code Formatting: ${{ steps.formatting.outputs.formatting || 'not run' }}"
+        echo "Linting: ${{ steps.linting.outputs.linting || 'not run' }}"
+        echo "Type Checking: ${{ steps.typing.outputs.typing || 'not run' }}"
+        echo "Test Coverage: ${{ steps.coverage.outputs.coverage || 'not run' }} (${{ steps.coverage.outputs.coverage_percentage || 'N/A' }}%)"
+        echo "Code Complexity: ${{ steps.complexity.outputs.complexity || 'not run' }}"
+        echo "Security Scan: ${{ steps.security.outputs.security || 'not run' }}"
+        echo "Dead Code Check: ${{ steps.deadcode.outputs.deadcode || 'not run' }}"
+
+        # Determine overall pass/fail
+        if [ "${{ steps.formatting.outputs.formatting }}" = "passed" ] && \
+           [ "${{ steps.linting.outputs.linting }}" = "passed" ] && \
+           [ "${{ steps.typing.outputs.typing }}" = "passed" ] && \
+           [ "${{ steps.coverage.outputs.coverage }}" = "passed" ] && \
+           [ "${{ steps.complexity.outputs.complexity }}" = "passed" ]; then
+          echo "✅ Quality Gate PASSED - All checks successful"
+          echo "passed=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Quality Gate FAILED - One or more checks failed"
+          echo "passed=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+    - name: Upload quality artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: quality-gate-results
+        path: |
+          coverage.xml
+          bandit-results.json
+
+  # Comment PR with quality gate results
+  quality-gate-comment:
+    runs-on: ubuntu-latest
+    needs: enforce-quality-gate
+    if: always() && github.event_name == 'pull_request'
+
+    steps:
+    - name: Download quality results
+      uses: actions/download-artifact@v4
+      with:
+        name: quality-gate-results
+
+    - name: Create quality report comment
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+
+          // Read coverage data
+          let coverageData = 'Coverage data not available';
+          try {
+            if (fs.existsSync('coverage.xml')) {
+              const xml = fs.readFileSync('coverage.xml', 'utf8');
+              const coverageMatch = xml.match(/line-rate="([^"]+)"/);
+              if (coverageMatch) {
+                const coverage = (parseFloat(coverageMatch[1]) * 100).toFixed(1);
+                coverageData = `${coverage}%`;
+              }
+            }
+          } catch (e) {
+            console.log('Error reading coverage:', e.message);
+          }
+
+          // Read security data
+          let securityData = 'Security scan not available';
+          try {
+            if (fs.existsSync('bandit-results.json')) {
+              const bandit = JSON.parse(fs.readFileSync('bandit-results.json', 'utf8'));
+              const issues = bandit.results ? bandit.results.length : 0;
+              securityData = issues === 0 ? '✅ No issues found' : `⚠️ ${issues} issue(s) found`;
+            }
+          } catch (e) {
+            console.log('Error reading security data:', e.message);
+          }
+
+          const qualityPassed = '${{ needs.enforce-quality-gate.outputs.quality-passed }}' === 'true';
+          const status = qualityPassed ? '✅ PASSED' : '❌ FAILED';
+          const emoji = qualityPassed ? '🎉' : '🚫';
+
+          const body = `## ${emoji} Quality Gate Report
+
+          **Overall Status: ${status}**
+
+          | Check | Status |
+          |-------|---------|
+          | Code Formatting | ${{ needs.enforce-quality-gate.result == 'success' ? '✅' : '❌' }} |
+          | Linting | ${{ needs.enforce-quality-gate.result == 'success' ? '✅' : '❌' }} |
+          | Type Checking | ${{ needs.enforce-quality-gate.result == 'success' ? '✅' : '❌' }} |
+          | Test Coverage | ${coverageData} |
+          | Security Scan | ${securityData} |
+
+          ${qualityPassed ?
+            '🚀 This PR meets all quality standards and is ready for review!' :
+            '⚠️ This PR needs attention before it can be merged. Please address the failing checks above.'
+          }
+
+          ---
+          *Quality gate enforced by CI/CD pipeline*`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });
+
+  # Block merge if quality gate fails
+  block-merge:
+    runs-on: ubuntu-latest
+    needs: enforce-quality-gate
+    if: always()
+
+    steps:
+    - name: Block merge on quality gate failure
+      if: needs.enforce-quality-gate.outputs.quality-passed != 'true'
+      run: |
+        echo "❌ MERGE BLOCKED: Quality gate failed"
+        echo "Please fix the quality issues before merging this PR"
+        exit 1
+
+    - name: Allow merge on quality gate success
+      if: needs.enforce-quality-gate.outputs.quality-passed == 'true'
+      run: |
+        echo "✅ MERGE ALLOWED: Quality gate passed"
+        echo "All quality checks successful - PR ready for review"

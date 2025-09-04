@@ -48,15 +48,105 @@ vendor/
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
-pnpm-lock.yaml
-yarn.lock
-package-lock.json
-.npm
-.pnpmfile.cjs
-.pnpmfile.js
+.pnp.*
 
 # ============================================================================
-# Python Virtual Environments & Cache
+# Build Outputs & Distribution
+# ============================================================================
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.vite/
+.svelte-kit/
+.turbo/
+target/
+bin/
+obj/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# ============================================================================
+# Cache Directories
+# ============================================================================
+.cache/
+.parcel-cache/
+.nx/cache/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# ============================================================================
+# IDE & Editor Files
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+.classpath
+
+# ============================================================================
+# Operating System Files
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# ============================================================================
+# Package Manager Locks (Optional - Uncomment as needed)
+# ============================================================================
+# yarn.lock
+# package-lock.json
+# pnpm-lock.yaml
+# composer.lock
+# Pipfile.lock
+
+# ============================================================================
+# Python Cache & Virtual Environments
 # ============================================================================
 __pycache__/
 *.py[cod]
@@ -75,114 +165,38 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 .venv/
+env/
 venv/
 ENV/
-env/
-.env/
-.conda/
-.tox/
-.coverage
-.pytest_cache/
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.ruff_cache/
-htmlcov/
-.coverage.*
+env.bak/
+venv.bak/
 
 # ============================================================================
-# Operating System Files
+# Temporary Files & Directories
 # ============================================================================
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
-
-# ============================================================================
-# IDE & Editor Files
-# ============================================================================
-.vscode/
-!.vscode/extensions.json
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-.idea/
+tmp/
+temp/
+*.tmp
+*.temp
 *.swp
 *.swo
-*~
-.vim/
-.nvim/
-.emacs.d/
-.nano/
-*.sublime-project
-*.sublime-workspace
-.brackets.json
-.atom/
-.code-workspace
-.fleet/
-
-# ============================================================================
-# Build & Compilation Outputs
-# ============================================================================
-build/
-dist/
-lib-cov/
-coverage/
+*.bak
+*.backup
+*.orig
+*.rej
+.sass-cache/
+.connect.lock
 .nyc_output
 .grunt
-.bowerman-outputs
-.parcel-cache
-.cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-.next/
-.nuxt/
-.vuepress/dist
-.serverless/
-.fusebox/
-.dynamodb/
-.tern-port
 
 # ============================================================================
-# Testing & Quality Assurance
-# ============================================================================
-coverage/
-*.lcov
-.nyc_output
-test-results/
-test-report.xml
-coverage.xml
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-reports/
-allure-results/
-allure-report/
-.scannerwork/
-
-# ============================================================================
-# Databases & Storage
+# Database Files
 # ============================================================================
 *.db
 *.sqlite
@@ -190,26 +204,38 @@ allure-report/
 *.db-journal
 *.db-wal
 *.db-shm
-data/
-database/
-*.sql
-dump.rdb
-*.rdb
 
 # ============================================================================
-# Cloud & Deployment
+# Testing & Coverage
 # ============================================================================
-.docker/
-docker-compose.override.yml
-.kubernetes/
-k8s-temp/
-.gcloud/
-.aws/
-.azure/
-.heroku/
-.vercel/
-.netlify/
+coverage/
+.nyc_output/
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+htmlcov/
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# ============================================================================
+# Documentation Build
+# ============================================================================
+docs/_build/
+site/
+.sphinx/
+
+# ============================================================================
+# Deployment & DevOps
+# ============================================================================
+.vercel
+.netlify
 .firebase/
+firebase-debug.log
+.serverless/
 .terraform/
 *.tfstate
 *.tfstate.*
@@ -223,6 +249,4 @@ k8s-temp/
 # BMAD (local only)
 .bmad-core/
 .bmad-*/
-
-# Claude session data (local development tool)
-.claude/
+.claude/data/sessions/

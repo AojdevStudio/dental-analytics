@@ -1,0 +1,30 @@
+# Code Owners for Dental Analytics Project
+# Defines who must review changes to specific parts of the codebase
+
+# Global ownership - all changes require review from project owner
+* @ossieirondi
+
+# Critical configuration files require special attention
+pyproject.toml @ossieirondi
+uv.lock @ossieirondi
+.pre-commit-config.yaml @ossieirondi
+
+# CI/CD pipeline changes require careful review
+/.github/ @ossieirondi
+
+# Backend business logic - critical for dental KPI calculations
+/backend/ @ossieirondi
+
+# Frontend application - user interface
+/frontend/ @ossieirondi
+
+# Configuration and credentials - security sensitive
+/config/ @ossieirondi
+
+# Documentation updates
+/docs/ @ossieirondi
+/ai-docs/ @ossieirondi
+*.md @ossieirondi
+
+# Test files - ensure quality standards
+/tests/ @ossieirondi

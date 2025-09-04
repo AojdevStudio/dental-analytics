@@ -3,7 +3,7 @@
 ## Purpose
 Simple dental analytics dashboard built for KamDental practice to automate KPI tracking. The goal is to display 5 core metrics from Google Sheets data in under 200 lines of code:
 - Daily production totals
-- Collection rate percentage  
+- Collection rate percentage
 - New patient count
 - Treatment acceptance rate
 - Hygiene reappointment tracking

@@ -161,7 +161,7 @@ class api_client {
 // ✅ Good
 const userConfig = {
   firstName: 'John',
-  lastName: 'Doe', 
+  lastName: 'Doe',
   emailAddress: 'john@example.com',
   isActive: true,
   lastLoginDate: new Date()
@@ -189,7 +189,7 @@ POST /api/authentication-tokens
 PUT /api/user-settings/{id}
 DELETE /api/session-data/{sessionId}
 
-// ❌ Bad  
+// ❌ Bad
 GET /api/userProfiles
 POST /api/authentication_tokens
 PUT /api/UserSettings/{id}
@@ -234,7 +234,7 @@ GET /api/users?first-name=John&is-active=true&page-size=20
 
 **Use kebab-case:**
 - ✅ `simple-memory-mcp`
-- ✅ `user-authentication-service`  
+- ✅ `user-authentication-service`
 - ✅ `data-processing-pipeline`
 - ❌ `simple_memory_mcp`
 - ❌ `UserAuthenticationService`
@@ -272,7 +272,7 @@ CREATE TABLE userProfiles (
 -- ✅ Good
 user_id, first_name, email_address, created_at, is_active
 
--- ❌ Bad  
+-- ❌ Bad
 userId, firstName, emailAddress, createdAt, isActive
 ```
 
@@ -342,7 +342,7 @@ export default {
 // If external API uses snake_case, match it
 {
   "user_id": 123,
-  "first_name": "John", 
+  "first_name": "John",
   "created_at": "2023-01-15T10:30:00Z"
 }
 ```
@@ -412,7 +412,7 @@ describe('UserService', () => {
   it('should return user profile when valid ID provided', () => {
     // test implementation
   });
-  
+
   it('should throw error when user ID does not exist', () => {
     // test implementation
   });
@@ -423,7 +423,7 @@ describe('UserService', () => {
   it('returns user', () => {
     // test implementation
   });
-  
+
   it('throws error', () => {
     // test implementation
   });
@@ -440,7 +440,7 @@ describe('UserService', () => {
 FROM node:18-alpine AS simple-memory-mcp
 FROM nginx:alpine AS api-gateway
 
-# ❌ Bad  
+# ❌ Bad
 FROM node:18-alpine AS SimpleMemoryMCP
 FROM nginx:alpine AS api_gateway
 ```
@@ -456,7 +456,7 @@ services:
     build: .
     ports:
       - "3000:3000"
-  
+
   postgres-db:
     image: postgres:14
     environment:

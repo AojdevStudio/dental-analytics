@@ -8,30 +8,30 @@ reviews:
     - path: "**/*.md"
       instructions: |
         Skip reviewing this markdown file as it contains documentation only.
-        
-    # Exclude YAML configuration files from review  
+
+    # Exclude YAML configuration files from review
     - path: "**/*.yml"
       instructions: |
         Skip reviewing this YAML configuration file.
-        
-    - path: "**/*.yaml" 
+
+    - path: "**/*.yaml"
       instructions: |
         Skip reviewing this YAML configuration file.
-        
+
     # Exclude text files from review
     - path: "**/*.txt"
       instructions: |
         Skip reviewing this text file.
-        
+
     # Exclude other common documentation formats
     - path: "**/*.rst"
       instructions: |
         Skip reviewing this reStructuredText documentation file.
-        
+
     - path: "**/*.adoc"
       instructions: |
         Skip reviewing this AsciiDoc documentation file.
-        
+
     # Focus on actual code files with detailed review
     - path: "**/*.js"
       instructions: |
@@ -41,7 +41,7 @@ reviews:
         - Security vulnerabilities
         - Logic errors
         - Adherence to coding standards
-        
+
     - path: "**/*.ts"
       instructions: |
         Review the TypeScript code for:
@@ -50,7 +50,7 @@ reviews:
         - Performance issues
         - Security vulnerabilities
         - Logic errors
-        
+
     - path: "**/*.jsx"
       instructions: |
         Review the React JSX code for:
@@ -58,7 +58,7 @@ reviews:
         - Performance optimizations
         - Accessibility compliance
         - Code quality and best practices
-        
+
     - path: "**/*.tsx"
       instructions: |
         Review the React TypeScript code for:
@@ -66,7 +66,7 @@ reviews:
         - Component patterns and architecture
         - Performance optimizations
         - Code quality and best practices
-        
+
     - path: "**/*.py"
       instructions: |
         Review the Python code for:
@@ -75,7 +75,7 @@ reviews:
         - Performance issues
         - Security vulnerabilities
         - Logic errors
-        
+
     - path: "**/*.java"
       instructions: |
         Review the Java code for:
@@ -84,7 +84,7 @@ reviews:
         - Security vulnerabilities
         - Design patterns usage
         - Logic errors
-        
+
     - path: "**/*.go"
       instructions: |
         Review the Go code for:
@@ -93,7 +93,7 @@ reviews:
         - Performance considerations
         - Code quality
         - Logic errors
-        
+
     - path: "**/*.rs"
       instructions: |
         Review the Rust code for:
@@ -122,7 +122,7 @@ code_generation:
         instructions: |
           Generate comprehensive docstrings following Google style.
           Include parameter types, return types, and examples where appropriate.
-          
+
       - path: "**/*.ts"
         instructions: |
           Generate TSDoc compatible documentation.

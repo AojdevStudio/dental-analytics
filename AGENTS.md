@@ -219,10 +219,10 @@ class TestKPICalculations:
         test_data = pd.DataFrame({
             'Production': [1000, 2000, 1500]
         })
-        
+
         # Act
         result = calculate_production_total(test_data)
-        
+
         # Assert
         assert result == 4500
 
@@ -232,10 +232,10 @@ class TestKPICalculations:
             'Production': [1000, 2000],
             'Collections': [900, 1800]
         })
-        
+
         # Act
         result = calculate_collection_rate(test_data)
-        
+
         # Assert
         assert result == 90.0  # (2700/3000) * 100
 ```

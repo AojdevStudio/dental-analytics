@@ -184,7 +184,7 @@ sequenceDiagram
     participant Metrics
     participant SheetsReader
     participant GoogleAPI
-    
+
     User->>Browser: Open Dashboard
     Browser->>Streamlit: HTTP Request
     Streamlit->>Metrics: get_all_kpis()
@@ -452,7 +452,7 @@ class CircuitBreaker:
         self.failure_count = 0
         self.failure_threshold = failure_threshold
         self.is_open = False
-    
+
     def call(self, func, *args):
         if self.is_open:
             return None

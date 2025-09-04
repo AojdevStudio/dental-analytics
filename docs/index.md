@@ -34,7 +34,7 @@ tags:
 ### 📋 Project Management
 - **Specs/** - Specification documents and requirements
 - **PRDs/** - Product Requirements Documents and specifications
-- **Stories/** - User stories and feature descriptions  
+- **Stories/** - User stories and feature descriptions
 - **Tasks/** - Task breakdowns and work items
 - **Issues/** - Bug reports and known issues
 
