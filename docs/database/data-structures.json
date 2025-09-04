@@ -1,0 +1,928 @@
+{
+  "schema_version": "2.0.0",
+  "description": "Comprehensive data structure definitions for dental analytics automation system with EOD-primary architecture and front desk KPI integration",
+  "data_source_hierarchy": {
+    "primary_eod_sources": {
+      "priority": 1,
+      "reliability": "highest",
+      "sheets": {
+        "baytown_eod": "EOD - Baytown Billing",
+        "humble_eod": "EOD - Humble Billing"
+      },
+      "description": "Comprehensive daily metrics including provider production, financial data, patient metrics, call metrics"
+    },
+    "secondary_production_sources": {
+      "priority": 2,
+      "reliability": "high",
+      "sheets": {
+        "baytown_production": "Baytown Production Analysis",
+        "humble_production": "Humble Production Analysis"
+      },
+      "description": "Dynamically updated production analysis with provider breakdowns"
+    },
+    "front_desk_kpi_sources": {
+      "priority": 2,
+      "reliability": "high",
+      "sheets": {
+        "baytown_front_kpis": "Baytown Front KPIs Form responses",
+        "humble_front_kpis": "Humble Front KPIs Form responses"
+      },
+      "description": "Front desk operational metrics for patient flow, outreach, and revenue pipeline"
+    },
+    "legacy_reporting_sources": {
+      "priority": 3,
+      "reliability": "medium",
+      "sheets": {
+        "baytown_daily": "Baytown Daily and MTD Reporting",
+        "humble_daily": "Humble Daily and MTD Reporting"
+      },
+      "description": "Legacy reporting sheets - use as fallback when primary sources unavailable"
+    }
+  },
+  "google_sheets_schema": {
+    "spreadsheet_id": "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8",
+    "eod_schema": {
+      "provider_metrics": {
+        "dr_kamdi_irondi_production": {
+          "column": "B",
+          "data_type": "currency",
+          "description": "Dr. Kamdi Irondi daily production"
+        },
+        "dr_obinna_ezeji_production": {
+          "column": "C",
+          "data_type": "currency",
+          "description": "Dr. Obinna Ezeji daily production"
+        },
+        "adriane_production": {
+          "column": "D",
+          "data_type": "currency",
+          "description": "Adriane hygienist production"
+        }
+      },
+      "financial_metrics": {
+        "total_production": {
+          "column": "E",
+          "data_type": "currency",
+          "description": "Total daily production"
+        },
+        "total_collections": {
+          "column": "F",
+          "data_type": "currency",
+          "description": "Total daily collections"
+        },
+        "insurance_collections": {
+          "column": "G",
+          "data_type": "currency",
+          "description": "Insurance collections"
+        },
+        "patient_collections": {
+          "column": "H",
+          "data_type": "currency",
+          "description": "Patient out-of-pocket collections"
+        }
+      },
+      "patient_metrics": {
+        "total_patients": {
+          "column": "I",
+          "data_type": "integer",
+          "description": "Total patients seen"
+        },
+        "new_patients": {
+          "column": "J",
+          "data_type": "integer",
+          "description": "New patients"
+        },
+        "hygiene_patients": {
+          "column": "K",
+          "data_type": "integer",
+          "description": "Hygiene patients"
+        },
+        "emergency_patients": {
+          "column": "L",
+          "data_type": "integer",
+          "description": "Emergency patients"
+        }
+      },
+      "operational_metrics": {
+        "total_calls_received": {
+          "column": "M",
+          "data_type": "integer",
+          "description": "Total calls received"
+        },
+        "calls_answered": {
+          "column": "N",
+          "data_type": "integer",
+          "description": "Calls answered"
+        },
+        "call_answer_rate": {
+          "column": "O",
+          "data_type": "percentage",
+          "description": "Call answer rate percentage"
+        },
+        "appointments_scheduled": {
+          "column": "P",
+          "data_type": "integer",
+          "description": "New appointments scheduled"
+        }
+      }
+    },
+    "front_desk_kpi_schema": {
+      "metadata": {
+        "submission_date": {
+          "column": "A",
+          "data_type": "datetime",
+          "description": "Form submission timestamp"
+        },
+        "name": {
+          "column": "B",
+          "data_type": "string",
+          "description": "Front desk staff member name"
+        }
+      },
+      "hygiene_metrics": {
+        "total_hygiene_appointments": {
+          "column": "C",
+          "data_type": "integer",
+          "description": "Total hygiene appointments for the day"
+        },
+        "patients_not_reappointed": {
+          "column": "D",
+          "data_type": "integer",
+          "description": "Number of patients NOT reappointed"
+        }
+      },
+      "outreach_metrics": {
+        "unscheduled_tx_calls": {
+          "column": "E",
+          "data_type": "integer",
+          "description": "# of unscheduled treatment calls made"
+        },
+        "patients_scheduled_from_calls": {
+          "column": "F",
+          "data_type": "integer",
+          "description": "# of patients scheduled from TX calls"
+        },
+        "follow_ups_created": {
+          "column": "G",
+          "data_type": "integer",
+          "description": "# of follow ups created"
+        },
+        "recalls_completed": {
+          "column": "H",
+          "data_type": "integer",
+          "description": "# of recall calls completed"
+        },
+        "patients_reached": {
+          "column": "I",
+          "data_type": "integer",
+          "description": "# of patients reached"
+        },
+        "total_pts_scheduled": {
+          "column": "J",
+          "data_type": "integer",
+          "description": "Total patients scheduled"
+        },
+        "clickup_follow_ups_created": {
+          "column": "K",
+          "data_type": "integer",
+          "description": "# of Click-Up follow-ups created"
+        }
+      },
+      "financial_metrics": {
+        "dollar_amount_presented": {
+          "column": "L",
+          "data_type": "currency",
+          "description": "Total dollar amount presented for the day"
+        },
+        "dollar_amount_scheduled": {
+          "column": "M",
+          "data_type": "currency",
+          "description": "Total dollar amount scheduled"
+        },
+        "same_day_treatment": {
+          "column": "N",
+          "data_type": "currency",
+          "description": "Same day treatment accepted"
+        }
+      },
+      "follow_up_tracking": {
+        "follow_ups_completed_clickup": {
+          "column": "O",
+          "data_type": "integer",
+          "description": "Total follow-ups completed in Click-Up"
+        },
+        "patients_scheduled_from_follow_ups": {
+          "column": "P",
+          "data_type": "integer",
+          "description": "Total patients scheduled from follow-ups"
+        }
+      },
+      "cancellation_metrics": {
+        "total_cancellations": {
+          "column": "Q",
+          "data_type": "integer",
+          "description": "Total cancellations today"
+        },
+        "cancellations_done_appropriately": {
+          "column": "R",
+          "data_type": "string",
+          "description": "Were all cancellations done appropriately? (Yes/No)"
+        }
+      }
+    }
+  },
+  "critical_schema_conflicts": {
+    "warning": "CRITICAL: Column letters have DIFFERENT meanings in different sheets!",
+    "column_n_conflict": {
+      "severity": "HIGH",
+      "description": "Column N represents completely different data types in different sheets",
+      "front_kpi_sheets": {
+        "column": "N",
+        "meaning": "same_day_treatment",
+        "data_type": "currency",
+        "description": "Dollar amount of treatment accepted same day",
+        "valid_range": [0, 50000],
+        "sheet_pattern": "*Front KPIs Form responses"
+      },
+      "eod_sheets": {
+        "column": "N",
+        "meaning": "calls_answered",
+        "data_type": "integer",
+        "description": "Number of phone calls answered",
+        "valid_range": [0, 500],
+        "sheet_pattern": "EOD - * Billing"
+      },
+      "validation_rule": "MUST check sheet name before accessing Column N to determine correct data type"
+    },
+    "column_l_conflict": {
+      "front_kpi_sheets": {
+        "column": "L",
+        "meaning": "dollar_amount_presented",
+        "data_type": "currency"
+      },
+      "eod_sheets": {
+        "column": "L",
+        "meaning": "emergency_patients",
+        "data_type": "integer"
+      }
+    },
+    "column_m_conflict": {
+      "front_kpi_sheets": {
+        "column": "M",
+        "meaning": "dollar_amount_scheduled",
+        "data_type": "currency"
+      },
+      "eod_sheets": {
+        "column": "M",
+        "meaning": "total_calls_received",
+        "data_type": "integer"
+      }
+    }
+  },
+  "report_type_detection": {
+    "front_desk_triggers": [
+      "*front",
+      "*front-desk",
+      "front desk report",
+      "how is the front office doing",
+      "front office performance",
+      "front desk analytics",
+      "front desk KPIs"
+    ],
+    "financial_triggers": [
+      "*financial",
+      "*production",
+      "*collections",
+      "daily report",
+      "weekly report",
+      "monthly report",
+      "provider performance"
+    ]
+  },
+  "location_configurations": {
+    "baytown": {
+      "display_name": "Baytown Practice",
+      "operating_schedule": {
+        "days_per_week": 5.5,
+        "schedule_description": "Monday-Friday + Every other Saturday",
+        "weekly_pattern": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday (alternating)"],
+        "monthly_operating_days": {
+          "typical_range": "23-24 days",
+          "calculation_note": "Varies by Saturday schedule"
+        },
+        "business_day_calculation": {
+          "formula": "Count M-F days remaining + (0.5 × Saturdays remaining in alternating schedule)",
+          "daily_average_context": "Based on 5.5-day work week"
+        }
+      },
+      "performance_context": {
+        "higher_daily_targets": "Due to 5.5-day schedule vs 4-day",
+        "saturday_impact": "Saturday production affects weekly totals"
+      }
+    },
+    "humble": {
+      "display_name": "Humble Practice", 
+      "operating_schedule": {
+        "days_per_week": 4,
+        "schedule_description": "Monday-Thursday only",
+        "weekly_pattern": ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        "monthly_operating_days": {
+          "typical_range": "17-18 days",
+          "calculation_note": "Consistent 4-day schedule"
+        },
+        "business_day_calculation": {
+          "formula": "Count Monday-Thursday days remaining only (exclude Friday-Sunday)",
+          "daily_average_context": "Based on 4-day work week"
+        }
+      },
+      "performance_context": {
+        "compressed_schedule": "Must achieve goals in fewer operating days",
+        "weekend_closure": "No weekend production to offset weekday shortfalls"
+      }
+    },
+    "critical_calculation_rules": {
+      "gap_analysis_requirements": {
+        "rule": "NEVER use generic 'business days' - always use location-specific operating days",
+        "baytown_calculation": "Include alternating Saturdays in remaining days calculation",
+        "humble_calculation": "Exclude Fridays and weekends completely from remaining days",
+        "mathematical_accuracy": "Required daily production calculations must reflect actual operating schedule"
+      },
+      "performance_urgency_scaling": {
+        "rule": "Urgency thresholds must account for operating day differences",
+        "example": "30% gap with 10 calendar days left = 6 operating days (Humble) vs 8 operating days (Baytown)",
+        "impact": "Same percentage gap has different mathematical urgency based on location"
+      }
+    }
+  },
+  "provider_schema": {
+    "provider_structure": {
+      "id": "string",
+      "name": "string",
+      "role": "enum ['dentist', 'hygienist', 'assistant']",
+      "location": "enum ['baytown', 'humble', 'both']",
+      "data_columns": {
+        "net_production": "string (column reference)",
+        "monthly_goal": "string (column reference)",
+        "percent_to_goal": "string (column reference)"
+      },
+      "performance_thresholds": {
+        "excellent": "number (>= 120% of goal)",
+        "good": "number (100-119% of goal)",
+        "on_track": "number (80-99% of goal)",
+        "needs_attention": "number (< 80% of goal)"
+      }
+    },
+    "current_providers": [
+      {
+        "id": "dr_kamdi_irondi",
+        "name": "Dr. Kamdi Irondi",
+        "role": "dentist",
+        "location": "both"
+      },
+      {
+        "id": "dr_obinna_ezeji",
+        "name": "Dr. Obinna Ezeji",
+        "role": "dentist",
+        "location": "Baytown"
+      },
+      {
+        "id": "adriane",
+        "name": "Adriane",
+        "role": "hygienist",
+        "location": "Baytown"
+      },
+      {
+        "id": "ralonda",
+        "name": "Ralonda",
+        "role": "hygienist",
+        "location": "Humble"
+      },
+      {
+        "id": "Dr_allexis_culton",
+        "name": "Dr. Allexis Culton",
+        "role": "dentist",
+        "location": "Baytown"
+      },
+      {
+        "id": "kia",
+        "name": "Kia",
+        "role": "hygienist",
+        "location": "Humble"
+      }
+    ]
+  },
+  "team_member_schema": {
+    "key_leadership": {
+      "danica_salinas": {
+        "name": "Danica Salinas",
+        "role": "Social Media/Marketing",
+        "location": "both",
+        "responsibilities": ["Social media management", "Marketing campaigns", "Brand management"]
+      },
+      "veronica_vaca": {
+        "name": "Veronica Vaca", 
+        "role": "Insurance Coordinator",
+        "location": "both",
+        "responsibilities": ["Insurance verification", "Claims processing", "Benefit coordination"]
+      },
+      "krissy_thomas": {
+        "name": "Krissy Thomas",
+        "role": "Treatment Coordinator/Office Manager",
+        "location": "baytown",
+        "responsibilities": ["Treatment plan coordination", "Office management", "Staff supervision"]
+      },
+      "bridget_pruett": {
+        "name": "Bridget Pruett",
+        "role": "Office Manager/Treatment Coordinator", 
+        "location": "humble",
+        "responsibilities": ["Office management", "Treatment coordination", "Staff supervision", "EOD form backup"]
+      }
+    },
+    "baytown_team": {
+      "front_desk_operations": {
+        "wendy": {
+          "name": "Wendy",
+          "role": "Checkout Specialist",
+          "primary_function": "checkout",
+          "front_desk_contributions": ["Payment processing", "Appointment checkout", "Reappointment scheduling", "Treatment plan financial discussions"],
+          "kpi_attribution": "Should receive credit for checkout-related conversions and reappointments"
+        },
+        "patience": {
+          "name": "Patience", 
+          "role": "Check-in Specialist",
+          "primary_function": "checkin",
+          "front_desk_contributions": ["Patient check-in", "Insurance verification", "Appointment confirmation", "Wait time management"],
+          "kpi_attribution": "Should receive credit for check-in efficiency and patient flow management"
+        },
+        "kayla": {
+          "name": "Kayla",
+          "role": "Scheduler/Insurance Specialist",
+          "primary_function": "scheduling",
+          "front_desk_contributions": ["Treatment call outreach", "Recall scheduling", "Insurance coordination", "Follow-up management"],
+          "kpi_attribution": "Primary credit for treatment calls, recalls, and outreach conversion metrics",
+          "special_responsibility": "EOD form primary submitter for both locations"
+        }
+      },
+      "clinical_team": {
+        "kia_carter": {
+          "name": "Kia Carter",
+          "role": "Lead Dental Assistant",
+          "location": "baytown"
+        },
+        "adriane_fontenot": {
+          "name": "Adriane Fontenot", 
+          "role": "Lead Hygienist",
+          "location": "baytown"
+        },
+        "dental_assistants": [
+          {"name": "Sade Holcomb", "role": "Dental Assistant"},
+          {"name": "Raquel Torres", "role": "Dental Assistant"},
+          {"name": "Paola", "role": "Dental Assistant"},
+          {"name": "Shikira Brown", "role": "Dental Assistant"}
+        ]
+      }
+    },
+    "humble_team": {
+      "front_desk_operations": {
+        "adriana": {
+          "name": "Adriana",
+          "role": "Front Desk Specialist",
+          "primary_function": "front_desk_operations",
+          "front_desk_contributions": ["Patient check-in/checkout", "Treatment call outreach", "Recall scheduling", "Appointment management", "Financial discussions"],
+          "kpi_attribution": "Should receive credit for all front desk conversion metrics and patient flow"
+        },
+        "bridget_pruett_front_desk": {
+          "name": "Bridget Pruett",
+          "role": "Office Manager with Front Desk Duties",
+          "primary_function": "management_and_front_desk",
+          "front_desk_contributions": ["Front desk backup", "Complex treatment coordination", "Staff training", "Process oversight"],
+          "kpi_attribution": "Should receive credit for management support of front desk operations",
+          "special_responsibility": "EOD form backup submitter"
+        }
+      },
+      "clinical_team": {
+        "ralonda_palmer": {
+          "name": "Ralonda Palmer",
+          "role": "Hygienist", 
+          "location": "humble"
+        },
+        "dental_assistants": [
+          {"name": "Melissa Reeves", "role": "Dental Assistant"},
+          {"name": "Jerilee Hicks", "role": "Dental Assistant"}
+        ]
+      }
+    },
+    "front_desk_kpi_attribution_rules": {
+      "core_principle": "Front desk KPI reports should recognize ALL team members who contribute to patient flow and conversions, not just the form submitter",
+      "baytown_attribution": {
+        "treatment_calls_and_recalls": "Primary credit: Kayla (makes most calls); Supporting credit: Wendy and Patience (follow-up and scheduling support)",
+        "reappointments": "Primary credit: Wendy (checkout specialist); Supporting credit: Patience (check-in scheduling)",
+        "same_day_treatment": "Shared credit: All front desk team members contribute to patient experience and treatment acceptance",
+        "follow_up_conversions": "Primary credit: Kayla (primary scheduler); Supporting credit: Wendy (financial discussions)"
+      },
+      "humble_attribution": {
+        "all_front_desk_metrics": "Primary credit: Adriana (primary front desk operations); Management support credit: Bridget Pruett",
+        "complex_treatments": "Shared credit: Adriana (initial presentation) and Bridget (coordination and follow-through)",
+        "process_improvements": "Leadership credit: Bridget Pruett (management oversight and training)"
+      },
+      "recognition_language": {
+        "team_based": "Use language like 'Front desk team achievements led by [primary person]' or 'Collaborative effort between [names]'",
+        "avoid": "Never say 'Great work by [form submitter only]' when entire team contributed to results",
+        "include": "Always mention specific contributions by role: 'Kayla's outreach calls, Wendy's checkout conversions, Patience's patient flow management'"
+      }
+    },
+    "core_values": {
+      "patient_centric_positivity": "All interactions focused on positive patient experience",
+      "integrity": "Honest, transparent communication with patients and team",
+      "teamwork": "Collaborative approach to patient care and practice success", 
+      "continuous_improvement": "Ongoing learning and process optimization"
+    }
+  },
+  "email_templates": {
+    "front_desk_performance_template": {
+      "subject_template": "{location} Front Desk CONVERSIONS - {temporal_context} - {date}",
+      "temporal_variations": {
+        "mid_week": "Mid-Week Status (Day {day_num} of 5)",
+        "week_end": "Full Week Results",
+        "mid_month": "MTD Through Day {day_of_month}",
+        "month_end": "Complete {month} Analysis"
+      },
+      "sections": [
+        {
+          "name": "executive_summary",
+          "template": "**{temporal_frame} Conversion Performance**: {primary_conversion_metric}. Revenue Generated: ${total_revenue_from_conversions}. Team: {team_members}.",
+          "temporal_frames": {
+            "early_week": "Early Week",
+            "mid_week": "Mid-Week",
+            "late_week": "Week Closing",
+            "early_month": "Early {month}",
+            "mid_month": "Mid-{month}",
+            "late_month": "Late {month}"
+          },
+          "max_length": 200,
+          "tone": "results_focused"
+        },
+        {
+          "name": "conversion_metrics",
+          "template": "**🎯 CONVERSION SUCCESS RATES:**\n• **Treatment Call Conversion**: {patients_scheduled_from_calls}/{unscheduled_tx_calls} = **{treatment_call_conversion}%** {conversion_indicator}\n• **Recall Success Rate**: {total_pts_scheduled}/{recalls_completed} = **{recall_conversion}%** {recall_indicator}\n• **Follow-up Effectiveness**: {patients_from_followups}/{followups_completed} = **{followup_conversion}%** {followup_indicator}\n• **Hygiene Reappointment**: {hygiene_reappointed}/{total_hygiene} = **{reappointment_rate}%** {hygiene_indicator}",
+          "format": "conversion_focused",
+          "emphasis": "Show actual numbers and percentages, not just attempts"
+        },
+        {
+          "name": "revenue_generation",
+          "template": "**💰 REVENUE IMPACT:**\n• **Treatment Acceptance Rate**: ${dollar_scheduled}/${dollar_presented} = **{acceptance_rate}%**\n• **Same-Day Treatment Captured**: **${same_day_treatment}**\n• **Presented Treatment Converted to Scheduled**: **${dollar_amount_scheduled}**\n• **Performance vs Goal**: {revenue_vs_goal_indicator}",
+          "format": "revenue_focused",
+          "emphasis": "Highlight actual dollars generated, not activities"
+        },
+        {
+          "name": "efficiency_analysis",
+          "template": "**📊 EFFICIENCY METRICS:**\n• **Best Conversion Rate**: {best_conversion_metric} at **{best_rate}%**\n• **Weakest Conversion**: {weakest_conversion_metric} at **{weakest_rate}%**\n• **Overall Efficiency Score**: {efficiency_rating}",
+          "format": "performance_based"
+        },
+        {
+          "name": "improvement_opportunities",
+          "template": "**🎯 CONVERSION OPTIMIZATION for {remaining_period}:**\n• **Current {period} Gap**: {conversion_gap_analysis}\n• **Revenue Opportunity {time_left}**: ${potential_revenue_if_target_met}\n• **Focus Area**: {lowest_conversion_area} (currently {current_rate}%, target {target_rate}%)\n• **Action Required {urgency}**: {specific_conversion_improvement_action}\n\n**📚 TRAINING RESOURCES:**\n{training_recommendations_with_links}",
+          "temporal_context": {
+            "remaining_period": "Dynamically calculated based on report type",
+            "time_left": "e.g., 'in remaining 2 days', 'by month-end'",
+            "urgency": "e.g., 'TODAY', 'this week', 'before month-end'"
+          },
+          "format": "action_oriented"
+        }
+      ]
+    },
+    "daily_operations_template": {
+      "subject_template": "{location} Daily Performance Alert - {date}",
+      "sections": [
+        {
+          "name": "executive_summary",
+          "template": "**Daily Performance Summary**: {primary_insight}. {critical_action_needed}.",
+          "max_length": 200,
+          "tone": "urgent_operational"
+        },
+        {
+          "name": "key_metrics",
+          "template": "• **Production Today**: {total_production}\n• **Collections Today**: {total_collections} ({collection_efficiency}% efficiency)\n• **Patients Seen**: {total_patients} (New: {new_patients})\n• **Call Answer Rate**: {call_answer_rate}%",
+          "format": "bullet_points"
+        }
+      ]
+    }
+  },
+  "front_desk_calculations": {
+    "hygiene_reappointment_rate": {
+      "formula": "((total_hygiene_appointments - patients_not_reappointed) / total_hygiene_appointments) * 100",
+      "format": "percentage",
+      "success_threshold": 95,
+      "description": "Target: 95%+ of hygiene patients reappointed"
+    },
+    "treatment_call_conversion_rate": {
+      "formula": "(patients_scheduled_from_calls / unscheduled_tx_calls) * 100",
+      "format": "percentage",
+      "success_threshold": 30,
+      "description": "Success metric: 30%+ conversion rate on treatment calls"
+    },
+    "recall_conversion_rate": {
+      "formula": "(total_pts_scheduled / recalls_completed) * 100",
+      "format": "percentage",
+      "success_threshold": 25,
+      "description": "Target: 25%+ of recall calls result in scheduled appointments"
+    },
+    "follow_up_conversion_rate": {
+      "formula": "(patients_scheduled_from_follow_ups / follow_ups_completed_clickup) * 100",
+      "format": "percentage",
+      "success_threshold": 40,
+      "description": "Target: 40%+ of follow-ups convert to appointments"
+    },
+    "treatment_acceptance_rate": {
+      "formula": "(dollar_amount_scheduled / dollar_amount_presented) * 100",
+      "format": "percentage",
+      "success_threshold": 60,
+      "description": "Target: 60%+ of presented treatment accepted"
+    },
+    "same_day_treatment_total": {
+      "formula": "same_day_treatment",
+      "format": "currency",
+      "success_threshold": 1000,
+      "description": "Target: $1,000+ same-day treatment accepted daily"
+    },
+    "cancellation_rate": {
+      "formula": "(total_cancellations / total_scheduled_appointments) * 100",
+      "format": "percentage"
+    }
+  },
+  "performance_benchmarks": {
+    "excellent_conversion_performance": {
+      "treatment_call_conversion": ">= 40%",
+      "recall_to_appointment_conversion": ">= 35%",
+      "follow_up_to_appointment_conversion": ">= 50%",
+      "treatment_acceptance_rate": ">= 70%",
+      "same_day_treatment_total": ">= $2,000",
+      "hygiene_reappointment_rate": ">= 98%"
+    },
+    "good_conversion_performance": {
+      "treatment_call_conversion": "30-39%",
+      "recall_to_appointment_conversion": "25-34%",
+      "follow_up_to_appointment_conversion": "40-49%",
+      "treatment_acceptance_rate": "60-69%",
+      "same_day_treatment_total": "$1,000-$1,999",
+      "hygiene_reappointment_rate": "95-97%"
+    },
+    "acceptable_conversion_performance": {
+      "treatment_call_conversion": "20-29%",
+      "recall_to_appointment_conversion": "15-24%",
+      "follow_up_to_appointment_conversion": "30-39%",
+      "treatment_acceptance_rate": "40-59%",
+      "same_day_treatment_total": "$500-$999",
+      "hygiene_reappointment_rate": "90-94%"
+    },
+    "needs_improvement": {
+      "treatment_call_conversion": "< 20%",
+      "recall_to_appointment_conversion": "< 15%",
+      "follow_up_to_appointment_conversion": "< 30%",
+      "treatment_acceptance_rate": "< 40%",
+      "same_day_treatment_total": "< $500",
+      "hygiene_reappointment_rate": "< 90%",
+      "action_required": "Focus on conversion training, not increasing call volume"
+    }
+  },
+  "temporal_context_calculations": {
+    "week_position": {
+      "formula": "current_day_of_week / 5",
+      "interpretation": {
+        "0.2": "Early week (Monday)",
+        "0.4": "Early-mid week (Tuesday)",
+        "0.6": "Mid-week (Wednesday)",
+        "0.8": "Late week (Thursday)",
+        "1.0": "Week complete (Friday)"
+      }
+    },
+    "month_position": {
+      "formula": "current_day_of_month / total_days_in_month",
+      "interpretation": {
+        "0-0.33": "Early month",
+        "0.34-0.66": "Mid-month",
+        "0.67-0.90": "Late month",
+        "0.91-1.0": "Month-end"
+      }
+    },
+    "days_remaining": {
+      "weekly": "5 - current_day_of_week",
+      "monthly": "total_days_in_month - current_day_of_month"
+    },
+    "progress_language": {
+      "week": {
+        "20%": "Just getting started this week",
+        "40%": "Building momentum",
+        "60%": "At the halfway point",
+        "80%": "Final push",
+        "100%": "Week complete"
+      },
+      "month": {
+        "early": "Setting the pace for {month}",
+        "mid": "Halfway through {month}",
+        "late": "Closing out {month} strong",
+        "end": "{month} complete"
+      }
+    }
+  },
+  "validation_rules": {
+    "data_integrity": {
+      "required_fields_eod": [
+        "total_production",
+        "total_collections",
+        "total_patients",
+        "call_answer_rate"
+      ],
+      "required_fields_front_desk": [
+        "total_hygiene_appointments",
+        "dollar_amount_presented",
+        "dollar_amount_scheduled",
+        "total_cancellations"
+      ]
+    },
+    "business_logic": {
+      "performance_thresholds": {
+        "production_target": {
+          "baytown_daily": 8000,
+          "humble_daily": 7000
+        },
+        "front_desk_targets": {
+          "hygiene_reappointment_minimum": 95,
+          "recall_calls_daily_minimum": 15,
+          "treatment_scheduling_conversion_minimum": 30,
+          "same_day_treatment_minimum": 2000,
+          "treatment_acceptance_minimum": 40,
+          "cancellation_rate_maximum": 10
+        }
+      }
+    }
+  },
+  "training_resources": {
+    "front_desk_training": {
+      "front_office_academy": {
+        "title": "Front Office Academy",
+        "description": "Comprehensive front office training modules and best practices",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "comprehensive_training",
+        "duration": "varies"
+      },
+      "caitlyn_trainings_front_office": {
+        "title": "Caitlyn Trainings (Front Office)",
+        "description": "Specialized front office training by Caitlyn",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "front_office_skills",
+        "duration": "varies"
+      },
+      "treatment_presentation_script": {
+        "title": "Treatment Presentation Script",
+        "description": "Proven scripts for presenting treatment to patients",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "conversion_skills",
+        "duration": "15 minutes"
+      },
+      "overcoming_objections_script": {
+        "title": "Overcoming Objections Script",
+        "description": "Scripts and techniques for handling patient objections",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "conversion_skills",
+        "duration": "20 minutes"
+      },
+      "outbound_call_scripting": {
+        "title": "Outbound Call Scripting",
+        "description": "Scripts for treatment calls, recalls, and follow-ups",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "communication_skills",
+        "duration": "15 minutes"
+      },
+      "inbound_calls": {
+        "title": "Inbound Calls",
+        "description": "Best practices for handling incoming patient calls",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "communication_skills",
+        "duration": "20 minutes"
+      },
+      "cherry_estimator_training": {
+        "title": "Cherry Estimator Training",
+        "description": "Training on using Cherry payment estimator tool",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "financial_tools",
+        "duration": "25 minutes"
+      },
+      "front_back_office_tutorials": {
+        "title": "Front & Back Office Tutorials",
+        "description": "Comprehensive tutorials for both front and back office procedures",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "comprehensive_training",
+        "duration": "varies"
+      }
+    },
+    "quick_reference_guides": {
+      "guidebooks": {
+        "title": "Guidebooks",
+        "description": "Quick reference guidebooks for daily procedures",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "quick_reference"
+      },
+      "reporting_data_training": {
+        "title": "Reporting & Data Training",
+        "description": "Training on reports, KPIs, and data entry procedures",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "data_skills"
+      },
+      "scheduling_institute": {
+        "title": "Scheduling Institute",
+        "description": "Advanced scheduling and appointment management training",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "scheduling_optimization"
+      }
+    },
+    "specialized_training": {
+      "amy_trainings_insurance": {
+        "title": "Amy Trainings (Insurance)",
+        "description": "Insurance-specific training modules by Amy",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "insurance_skills",
+        "duration": "varies"
+      },
+      "diagnostic_protocols_hygiene": {
+        "title": "Diagnostic Protocols for Hygiene",
+        "description": "Clinical diagnostic protocols for hygiene department",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "clinical_skills",
+        "duration": "30 minutes"
+      },
+      "hygienist_training_videos": {
+        "title": "Hygienist Training Videos",
+        "description": "Video-based training for hygienist procedures",
+        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+        "category": "clinical_skills",
+        "duration": "varies"
+      }
+    }
+  },
+  "actionable_recommendations_with_links": {
+    "low_treatment_call_conversion": {
+      "threshold": "< 20%",
+      "recommendation": "Treatment Presentation Review: One-on-one training on overcoming objections and closing techniques",
+      "training_link": "{training_resources.front_desk_training.treatment_presentation_script.url}",
+      "quick_reference": "{training_resources.front_desk_training.overcoming_objections_script.url}",
+      "comprehensive_training": "{training_resources.front_desk_training.front_office_academy.url}"
+    },
+    "poor_follow_up_conversion": {
+      "threshold": "< 30%",
+      "recommendation": "Follow-up Protocol: Ensure immediate follow-up on all unscheduled treatment calls (don't lose momentum)",
+      "training_link": "{training_resources.front_desk_training.outbound_call_scripting.url}",
+      "quick_reference": "{training_resources.quick_reference_guides.guidebooks.url}",
+      "comprehensive_training": "{training_resources.front_desk_training.caitlyn_trainings_front_office.url}"
+    },
+    "low_treatment_acceptance": {
+      "threshold": "< 40%",
+      "recommendation": "Presentation Value Enhancement: Focus on emotional benefits and urgency in treatment discussions",
+      "training_link": "{training_resources.front_desk_training.treatment_presentation_script.url}",
+      "quick_reference": "{training_resources.front_desk_training.cherry_estimator_training.url}",
+      "comprehensive_training": "{training_resources.front_desk_training.front_office_academy.url}"
+    },
+    "poor_inbound_call_handling": {
+      "threshold": "< 70% call answer rate",
+      "recommendation": "Inbound Call Training: Improve call handling and scheduling conversion",
+      "training_link": "{training_resources.front_desk_training.inbound_calls.url}",
+      "quick_reference": "{training_resources.quick_reference_guides.scheduling_institute.url}"
+    },
+    "inconsistent_tracking": {
+      "recommendation": "Daily Conversion Tracking: End-of-day review of actual appointments scheduled vs calls made",
+      "training_link": "{training_resources.quick_reference_guides.reporting_data_training.url}",
+      "comprehensive_training": "{training_resources.front_desk_training.front_back_office_tutorials.url}"
+    },
+    "week_end_push_needed": {
+      "recommendation": "Week-End Target: Convert at least 5 patients from remaining treatment and recall outreach efforts",
+      "training_link": "{training_resources.front_desk_training.outbound_call_scripting.url}",
+      "comprehensive_training": "{training_resources.front_desk_training.caitlyn_trainings_front_office.url}"
+    }
+  },
+  "css_styling_framework": {
+    "email_themes": {
+      "theme-baytown": {
+        "primary_color": "#2C5282",
+        "secondary_color": "#4299E1",
+        "accent_color": "#63B3ED",
+        "header_style": "background: linear-gradient(135deg, #2C5282 0%, #4299E1 100%); color: #000000;",
+        "font_family": "Segoe UI, Arial, sans-serif"
+      },
+      "theme-humble": {
+        "primary_color": "#2D7D32",
+        "secondary_color": "#43A047",
+        "accent_color": "#81C784",
+        "header_style": "background: linear-gradient(135deg, #2D7D32 0%, #43A047 100%); color: #000000;",
+        "font_family": "Segoe UI, Arial, sans-serif"
+      }
+    },
+    "component_styles": {
+      "metric_card": {
+        "css": "border-left: 4px solid {primary_color}; padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 4px;"
+      },
+      "front_desk_card": {
+        "css": "border: 2px solid {accent_color}; padding: 16px; margin: 12px 0; background: linear-gradient(to right, #ffffff, {accent_color}15); border-radius: 8px;"
+      }
+    }
+  }
+}
