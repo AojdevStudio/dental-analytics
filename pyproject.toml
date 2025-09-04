@@ -1,0 +1,60 @@
+[project]
+name = "dental-analytics"
+version = "0.1.0"
+description = "Simple dental analytics dashboard for KPI tracking"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "AOJDevStudio"}
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "google-auth>=2.23",
+    "google-api-python-client>=2.103",
+    "pandas>=2.1",
+    "streamlit>=1.30",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend", "frontend"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = ["--cov=backend", "--cov=frontend", "--cov-report=term-missing"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-cov>=6.2.1",
+    "pytest-mock>=3.15.0",
+]
