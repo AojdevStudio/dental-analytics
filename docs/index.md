@@ -6,6 +6,27 @@
 
 This documentation follows a comprehensive organizational structure designed for software development projects.
 
+#### Standard Metadata Structure for All Markdown Files
+
+```yaml
+---
+title: "Document Title"
+description: "A brief, one-sentence summary of the document's purpose."
+category: "Primary Category"
+subcategory: "Secondary Category"
+product_line: "Associated Product"
+audience: "Intended Audience"
+status: "Document Status"
+author: "AOJDevStudio"
+created_date: "YYYY-MM-DD"
+last_updated: "YYYY-MM-DD"
+tags:
+  - keyword1
+  - keyword2
+  - keyword3
+---
+```
+
 ### 🏗️ Architecture & Design
 - **Architecture/** - System architecture, design patterns, and technical decisions
 - **Database/** - Schema design, migrations, and data modeling

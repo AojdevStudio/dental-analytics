@@ -77,6 +77,12 @@ uv run jupyter notebook
 # Test Google Sheets connection
 uv run python -c "from backend.sheets_reader import test_connection; test_connection()"
 ```
+### Memory & Knowledge System
+
+- **Markdown-based storage** in `.serena/memories/` directories
+- **Project-specific knowledge** persistence across sessions
+- **Contextual retrieval** based on relevance
+- **Onboarding support** for new projects
 
 ## Technology Stack
 
@@ -132,6 +138,27 @@ dental-analytics/
 - Link related documents
 - Maintain consistent formatting
 - Update index.md when adding new sections
+
+#### Standard Metadata Structure for All Markdown Files
+
+```yaml
+---
+title: "Document Title"
+description: "A brief, one-sentence summary of the document's purpose."
+category: "Primary Category"
+subcategory: "Secondary Category"
+product_line: "Associated Product"
+audience: "Intended Audience"
+status: "Document Status"
+author: "AOJDevStudio"
+created_date: "YYYY-MM-DD"
+last_updated: "YYYY-MM-DD"
+tags:
+  - keyword1
+  - keyword2
+  - keyword3
+---
+```
 
 ## Python Guidelines
 
@@ -241,6 +268,13 @@ exclude_lines = [
     "raise NotImplementedError"
 ]
 ```
+## Working with the Codebase
+
+- Project uses Python 3.11 with `uv` for dependency management
+- Strict typing with mypy, formatted with black + ruff
+- Language servers run as separate processes with LSP communication
+- Memory system enables persistent project knowledge
+- Context/mode system allows workflow customization
 
 ## Dental Practice Specific Guidelines
 
