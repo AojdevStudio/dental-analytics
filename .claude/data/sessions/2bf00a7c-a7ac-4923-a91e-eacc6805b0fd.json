@@ -1,0 +1,27 @@
+{
+  "session_id": "2bf00a7c-a7ac-4923-a91e-eacc6805b0fd",
+  "prompts": [
+    "/BMad:agents:ux-expert ",
+    "2.   Review the Dental Analytics Dashboard PRD at docs/prds/dental-analytics-prd.md and create a minimal \n  UI design specification that:\n\n  1. Displays 5 KPIs on a single screen without scrolling:\n    - Daily Production Total\n    - Collection Rate (%)\n    - New Patient Count\n    - Treatment Acceptance Rate (%)\n    - Hygiene Reappointment Rate (%)\n  2. Applies Kam Dental brand guidelines from docs/rules/brand-guidelines.md:\n    - Primary Navy (#142D54) for headers\n    - Teal Blue (#007E9E) for positive indicators\n    - Emergency Red (#BB0A0A) for below-threshold metrics\n    - Roboto font family\n  3. Maintains radical simplicity:\n    - Zero navigation required\n    - Read-only display (no buttons/inputs)\n    - Desktop-first for 1920x1080 screens\n    - \"Data Unavailable\" error state\n  4. Works within constraints:\n    - Streamlit framework components\n    - Under 200 lines total code\n    - No custom CSS/JavaScript for MVP\n\n  Focus on: Creating a glanceable dashboard where practice managers can instantly assess all 5 metrics.\n   The UI should disappear into the background, letting the numbers speak directly.",
+    "i moved it to the @docs/specs/ because we already have that directory",
+    "/BMad:agents:architect ",
+    "2, 4 please output these two by reviewing the @docs/prds/dental-analytics-prd.md @docs/checklists/technical-implementation-checklist.md @docs/specs/dental-dashboard-ui-spec.md ",
+    "*help",
+    "/BMad:agents:po ",
+    "6",
+    "2",
+    "exists already .gitignore .. We need rewritten Google Claude setup instructions, and we need to develop a testing story for PyTest implementations.",
+    "*help",
+    "7",
+    "/BMad:agents:sm ",
+    "3",
+    "according to our epic we need 5 stories. and can we name time easily as 'story-1.x' ",
+    "wait so you like it better to generate the next story after the dev works on the first one. i see.. got it. ",
+    "*help",
+    "4",
+    "1",
+    "/BMad:agents:architect we are missing the source tree document. ",
+    "a .git dir is not necessary as .gitignore is at the root",
+    "file naming conventions need to match my preference @ai-docs/naming-conventions.md "
+  ]
+}

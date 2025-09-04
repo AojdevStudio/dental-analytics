@@ -1,0 +1,15 @@
+{
+  "session_id": "0a193202-5c56-4f26-be21-2e51206e60d8",
+  "prompts": [
+    "1",
+    "4 Separation of file structure is important to me. I know there's going to be a single repo, but we definitely want to keep the back-end logic away from the front-end logic. This way, in the future, if we decide to connect the back end to a different framework or front end, we'll be able to do that.\n\nWe want to keep things separate for that reason. You didn't mention that in the technical assumptions, so I just want to make sure that's taken into account. For instance, right now it's a Streamlit front end, but in the future, it could be a Max.js front end.",
+    "1",
+    "1",
+    "proceed to next section",
+    "1",
+    "Output the full PRD. We'll put it in this directory. docs/prds",
+    "run the checklist but also make sure you are following my rules in CLAUDE.md about markdown documents. using serena mcp can save you time",
+    "your date is wrong. run !date to know the date.",
+    "Since we have a UX as required, I would like to move on to the UX expert now.\n\nThank you for finishing up the PRD. I'll move on to the UX expert to create a front end spec"
+  ]
+}

@@ -18,6 +18,7 @@ config.json
 secrets.json
 .secrets/
 .vault/
+config/credentials.json
 
 # ============================================================================
 # Logs & Debug Files
