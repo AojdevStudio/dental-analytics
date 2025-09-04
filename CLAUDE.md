@@ -126,6 +126,13 @@ dental-analytics/
 ### Naming Conventions
 - Follow the naming conventions in the @ai-docs/naming-conventions.md file.
 
+### Documentation Standards
+- Use clear, descriptive filenames
+- Include creation/modification dates
+- Link related documents
+- Maintain consistent formatting
+- Update index.md when adding new sections
+
 ## Python Guidelines
 
 ### Type Hints
