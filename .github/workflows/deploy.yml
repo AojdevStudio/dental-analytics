@@ -43,7 +43,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ inputs.version || github.ref }}
 
@@ -107,7 +107,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ inputs.version || github.ref }}
 
@@ -234,7 +234,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ inputs.version || github.ref }}
 
@@ -425,7 +425,7 @@ jobs:
         echo "Rolling back to previous stable version..."
 
     - name: Checkout previous version
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: HEAD~1  # Previous commit
 
