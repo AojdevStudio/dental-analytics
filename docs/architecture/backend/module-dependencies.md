@@ -4,7 +4,7 @@
 backend/:
   __init__.py:
     - Empty file for module initialization
-    
+
   sheets_reader.py:
     external:
       - google-auth >= 2.23
@@ -12,7 +12,7 @@ backend/:
       - pandas >= 2.1
     internal:
       - None (standalone module)
-    
+
   metrics.py:
     external:
       - pandas >= 2.1

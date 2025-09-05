@@ -14,7 +14,7 @@ uv run streamlit run frontend/app.py
 # Add production dependency
 uv add package-name
 
-# Add development dependency  
+# Add development dependency
 uv add --dev package-name
 
 # Update all packages

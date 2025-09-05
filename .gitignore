@@ -249,3 +249,4 @@ firebase-debug.log
 # BMAD (local only)
 .bmad-core/
 .bmad-*/
+.claude/data/sessions/

@@ -22,8 +22,8 @@
    ```python
    kpis = get_all_kpis()
    assert all(key in kpis for key in [
-       'production_total', 'collection_rate', 
-       'new_patients', 'treatment_acceptance', 
+       'production_total', 'collection_rate',
+       'new_patients', 'treatment_acceptance',
        'hygiene_reappointment'
    ])
    ```

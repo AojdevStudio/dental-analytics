@@ -198,14 +198,14 @@ const systemAnalysisPrompt = createPrompt({
 const createContextAwarePrompt = async (task: string, projectPath: string) => {
   const projectMeta = await getProjectMetadata(projectPath);
   const relevantFiles = await searchRelevantContext(task, projectPath);
-  
+
   return createPrompt({
     taskContext: `You are working on ${projectMeta.name} (${projectMeta.techStack})`,
     backgroundData: `
       Project: ${projectMeta.description}
       Tech Stack: ${projectMeta.techStack}
       Team Size: ${projectMeta.teamSize}
-      
+
       Relevant Code:
       ${relevantFiles.join('\n')}
     `,
@@ -249,8 +249,8 @@ const createSpecializedAgent = (role: 'security' | 'performance' | 'architecture
       examples: architectureExamples
     }
   };
-  
-  return (request: string, context: string) => 
+
+  return (request: string, context: string) =>
     createPrompt({
       ...configs[role],
       backgroundData: context,

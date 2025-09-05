@@ -24,7 +24,7 @@ dependencies = [
 ### Step 2: Test Connection
 - Use spreadsheet ID: `1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8`
 - Read these sheets first:
-  - "EOD - Baytown Billing" 
+  - "EOD - Baytown Billing"
   - "EOD - Humble Billing"
 - Print first 5 rows to verify connection works
 

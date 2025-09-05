@@ -196,25 +196,25 @@ def test_google_sheets_connection():
         creds = service_account.Credentials.from_service_account_file(
             'config/credentials.json', scopes=SCOPES
         )
-        
+
         # Build service
         service = build('sheets', 'v4', credentials=creds)
-        
+
         # Test API call
         spreadsheet_id = '1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8'
         result = service.spreadsheets().get(
             spreadsheetId=spreadsheet_id
         ).execute()
-        
+
         print(f"✅ Success! Connected to: {result.get('properties', {}).get('title')}")
         print(f"   Sheets found: {len(result.get('sheets', []))}")
-        
+
         # List sheet names
         for sheet in result.get('sheets', []):
             print(f"   - {sheet['properties']['title']}")
-            
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Connection failed: {e}")
         return False
@@ -246,7 +246,7 @@ uv run python test_connection.py
 **Solution:** Return to Step 3 and ensure Google Sheets API is enabled
 
 #### Issue: "Permission denied" or 403 error
-**Solution:** 
+**Solution:**
 1. Verify service account email is correctly shared on spreadsheet
 2. Check that "Viewer" permission is granted
 3. Ensure credentials.json is from correct project
@@ -315,7 +315,7 @@ When deploying to Streamlit Cloud:
    ```python
    import streamlit as st
    import json
-   
+
    credentials_dict = json.loads(st.secrets["google"]["credentials_json"])
    ```
 

@@ -6,7 +6,7 @@
 - **Assignee:** [AI Agent | Human | Unassigned]
 - **Estimate:** [Story Points/Hours]
 - **Issue ID:** [ENG-XXX] or [#XXX]
-- **Labels:** 
+- **Labels:**
   - type:feature
   - priority:high
   - agent-ready
@@ -37,9 +37,17 @@ Relevant background without overwhelming detail
 - Architecture decisions that must be respected
 
 ### Testing Requirements
-- [ ] **Unit Tests** - Framework: [Framework], Coverage: [%], Location: [path]
-- [ ] **Integration Tests** - Framework: [Framework], Location: [path]
-- [ ] **E2E Tests** - Framework: [Framework], Location: [path]
+- [ ] **Unit Tests** - Framework: pytest, Coverage: ≥90% backend business logic, Location: tests/
+- [ ] **Integration Tests** - Framework: pytest, Location: tests/integration/
+- [ ] **E2E Tests** - Framework: [Streamlit testing if applicable], Location: tests/e2e/
+
+### Quality Requirements
+- [ ] **Code Formatting** - All code formatted with Black (88 char limit)
+- [ ] **Code Linting** - Zero Ruff violations, all style rules pass
+- [ ] **Type Checking** - 100% MyPy compliance for public APIs
+- [ ] **Test Coverage** - Minimum 90% coverage for backend business logic
+- [ ] **Pre-commit Hooks** - All pre-commit validations pass
+- [ ] **Quality Scripts** - `scripts/check-quality.py` passes completely
 
 ### Dependencies
 - **Blockers:** Issues that must be completed first
@@ -48,11 +56,15 @@ Relevant background without overwhelming detail
 
 ## Definition of Done
 - [ ] All acceptance criteria met
+- [ ] All quality requirements satisfied (formatting, linting, type checking)
+- [ ] Test coverage meets minimum thresholds (≥90% backend business logic)
+- [ ] All tests written and passing (unit, integration, e2e as applicable)
+- [ ] Pre-commit hooks execute successfully on all changes
+- [ ] CI/CD pipeline passes completely with quality gates
 - [ ] Code reviewed and approved
-- [ ] Tests written and passing (per testing requirements)
 - [ ] Documentation updated (if applicable)
-- [ ] Deployed to [environment]
-- [ ] Manual verification completed
+- [ ] Application runs locally without issues (`uv run streamlit run frontend/app.py`)
+- [ ] Manual verification completed per validation steps
 
 ## Agent Context
 
@@ -71,10 +83,13 @@ Relevant background without overwhelming detail
 ## Validation Steps
 
 ### Automated Verification
-- [ ] Build pipeline passes
-- [ ] All tests green
-- [ ] Code quality checks pass
-- [ ] Security scans clean
+- [ ] Build pipeline passes with all quality gates
+- [ ] All tests green (unit, integration, e2e)
+- [ ] Code quality checks pass (Black, Ruff, MyPy)
+- [ ] Test coverage meets minimum thresholds (≥90% backend)
+- [ ] Pre-commit hooks execute successfully
+- [ ] `scripts/check-quality.py` validation passes
+- [ ] Security scans clean (dependency vulnerabilities)
 
 ### Manual Verification
 1. **Step 1:** Specific testing instruction
@@ -140,4 +155,3 @@ Brief description of changes
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 ```
-

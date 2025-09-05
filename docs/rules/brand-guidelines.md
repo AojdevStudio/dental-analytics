@@ -88,4 +88,3 @@ Fallback fonts: `Helvetica Neue, Arial, sans-serif`
 * Alt text required for all graphics and photos.
 
 ---
-

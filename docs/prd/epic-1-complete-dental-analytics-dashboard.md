@@ -4,8 +4,8 @@
 
 ## Story 1.1: Project Foundation and Google Sheets Connection
 
-**As a** developer,  
-**I want** to set up the project structure and establish Google Sheets API connection,  
+**As a** developer,
+**I want** to set up the project structure and establish Google Sheets API connection,
 **so that** the application has a solid foundation and can access practice data.
 
 **Acceptance Criteria:**
@@ -19,8 +19,8 @@
 
 ## Story 1.2: Production and Collection KPI Calculations
 
-**As a** practice manager,  
-**I want** to see daily production totals and collection rates calculated from EOD sheets,  
+**As a** practice manager,
+**I want** to see daily production totals and collection rates calculated from EOD sheets,
 **so that** I can monitor practice financial performance.
 
 **Acceptance Criteria:**
@@ -33,8 +33,8 @@
 
 ## Story 1.3: Patient and Treatment KPI Calculations
 
-**As a** practice manager,  
-**I want** to see new patient counts and treatment acceptance rates,  
+**As a** practice manager,
+**I want** to see new patient counts and treatment acceptance rates,
 **so that** I can track patient acquisition and treatment conversion.
 
 **Acceptance Criteria:**
@@ -47,8 +47,8 @@
 
 ## Story 1.4: Hygiene Reappointment KPI Calculation
 
-**As a** practice manager,  
-**I want** to see hygiene reappointment rates,  
+**As a** practice manager,
+**I want** to see hygiene reappointment rates,
 **so that** I can ensure patients are maintaining regular preventive care schedules.
 
 **Acceptance Criteria:**
@@ -61,8 +61,8 @@
 
 ## Story 1.5: Streamlit Dashboard Display
 
-**As a** practice manager,  
-**I want** to view all five KPIs on a single dashboard screen,  
+**As a** practice manager,
+**I want** to view all five KPIs on a single dashboard screen,
 **so that** I can quickly assess practice performance without navigation.
 
 **Acceptance Criteria:**

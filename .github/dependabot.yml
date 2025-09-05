@@ -1,0 +1,74 @@
+# Dependabot configuration for automated dependency updates
+# Helps maintain security and stability of the dental analytics application
+
+version: 2
+
+updates:
+  # Python dependencies (main application)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    assignees:
+      - "ossieirondi"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+    # Group related updates together to reduce PR noise
+    groups:
+      google-apis:
+        patterns:
+          - "google-*"
+        dependency-type: "production"
+      testing:
+        patterns:
+          - "pytest*"
+        dependency-type: "development"
+      quality-tools:
+        patterns:
+          - "black"
+          - "ruff"
+          - "mypy"
+          - "pre-commit"
+        dependency-type: "development"
+      data-science:
+        patterns:
+          - "pandas"
+          - "numpy"
+        dependency-type: "production"
+      streamlit:
+        patterns:
+          - "streamlit*"
+        dependency-type: "production"
+    # Ignore specific dependencies if needed
+    ignore:
+      # Ignore major version updates for stable dependencies
+      - dependency-name: "pandas"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "streamlit"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions workflow dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    assignees:
+      - "ossieirondi"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci"

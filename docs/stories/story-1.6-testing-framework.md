@@ -21,8 +21,8 @@ tags:
 
 ## User Story
 
-**As a** developer,  
-**I want** comprehensive automated tests for all KPI calculations and data processing,  
+**As a** developer,
+**I want** comprehensive automated tests for all KPI calculations and data processing,
 **so that** we can ensure calculation accuracy and prevent regressions during development.
 
 ## Story Points: 3
@@ -119,7 +119,7 @@ testpaths = tests
 python_files = test_*.py
 python_classes = Test*
 python_functions = test_*
-addopts = 
+addopts =
     --verbose
     --cov=backend
     --cov-report=term-missing
@@ -139,7 +139,7 @@ markers =
 # .coveragerc
 [run]
 source = backend
-omit = 
+omit =
     tests/*
     */test_*.py
     */__pycache__/*
@@ -223,27 +223,27 @@ from backend.metrics import (
 
 class TestMetricsCalculator:
     """Test suite for KPI calculations."""
-    
+
     @pytest.mark.unit
     def test_calculate_production_total(self, sample_eod_data):
         """Test daily production total calculation."""
         result = MetricsCalculator.calculate_production_total(sample_eod_data)
         expected = 39800  # Sum of all total_production
         assert result == expected
-    
+
     @pytest.mark.unit
     def test_calculate_production_total_empty(self, empty_dataframe):
         """Test production calculation with empty data."""
         result = MetricsCalculator.calculate_production_total(empty_dataframe)
         assert result is None
-    
+
     @pytest.mark.unit
     def test_calculate_collection_rate(self, sample_eod_data):
         """Test collection rate percentage calculation."""
         result = MetricsCalculator.calculate_collection_rate(sample_eod_data)
         # (36610 / 39800) * 100 = 91.985...
         assert abs(result - 91.99) < 0.01
-    
+
     @pytest.mark.unit
     def test_calculate_collection_rate_zero_production(self):
         """Test collection rate with zero production."""
@@ -253,13 +253,13 @@ class TestMetricsCalculator:
         })
         result = MetricsCalculator.calculate_collection_rate(df)
         assert result is None
-    
+
     @pytest.mark.unit
     def test_calculate_new_patients(self, sample_eod_data):
         """Test new patient count calculation."""
         result = MetricsCalculator.calculate_new_patients(sample_eod_data)
         assert result == 17  # Sum of new_patients
-    
+
     @pytest.mark.unit
     def test_calculate_new_patients_with_nulls(self):
         """Test new patient count with null values."""
@@ -268,14 +268,14 @@ class TestMetricsCalculator:
         })
         result = MetricsCalculator.calculate_new_patients(df)
         assert result == 6  # Should handle nulls gracefully
-    
+
     @pytest.mark.unit
     def test_calculate_treatment_acceptance(self, sample_front_kpi_data):
         """Test treatment acceptance rate calculation."""
         result = MetricsCalculator.calculate_treatment_acceptance(sample_front_kpi_data)
         # (20455 / 24600) * 100 = 83.15...
         assert abs(result - 83.15) < 0.01
-    
+
     @pytest.mark.unit
     def test_calculate_treatment_acceptance_zero_presented(self):
         """Test treatment acceptance with zero presented."""
@@ -285,14 +285,14 @@ class TestMetricsCalculator:
         })
         result = MetricsCalculator.calculate_treatment_acceptance(df)
         assert result is None
-    
+
     @pytest.mark.unit
     def test_calculate_hygiene_reappointment(self, sample_front_kpi_data):
         """Test hygiene reappointment rate calculation."""
         result = MetricsCalculator.calculate_hygiene_reappointment(sample_front_kpi_data)
         # ((100 - 7) / 100) * 100 = 93.0
         assert abs(result - 93.0) < 0.01
-    
+
     @pytest.mark.unit
     def test_calculate_hygiene_reappointment_zero_appointments(self):
         """Test hygiene reappointment with zero appointments."""
@@ -302,7 +302,7 @@ class TestMetricsCalculator:
         })
         result = MetricsCalculator.calculate_hygiene_reappointment(df)
         assert result is None
-    
+
     @pytest.mark.unit
     def test_column_name_mismatch_handling(self):
         """Test handling of incorrect column names."""
@@ -314,25 +314,25 @@ class TestMetricsCalculator:
 
 class TestKPIThresholds:
     """Test KPI threshold validations."""
-    
+
     def test_production_threshold_categories(self):
         """Test production categorization."""
         assert self._categorize_production(28000) == "excellent"
         assert self._categorize_production(20000) == "good"
         assert self._categorize_production(14000) == "needs_improvement"
-    
+
     def test_collection_rate_thresholds(self):
         """Test collection rate categorization."""
         assert self._categorize_collection_rate(96) == "excellent"
         assert self._categorize_collection_rate(90) == "good"
         assert self._categorize_collection_rate(84) == "needs_improvement"
-    
+
     def test_hygiene_reappointment_thresholds(self):
         """Test hygiene reappointment categorization."""
         assert self._categorize_hygiene(95) == "excellent"
         assert self._categorize_hygiene(85) == "good"
         assert self._categorize_hygiene(79) == "needs_improvement"
-    
+
     def _categorize_production(self, value):
         if value >= 25000:
             return "excellent"
@@ -340,7 +340,7 @@ class TestKPIThresholds:
             return "good"
         else:
             return "needs_improvement"
-    
+
     def _categorize_collection_rate(self, value):
         if value >= 95:
             return "excellent"
@@ -348,7 +348,7 @@ class TestKPIThresholds:
             return "good"
         else:
             return "needs_improvement"
-    
+
     def _categorize_hygiene(self, value):
         if value >= 90:
             return "excellent"
@@ -368,7 +368,7 @@ from backend.sheets_reader import SheetsReader
 
 class TestSheetsReader:
     """Test suite for Google Sheets data retrieval."""
-    
+
     @pytest.mark.unit
     def test_sheets_reader_initialization(self):
         """Test SheetsReader initialization."""
@@ -376,19 +376,19 @@ class TestSheetsReader:
             reader = SheetsReader('config/credentials.json')
             assert reader.SPREADSHEET_ID == '1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8'
             mock_creds.from_service_account_file.assert_called_once()
-    
+
     @pytest.mark.unit
     def test_get_sheet_data_success(self, mock_sheets_service):
         """Test successful data retrieval from sheets."""
         with patch('backend.sheets_reader.build') as mock_build:
             mock_build.return_value = mock_sheets_service
-            
+
             reader = SheetsReader()
             result = reader.get_sheet_data('TestRange')
-            
+
             assert isinstance(result, pd.DataFrame)
             assert not result.empty
-    
+
     @pytest.mark.unit
     def test_get_sheet_data_empty_response(self):
         """Test handling of empty sheet response."""
@@ -398,11 +398,11 @@ class TestSheetsReader:
                 'values': []
             }
             mock_build.return_value = mock_service
-            
+
             reader = SheetsReader()
             result = reader.get_sheet_data('EmptyRange')
             assert result is None
-    
+
     @pytest.mark.unit
     def test_get_sheet_data_api_error(self):
         """Test handling of API errors."""
@@ -410,11 +410,11 @@ class TestSheetsReader:
             mock_service = Mock()
             mock_service.spreadsheets().values().get().execute.side_effect = Exception("API Error")
             mock_build.return_value = mock_service
-            
+
             reader = SheetsReader()
             result = reader.get_sheet_data('ErrorRange')
             assert result is None
-    
+
     @pytest.mark.unit
     def test_dataframe_column_headers(self, mock_sheets_service):
         """Test that first row becomes column headers."""
@@ -426,13 +426,13 @@ class TestSheetsReader:
             ]
         }
         mock_sheets_service.spreadsheets().values().get().execute.return_value = test_data
-        
+
         with patch('backend.sheets_reader.build') as mock_build:
             mock_build.return_value = mock_sheets_service
-            
+
             reader = SheetsReader()
             result = reader.get_sheet_data('TestRange')
-            
+
             assert list(result.columns) == ['col1', 'col2', 'col3']
             assert len(result) == 2  # Two data rows
 ```
@@ -447,14 +447,14 @@ from backend.metrics import get_all_kpis
 
 class TestFullIntegration:
     """Integration tests for complete KPI calculation flow."""
-    
+
     @pytest.mark.integration
     def test_complete_kpi_flow(self, sample_eod_data, sample_front_kpi_data):
         """Test end-to-end KPI calculation."""
         with patch('backend.sheets_reader.SheetsReader') as MockReader:
             mock_instance = Mock()
             MockReader.return_value = mock_instance
-            
+
             # Mock different sheet responses
             def get_sheet_side_effect(range_name):
                 if 'EOD' in range_name:
@@ -462,67 +462,67 @@ class TestFullIntegration:
                 elif 'Front KPI' in range_name:
                     return sample_front_kpi_data
                 return None
-            
+
             mock_instance.get_sheet_data.side_effect = get_sheet_side_effect
-            
+
             # Execute full flow
             kpis = get_all_kpis()
-            
+
             # Validate all KPIs present
             assert 'production_total' in kpis
             assert 'collection_rate' in kpis
             assert 'new_patients' in kpis
             assert 'treatment_acceptance' in kpis
             assert 'hygiene_reappointment' in kpis
-            
+
             # Validate values are reasonable
             assert kpis['production_total'] > 0
             assert 0 <= kpis['collection_rate'] <= 100
             assert kpis['new_patients'] >= 0
             assert 0 <= kpis['treatment_acceptance'] <= 100
             assert 0 <= kpis['hygiene_reappointment'] <= 100
-    
+
     @pytest.mark.integration
     def test_partial_data_failure(self, sample_eod_data):
         """Test handling when some data sources fail."""
         with patch('backend.sheets_reader.SheetsReader') as MockReader:
             mock_instance = Mock()
             MockReader.return_value = mock_instance
-            
+
             # EOD succeeds, Front KPI fails
             def get_sheet_side_effect(range_name):
                 if 'EOD' in range_name:
                     return sample_eod_data
                 return None  # Front KPI fails
-            
+
             mock_instance.get_sheet_data.side_effect = get_sheet_side_effect
-            
+
             kpis = get_all_kpis()
-            
+
             # EOD-based KPIs should work
             assert kpis['production_total'] is not None
             assert kpis['collection_rate'] is not None
             assert kpis['new_patients'] is not None
-            
+
             # Front KPI-based should be None
             assert kpis['treatment_acceptance'] is None
             assert kpis['hygiene_reappointment'] is None
-    
+
     @pytest.mark.integration
     @pytest.mark.slow
     def test_performance_benchmark(self, sample_eod_data, sample_front_kpi_data):
         """Test that KPI calculation completes within 1 second."""
         import time
-        
+
         with patch('backend.sheets_reader.SheetsReader') as MockReader:
             mock_instance = Mock()
             MockReader.return_value = mock_instance
             mock_instance.get_sheet_data.return_value = sample_eod_data
-            
+
             start = time.time()
             kpis = get_all_kpis()
             duration = time.time() - start
-            
+
             assert duration < 1.0  # Should complete in under 1 second
             assert all(kpi is not None for kpi in kpis.values())
 ```

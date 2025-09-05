@@ -170,5 +170,3 @@ claude_code_workflows:
       icon: 'code'
       href: 'https://github.com/anthropics/claude-code/tree/main/.devcontainer'
       description: 'Clone our development container reference implementation.'
----
-

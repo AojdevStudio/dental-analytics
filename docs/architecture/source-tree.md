@@ -227,7 +227,7 @@ graph TD
     C --> D[Google Sheets API]
     C --> E[config/credentials.json]
     A --> F[.streamlit/config.toml]
-    
+
     T1[tests/test_metrics.py] --> B
     T2[tests/test_sheets_reader.py] --> C
     T3[tests/integration/] --> A
