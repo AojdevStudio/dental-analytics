@@ -1,8 +1,7 @@
 # Story 1.2: Production and Collection KPI Calculations
 
 ## Status
-Ready for Review
-
+Done
 ## Story
 
 **As a** practice manager,
