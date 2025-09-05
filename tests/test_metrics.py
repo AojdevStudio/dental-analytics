@@ -47,7 +47,7 @@ class TestMetricsCalculator:
     def test_calculate_production_total_none_input(self) -> None:
         """Test production calculation with None input."""
         # Act
-        result = MetricsCalculator.calculate_production_total(None)  # type: ignore[arg-type]
+        result = MetricsCalculator.calculate_production_total(None)
 
         # Assert
         assert result is None
@@ -141,7 +141,7 @@ class TestMetricsCalculator:
     def test_calculate_collection_rate_none_input(self) -> None:
         """Test collection rate calculation with None input."""
         # Act
-        result = MetricsCalculator.calculate_collection_rate(None)  # type: ignore[arg-type]
+        result = MetricsCalculator.calculate_collection_rate(None)
 
         # Assert
         assert result is None
