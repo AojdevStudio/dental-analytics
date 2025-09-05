@@ -76,20 +76,20 @@ A dashboard that becomes the morning ritual for practice managers—open the bro
 
 ### Core Features (Must Have) - With Exact Formulas
 - **Google Sheets Integration:** Secure connection to read data from specified sheets with automatic refresh
-- **Production Total Display:** 
+- **Production Total Display:**
   - Formula: Sum of columns B-D (provider production) or Column E directly
   - Daily targets: Baytown $8,000, Humble $7,000
-- **Collection Rate Calculation:** 
+- **Collection Rate Calculation:**
   - Formula: `(total_collections / total_production) × 100`
   - Source: Column F / Column E × 100
-- **New Patient Counter:** 
+- **New Patient Counter:**
   - Source: Column J from EOD sheets
   - Track daily, weekly, monthly totals
-- **Treatment Acceptance Rate:** 
+- **Treatment Acceptance Rate:**
   - Formula: `(dollar_scheduled / dollar_presented) × 100`
   - Source: Front KPI sheets Column M / Column L × 100
   - Target: 60% minimum, 70% excellent
-- **Hygiene Reappointment Tracking:** 
+- **Hygiene Reappointment Tracking:**
   - Formula: `((total_hygiene - not_reappointed) / total_hygiene) × 100`
   - Source: Front KPI sheets (Column C - Column D) / Column C × 100
   - Target: 95% minimum, 98% excellent

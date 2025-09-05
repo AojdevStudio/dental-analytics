@@ -1,7 +1,7 @@
 # Story 1.1: Project Foundation and Google Sheets Connection
 
 ## Status
-Ready for Review
+Done
 
 ## Story
 **As a** developer,
