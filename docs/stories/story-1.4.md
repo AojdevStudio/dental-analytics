@@ -1,7 +1,7 @@
 # Story 1.4: Hygiene Reappointment KPI Calculation
 
 ## Status
-Ready for Review
+Done 
 
 ## Story
 
@@ -391,3 +391,27 @@ def test_get_all_kpis_complete():
 - Complete code quality compliance with zero technical debt
 
 This story serves as a model implementation for future development work.
+
+### Sprint Change Review Date: 2025-09-05
+
+### Sprint Change Reviewed By: Quinn (Test Architect)
+
+### Sprint Change Assessment
+
+**PASS** - Sprint changes successfully implemented to fix daily KPI calculation issue.
+
+**Key Changes Validated:**
+- **Daily Filtering**: Added `_get_latest_entry()` function to filter for most recent date instead of aggregating all historical data
+- **Column Mapping Fix**: Production now correctly uses columns I+J+K, Collection uses L+M+N  
+- **Dual Location Support**: Separate `get_baytown_kpis()` and `get_humble_kpis()` functions implemented
+- **Data Structure Update**: `get_all_kpis()` now returns nested structure with both locations
+
+**Test Results:**
+- Baytown production for 9/4: $6,450 ✅ (matches expected daily value)
+- Collection rate: 40.8% (daily calculation working)
+- New patients: 7 (MTD from column S)
+- Humble location: Separate calculations operational
+
+### Gate Status
+
+Gate: PASS → docs/qa/gates/1.4-hygiene-reappointment-kpi-sprint-change.yml

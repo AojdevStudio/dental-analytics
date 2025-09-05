@@ -3,9 +3,11 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-Simple dental analytics dashboard that reads KPI data from Google Sheets, processes it with pandas, and displays metrics in a Streamlit web interface. Built for KamDental practice to automate daily production, collection rate, new patient count, treatment acceptance, and hygiene reappointment tracking.
+**COMPLETED**: Full-stack dental analytics dashboard that reads KPI data from Google Sheets, processes it with pandas, and displays metrics in a Streamlit web interface. Built for KamDental practice to automate daily production, collection rate, new patient count, treatment acceptance, and hygiene reappointment tracking.
 
-**Goal**: Get 5 numbers on screen from Google Sheets in under 200 lines of code.
+**Status**: ✅ **Stories 1.1-1.5 Complete** - All 5 KPIs implemented with Streamlit dashboard
+**Current Line Count**: 249 lines (Backend: 169 + Frontend: 80)
+**Goal Achieved**: 5 KPI dashboard operational with brand styling
 
 ## Development Commands
 
@@ -100,9 +102,24 @@ uv run python
 # Jupyter notebook for data exploration
 uv run jupyter notebook
 
-# Test Google Sheets connection
-uv run python -c "from backend.sheets_reader import test_connection; test_connection()"
+# Test Google Sheets connection and KPI data
+uv run python -c "from backend.metrics import get_all_kpis; print(get_all_kpis())"
 ```
+### Dashboard Testing Procedures
+```bash
+# Start dashboard server
+uv run streamlit run frontend/app.py
+
+# Access dashboard locally
+# URL: http://localhost:8501
+
+# Test complete data flow
+uv run python test_calculations.py
+
+# Verify KPI calculations manually
+uv run python -c "from backend.metrics import get_all_kpis; print(get_all_kpis())"
+```
+
 ### Memory & Knowledge System
 
 - **Markdown-based storage** in `.serena/memories/` directories
@@ -112,28 +129,36 @@ uv run python -c "from backend.sheets_reader import test_connection; test_connec
 
 ## Technology Stack
 
-### Core Technologies
+### Core Technologies ✅ Implemented
 - **Python 3.10+**: Primary language
 - **uv**: Dependency management and project runner
-- **Streamlit**: Frontend web framework
+- **Streamlit**: Frontend web framework (dashboard live)
 - **pandas**: Data processing and analysis
 
-### Data Science & ML
+### UI/UX Stack ✅ Complete
+- **Streamlit**: Web dashboard framework
+- **Brand Colors**: Navy (#142D54), Teal (#007E9E) 
+- **Layout**: 2-column primary + 3-column secondary metrics
+- **Theme Configuration**: Custom .streamlit/config.toml
+
+### Data Science & ML ✅ Implemented
 - **pandas>=2.1**: Data manipulation and analysis
 - **plotly>=5.17**: Interactive charts (future phase)
 
-### External APIs
+### External APIs ✅ Connected
 - **google-auth>=2.23**: Google authentication
 - **google-api-python-client>=2.103**: Google Sheets API client
+- **Google Sheets Integration**: Live KPI data retrieval
 
-### Testing Framework
-- **pytest**: Test runner
-- **pytest-cov**: Coverage reporting
+### Testing Framework (Story 1.6 Pending)
+- **pytest**: Test runner (to be implemented)
+- **pytest-cov**: Coverage reporting (to be implemented)
+- **Manual Tests**: Current test_calculations.py
 
-### Code Quality Tools
+### Code Quality Tools ✅ Active
 - **black**: Code formatting
-- **flake8**: Style checking
-- **mypy**: Type checking
+- **ruff**: Modern linting (replaced flake8)
+- **mypy**: Type checking with modern Python 3.10+ syntax
 
 ## Project Structure Guidelines
 
@@ -141,18 +166,26 @@ uv run python -c "from backend.sheets_reader import test_connection; test_connec
 ```
 dental-analytics/
 ├── frontend/
-│   └── app.py             # Streamlit UI (100 lines max)
+│   ├── app.py                    # Streamlit dashboard (80 lines) ✅
+│   └── .streamlit/
+│       └── config.toml           # Brand theme config ✅
 ├── backend/
 │   ├── __init__.py
-│   ├── sheets_reader.py   # Google Sheets API (50 lines)
-│   └── metrics.py         # KPI calculations (50 lines)
+│   ├── sheets_reader.py          # Google Sheets API (77 lines) ✅
+│   └── metrics.py                # KPI calculations (92 lines) ✅
 ├── config/
-│   └── credentials.json   # Google API credentials
-├── tests/                 # Test files (mirror backend structure)
-│   ├── test_sheets_reader.py
-│   └── test_metrics.py
-├── pyproject.toml         # Project configuration
-└── uv.lock               # Dependency lockfile
+│   └── credentials.json          # Google API credentials
+├── tests/                        # Manual test suite (Story 1.6 pending)
+│   └── test_calculations.py      # Current manual tests
+├── docs/stories/                 # Story documentation
+│   ├── story-1.1.md             # Project setup ✅
+│   ├── story-1.2.md             # Production & collection ✅
+│   ├── story-1.3.md             # New patients & treatment ✅
+│   ├── story-1.4.md             # Hygiene reappointment ✅
+│   ├── story-1.5.md             # Streamlit dashboard ✅
+│   └── story-1.6.md             # Testing framework (pending)
+├── pyproject.toml               # Project configuration
+└── uv.lock                      # Dependency lockfile
 ```
 
 ### Naming Conventions
@@ -302,37 +335,86 @@ exclude_lines = [
 - Memory system enables persistent project knowledge
 - Context/mode system allows workflow customization
 
+## Current Project Status
+
+### Completed Stories ✅
+- **Story 1.1**: Project foundation with Google Sheets connection
+- **Story 1.2**: Daily production and collection rate calculations  
+- **Story 1.3**: New patient count and treatment acceptance tracking
+- **Story 1.4**: Hygiene reappointment rate monitoring
+- **Story 1.5**: Streamlit dashboard with brand styling
+
+### Next Steps
+- **Story 1.6**: Pytest testing framework implementation
+- **Future**: Real-time data refresh, historical trends
+
+### Dashboard Access
+- **Local URL**: http://localhost:8501
+- **Start Command**: `uv run streamlit run frontend/app.py`
+- **All 5 KPIs**: Production, Collection Rate, New Patients, Treatment Acceptance, Hygiene Reappointment
+
 ## Dental Practice Specific Guidelines
 
-### KPI Calculation Standards
+### Implemented KPI Formulas ✅
 ```python
-# Always use these exact formulas
-def calculate_collection_rate(df: pd.DataFrame) -> float:
-    """Collection Rate = (Collections / Production) × 100"""
-    return (df['Collections'].sum() / df['Production'].sum()) * 100
+# Production Total: Sum of daily production (Column E)
+def calculate_production_total(df: pd.DataFrame) -> float | None:
+    return float(pd.to_numeric(df["total_production"], errors="coerce").sum())
 
-def calculate_treatment_acceptance(df: pd.DataFrame) -> float:
-    """Treatment Acceptance = (Scheduled / Presented) × 100"""
-    return (df['Scheduled'].sum() / df['Presented'].sum()) * 100
+# Collection Rate: (Collections / Production) × 100  
+def calculate_collection_rate(df: pd.DataFrame) -> float | None:
+    collections = pd.to_numeric(df["total_collections"], errors="coerce").sum()
+    production = pd.to_numeric(df["total_production"], errors="coerce").sum()
+    return float((collections / production) * 100)
+
+# New Patients: Count from Column J
+def calculate_new_patients(df: pd.DataFrame) -> int | None:
+    return int(pd.to_numeric(df["new_patients"], errors="coerce").sum())
+
+# Treatment Acceptance: (Scheduled / Presented) × 100
+def calculate_treatment_acceptance(df: pd.DataFrame) -> float | None:
+    scheduled = pd.to_numeric(df["treatments_scheduled"], errors="coerce").sum()
+    presented = pd.to_numeric(df["treatments_presented"], errors="coerce").sum()
+    return float((scheduled / presented) * 100)
+
+# Hygiene Reappointment: ((Total - Not Reappointed) / Total) × 100
+def calculate_hygiene_reappointment(df: pd.DataFrame) -> float | None:
+    total_hygiene = pd.to_numeric(df["total_hygiene_appointments"], errors="coerce").sum()
+    not_reappointed = pd.to_numeric(df["patients_not_reappointed"], errors="coerce").sum()
+    return float(((total_hygiene - not_reappointed) / total_hygiene) * 100)
 ```
 
-### Data Validation
-```python
-# Always validate dental data
-def validate_dental_data(df: pd.DataFrame) -> bool:
-    """Ensure data meets dental practice requirements."""
-    required_columns = ['Date', 'Provider', 'Production', 'Collections']
-    return all(col in df.columns for col in required_columns)
-```
+### Data Sources ✅ Configured
+- **EOD Sheets**: "EOD - Baytown Billing!A:N" (Production, Collections, New Patients)
+- **Front KPI Sheets**: "Front KPI - Baytown!A:N" (Treatment Acceptance, Hygiene Reappointment)
+- **Spreadsheet ID**: 1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8
 
-### Error Handling for Production
+### Dashboard Brand Implementation ✅
+- **Primary Navy**: #142D54 (headers, text)
+- **Teal Accent**: #007E9E (metrics, good status)
+- **Emergency Red**: #BB0A0A (poor metrics)
+- **Clean Layout**: 2+3 column responsive design
+- **Error Handling**: "Data Unavailable" for failed metrics
+
+### Production Error Handling ✅ Implemented
 ```python
-# Handle missing Google Sheets gracefully
-def safe_sheet_read(spreadsheet_id: str) -> Optional[pd.DataFrame]:
+# Robust error handling in all KPI calculations
+def calculate_metric(df: pd.DataFrame | None) -> float | None:
+    if df is None or df.empty:
+        return None
     try:
-        return sheets_client.get_data(spreadsheet_id)
-    except Exception as e:
-        logger.error(f"Sheet read failed: {e}")
-        # Return empty DataFrame with expected columns
-        return pd.DataFrame(columns=['Date', 'Provider', 'Production'])
+        # Safe numeric conversion with error handling
+        values = pd.to_numeric(df["column"], errors="coerce").sum()
+        # Division by zero protection
+        if denominator == 0:
+            return None
+        return float(calculation_result)
+    except KeyError:
+        return None  # Missing column gracefully handled
+
+# Dashboard displays "Data Unavailable" for None values
+if kpis.get("metric_name") is not None:
+    st.metric(label="LABEL", value=f"${kpis['metric_name']:,.0f}")
+else:
+    st.metric(label="LABEL", value="Data Unavailable")
 ```

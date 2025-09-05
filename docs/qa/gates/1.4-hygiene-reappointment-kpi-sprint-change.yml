@@ -1,0 +1,18 @@
+schema: 1
+story: '1.4'
+gate: PASS
+status_reason: 'Sprint change successfully implemented - daily KPI calculations now work correctly with dual-location support.'
+reviewer: 'Quinn'
+updated: '2025-09-05T17:55:00Z'
+top_issues: []
+waiver: { active: false }
+sprint_change_validation:
+  - daily_calculation: 'Verified - filters for latest date entry instead of aggregating'
+  - formula_correct: 'Column mappings updated for I+J+K production, L+M+N collections'
+  - dual_location: 'Both Baytown and Humble data sources integrated'
+  - error_handling: 'Graceful None handling for missing data preserved'
+test_results:
+  baytown_production: '$6,450 matches expected 9/4 value'
+  collection_rate: 'Daily calculation working correctly'
+  new_patients_mtd: 'Column S properly returning MTD value'
+  humble_support: 'Separate location calculations operational'
