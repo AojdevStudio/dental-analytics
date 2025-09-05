@@ -53,6 +53,24 @@ class MetricsCalculator:
             return None
 
     @staticmethod
+    def calculate_hygiene_reappointment(df: pd.DataFrame | None) -> float | None:
+        """Calculate hygiene reappointment percentage from Front KPI data."""
+        if df is None or df.empty:
+            return None
+        try:
+            total_hygiene = pd.to_numeric(
+                df["total_hygiene_appointments"], errors="coerce"
+            ).sum()
+            not_reappointed = pd.to_numeric(
+                df["patients_not_reappointed"], errors="coerce"
+            ).sum()
+            if total_hygiene == 0:
+                return None
+            return float(((total_hygiene - not_reappointed) / total_hygiene) * 100)
+        except KeyError:
+            return None
+
+    @staticmethod
     def get_all_kpis() -> dict[str, float | None]:
         """Orchestrate all KPI calculations from Google Sheets data."""
         from backend.sheets_reader import SheetsReader
@@ -65,6 +83,9 @@ class MetricsCalculator:
             "collection_rate": MetricsCalculator.calculate_collection_rate(eod_data),
             "new_patients": MetricsCalculator.calculate_new_patients(eod_data),
             "treatment_acceptance": MetricsCalculator.calculate_treatment_acceptance(
+                front_kpi_data
+            ),
+            "hygiene_reappointment": MetricsCalculator.calculate_hygiene_reappointment(
                 front_kpi_data
             ),
         }
