@@ -300,6 +300,7 @@ test = [
 [package.dev-dependencies]
 dev = [
     { name = "black" },
+    { name = "faker" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -324,6 +325,7 @@ provides-extras = ["test"]
 [package.metadata.requires-dev]
 dev = [
     { name = "black", specifier = ">=25.1.0" },
+    { name = "faker", specifier = ">=37.6.0" },
     { name = "mypy", specifier = ">=1.17.1" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pytest", specifier = ">=8.4.2" },
@@ -351,6 +353,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/36/f4/c6e662dade71f56cd2f3735141b265c3c79293c109549c1e6933b0651ffc/exceptiongroup-1.3.0-py3-none-any.whl", hash = "sha256:4d111e6e0c13d0644cad6ddaa7ed0261a0b36971f6d23e7ec9b4b9097da78a10", size = 16674, upload-time = "2025-05-10T17:42:49.33Z" },
+]
+
+[[package]]
+name = "faker"
+version = "37.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/24/cd/f7679c20f07d9e2013123b7f7e13809a3450a18d938d58e86081a486ea15/faker-37.6.0.tar.gz", hash = "sha256:0f8cc34f30095184adf87c3c24c45b38b33ad81c35ef6eb0a3118f301143012c", size = 1907960, upload-time = "2025-08-26T15:56:27.419Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/7d/8b50e4ac772719777be33661f4bde320793400a706f5eb214e4de46f093c/faker-37.6.0-py3-none-any.whl", hash = "sha256:3c5209b23d7049d596a51db5d76403a0ccfea6fc294ffa2ecfef6a8843b1e6a7", size = 1949837, upload-time = "2025-08-26T15:56:25.33Z" },
 ]
 
 [[package]]
