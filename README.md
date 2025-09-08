@@ -99,13 +99,49 @@ dental-analytics/
 │       ├── story-1.3.md         # New patients & treatment ✅
 │       ├── story-1.4.md         # Hygiene reappointment ✅
 │       ├── story-1.5.md         # Streamlit dashboard ✅
-│       └── story-1.6.md         # Testing framework (pending)
+│       └── story-1.6.md         # Testing framework ✅
+├── tests/                        # Pytest test suite ✅
+│   ├── conftest.py             # Shared fixtures
+│   ├── test_metrics.py         # KPI calculation tests
+│   ├── test_sheets_reader.py   # Data retrieval tests
+│   ├── test_gdrive_validation.py # Spreadsheet validation
+│   ├── fixtures/               # Test data
+│   └── integration/            # Integration tests
 ├── test_calculations.py          # Manual test suite ✅
+├── pytest.ini                   # Pytest configuration ✅
+├── .coveragerc                  # Coverage settings ✅
 ├── pyproject.toml               # Project configuration
 ├── uv.lock                      # Dependency lockfile
 ├── CLAUDE.md                    # Claude development guide
 └── README.md                    # This file
 ```
+
+## Testing
+
+### Running Tests
+```bash
+# Run all tests with coverage
+uv run pytest --cov=backend --cov-report=term-missing
+
+# Run specific test file
+uv run pytest tests/test_metrics.py
+
+# Run only unit tests
+uv run pytest -m unit
+
+# Run only integration tests
+uv run pytest -m integration
+
+# Generate HTML coverage report
+uv run pytest --cov=backend --cov-report=html
+# View report: open htmlcov/index.html
+```
+
+### Test Coverage Requirements
+- Backend modules: 90% minimum coverage
+- All KPI calculations have unit tests
+- Integration tests verify full data flow
+- G-Drive validation tests ensure correct column mappings
 
 ## KPI Calculations ✅ Implemented
 
