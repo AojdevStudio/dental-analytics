@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 
-from backend.sheets_reader import SheetsReader
+from backend.sheets_reader import SCOPES, SPREADSHEET_ID, SheetsReader
 
 
 class TestSheetsReader:
@@ -26,7 +26,7 @@ class TestSheetsReader:
 
             assert reader.service == mock_service
             mock_sa.Credentials.from_service_account_file.assert_called_once_with(
-                "config/credentials.json", scopes=SheetsReader.SCOPES
+                "config/credentials.json", scopes=SCOPES
             )
 
     def test_initialization_failure(self) -> None:
@@ -150,10 +150,5 @@ class TestSheetsReader:
 
     def test_constants(self) -> None:
         """Test class constants are correctly defined."""
-        assert (
-            SheetsReader.SPREADSHEET_ID
-            == "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
-        )
-        assert SheetsReader.SCOPES == [
-            "https://www.googleapis.com/auth/spreadsheets.readonly"
-        ]
+        assert SPREADSHEET_ID == "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
+        assert SCOPES == ["https://www.googleapis.com/auth/spreadsheets.readonly"]

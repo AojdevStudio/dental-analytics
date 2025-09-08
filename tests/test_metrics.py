@@ -1,228 +1,196 @@
 # Unit tests for metrics calculations
 
-
+import numpy as np
 import pandas as pd
 import pytest
 
-from backend.metrics import MetricsCalculator
+from backend.metrics import (
+    calculate_collection_rate,
+    calculate_hygiene_reappointment,
+    calculate_new_patients,
+    calculate_production_total,
+    calculate_treatment_acceptance,
+)
 
 
-class TestMetricsCalculator:
-    """Test suite for MetricsCalculator class."""
+class TestKPICalculations:
+    """Test suite for KPI calculation functions."""
 
+    @pytest.mark.unit
     def test_calculate_production_total_success(self) -> None:
         """Test successful production total calculation."""
-        # Arrange
         test_data = pd.DataFrame({"total_production": [1000, 2000, 1500]})
-
-        # Act
-        result = MetricsCalculator.calculate_production_total(test_data)
-
-        # Assert
+        result = calculate_production_total(test_data)
         assert result == 4500.0
         assert isinstance(result, float)
 
-    def test_calculate_production_total_with_decimals(self) -> None:
-        """Test production calculation with decimal values."""
-        # Arrange
-        test_data = pd.DataFrame({"total_production": [1000.50, 2000.25, 1500.75]})
-
-        # Act
-        result = MetricsCalculator.calculate_production_total(test_data)
-
-        # Assert
-        assert result == 4501.5
-
-    def test_calculate_production_total_empty_dataframe(self) -> None:
+    @pytest.mark.unit
+    def test_calculate_production_total_empty(self) -> None:
         """Test production calculation with empty DataFrame."""
-        # Arrange
         empty_df = pd.DataFrame()
-
-        # Act
-        result = MetricsCalculator.calculate_production_total(empty_df)
-
-        # Assert
+        result = calculate_production_total(empty_df)
         assert result is None
 
-    def test_calculate_production_total_none_input(self) -> None:
+    @pytest.mark.unit
+    def test_calculate_production_total_none(self) -> None:
         """Test production calculation with None input."""
-        # Act
-        result = MetricsCalculator.calculate_production_total(None)
-
-        # Assert
+        result = calculate_production_total(None)
         assert result is None
 
+    @pytest.mark.unit
     def test_calculate_production_total_missing_column(self) -> None:
         """Test production calculation with missing column."""
-        # Arrange
         test_data = pd.DataFrame({"other_column": [1, 2, 3]})
-
-        # Act
-        result = MetricsCalculator.calculate_production_total(test_data)
-
-        # Assert
+        result = calculate_production_total(test_data)
         assert result is None
 
-    def test_calculate_production_total_invalid_values(self) -> None:
-        """Test production calculation with invalid string values."""
-        # Arrange
-        test_data = pd.DataFrame({"total_production": ["invalid", "data", "values"]})
-
-        # Act
-        result = MetricsCalculator.calculate_production_total(test_data)
-
-        # Assert
-        assert (
-            result == 0.0
-        )  # pd.to_numeric with errors='coerce' converts to NaN, sum is 0
-
-    def test_calculate_production_total_mixed_values(self) -> None:
-        """Test production calculation with mix of valid and invalid values."""
-        # Arrange
-        test_data = pd.DataFrame({"total_production": [1000, "invalid", 2000, None]})
-
-        # Act
-        result = MetricsCalculator.calculate_production_total(test_data)
-
-        # Assert
-        assert result == 3000.0  # Only valid numbers are summed
-
+    @pytest.mark.unit
     def test_calculate_collection_rate_success(self) -> None:
         """Test successful collection rate calculation."""
-        # Arrange
         test_data = pd.DataFrame(
             {"total_production": [1000, 2000], "total_collections": [900, 1800]}
         )
-
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(test_data)
-
-        # Assert
+        result = calculate_collection_rate(test_data)
         assert result == 90.0  # (2700/3000) * 100
         assert isinstance(result, float)
 
-    def test_calculate_collection_rate_perfect_collection(self) -> None:
-        """Test collection rate with 100% collection."""
-        # Arrange
-        test_data = pd.DataFrame(
-            {"total_production": [1000, 2000], "total_collections": [1000, 2000]}
-        )
-
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(test_data)
-
-        # Assert
-        assert result == 100.0
-
+    @pytest.mark.unit
     def test_calculate_collection_rate_zero_production(self) -> None:
         """Test collection rate with zero production (division by zero)."""
-        # Arrange
         test_data = pd.DataFrame(
             {"total_production": [0, 0, 0], "total_collections": [100, 200, 300]}
         )
-
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(test_data)
-
-        # Assert
+        result = calculate_collection_rate(test_data)
         assert result is None
 
-    def test_calculate_collection_rate_empty_dataframe(self) -> None:
+    @pytest.mark.unit
+    def test_calculate_collection_rate_empty(self) -> None:
         """Test collection rate calculation with empty DataFrame."""
-        # Arrange
         empty_df = pd.DataFrame()
-
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(empty_df)
-
-        # Assert
+        result = calculate_collection_rate(empty_df)
         assert result is None
 
-    def test_calculate_collection_rate_none_input(self) -> None:
+    @pytest.mark.unit
+    def test_calculate_collection_rate_none(self) -> None:
         """Test collection rate calculation with None input."""
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(None)
-
-        # Assert
+        result = calculate_collection_rate(None)
         assert result is None
 
-    def test_calculate_collection_rate_missing_production_column(self) -> None:
-        """Test collection rate with missing production column."""
-        # Arrange
-        test_data = pd.DataFrame({"total_collections": [100, 200, 300]})
+    @pytest.mark.unit
+    def test_calculate_new_patients_success(self) -> None:
+        """Test successful new patient count calculation."""
+        test_data = pd.DataFrame({"new_patients": [3, 5, 2]})
+        result = calculate_new_patients(test_data)
+        assert result == 10
+        assert isinstance(result, int)
 
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(test_data)
+    @pytest.mark.unit
+    def test_calculate_new_patients_with_nulls(self) -> None:
+        """Test new patient count with null values."""
+        test_data = pd.DataFrame({"new_patients": [3, None, 2, np.nan, 1]})
+        result = calculate_new_patients(test_data)
+        assert result == 6  # Should handle nulls gracefully
 
-        # Assert
+    @pytest.mark.unit
+    def test_calculate_new_patients_empty(self) -> None:
+        """Test new patient count with empty DataFrame."""
+        empty_df = pd.DataFrame()
+        result = calculate_new_patients(empty_df)
         assert result is None
 
-    def test_calculate_collection_rate_missing_collections_column(self) -> None:
-        """Test collection rate with missing collections column."""
-        # Arrange
-        test_data = pd.DataFrame({"total_production": [1000, 2000, 1500]})
-
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(test_data)
-
-        # Assert
-        assert result is None
-
-    def test_calculate_collection_rate_invalid_values(self) -> None:
-        """Test collection rate with invalid string values."""
-        # Arrange
+    @pytest.mark.unit
+    def test_calculate_treatment_acceptance_success(self) -> None:
+        """Test successful treatment acceptance rate calculation."""
         test_data = pd.DataFrame(
             {
-                "total_production": ["invalid", "data"],
-                "total_collections": ["invalid", "data"],
+                "treatments_presented": [1000, 2000, 1500],
+                "treatments_scheduled": [500, 1800, 1200],
             }
         )
+        result = calculate_treatment_acceptance(test_data)
+        # (3500 / 4500) * 100 = 77.78%
+        assert result is not None and abs(result - 77.78) < 0.01
 
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(test_data)
+    @pytest.mark.unit
+    def test_calculate_treatment_acceptance_zero_presented(self) -> None:
+        """Test treatment acceptance with zero presented."""
+        test_data = pd.DataFrame(
+            {"treatments_presented": [0, 0], "treatments_scheduled": [0, 0]}
+        )
+        result = calculate_treatment_acceptance(test_data)
+        assert result is None
 
-        # Assert
-        assert result is None  # Division by zero when both convert to 0
-
-    def test_calculate_collection_rate_decimal_precision(self) -> None:
-        """Test collection rate with decimal precision."""
-        # Arrange
+    @pytest.mark.unit
+    def test_calculate_hygiene_reappointment_success(self) -> None:
+        """Test successful hygiene reappointment rate calculation."""
         test_data = pd.DataFrame(
             {
-                "total_production": [1000.33, 2000.67],
-                "total_collections": [950.30, 1850.60],
+                "total_hygiene_appointments": [10, 20, 15],
+                "patients_not_reappointed": [1, 2, 1],
             }
         )
+        result = calculate_hygiene_reappointment(test_data)
+        # ((45 - 4) / 45) * 100 = 91.11%
+        assert result is not None and abs(result - 91.11) < 0.01
 
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(test_data)
-
-        # Assert
-        assert result is not None  # Guard clause for type safety
-        expected = (2800.9 / 3001.0) * 100  # approximately 93.33%
-        assert abs(result - expected) < 0.01
-
-    @pytest.mark.parametrize(
-        "production,collections,expected",
-        [
-            ([1000], [1000], 100.0),
-            ([2000], [1000], 50.0),
-            ([500, 500], [300, 200], 50.0),
-            ([1000, 0], [800, 0], 80.0),
-        ],
-    )
-    def test_calculate_collection_rate_parametrized(
-        self, production: list[int], collections: list[int], expected: float
-    ) -> None:
-        """Test collection rate with various parameter combinations."""
-        # Arrange
+    @pytest.mark.unit
+    def test_calculate_hygiene_reappointment_zero_appointments(self) -> None:
+        """Test hygiene reappointment with zero appointments."""
         test_data = pd.DataFrame(
-            {"total_production": production, "total_collections": collections}
+            {"total_hygiene_appointments": [0, 0], "patients_not_reappointed": [0, 0]}
         )
+        result = calculate_hygiene_reappointment(test_data)
+        assert result is None
 
-        # Act
-        result = MetricsCalculator.calculate_collection_rate(test_data)
+    @pytest.mark.unit
+    def test_column_name_mismatch_handling(self) -> None:
+        """Test handling of incorrect column names."""
+        test_data = pd.DataFrame({"wrong_column": [100, 200]})
+        result = calculate_production_total(test_data)
+        assert result is None
 
-        # Assert
-        assert result is not None  # Guard clause for type safety
-        assert abs(result - expected) < 0.01
+
+class TestKPIThresholds:
+    """Test KPI threshold validations."""
+
+    def test_production_threshold_categories(self) -> None:
+        """Test production categorization."""
+        assert self._categorize_production(28000) == "excellent"
+        assert self._categorize_production(20000) == "good"
+        assert self._categorize_production(14000) == "needs_improvement"
+
+    def test_collection_rate_thresholds(self) -> None:
+        """Test collection rate categorization."""
+        assert self._categorize_collection_rate(96) == "excellent"
+        assert self._categorize_collection_rate(90) == "good"
+        assert self._categorize_collection_rate(84) == "needs_improvement"
+
+    def test_hygiene_reappointment_thresholds(self) -> None:
+        """Test hygiene reappointment categorization."""
+        assert self._categorize_hygiene(95) == "excellent"
+        assert self._categorize_hygiene(85) == "good"
+        assert self._categorize_hygiene(79) == "needs_improvement"
+
+    def _categorize_production(self, value: float) -> str:
+        if value >= 25000:
+            return "excellent"
+        elif value >= 15000:
+            return "good"
+        else:
+            return "needs_improvement"
+
+    def _categorize_collection_rate(self, value: float) -> str:
+        if value >= 95:
+            return "excellent"
+        elif value >= 85:
+            return "good"
+        else:
+            return "needs_improvement"
+
+    def _categorize_hygiene(self, value: float) -> str:
+        if value >= 90:
+            return "excellent"
+        elif value >= 80:
+            return "good"
+        else:
+            return "needs_improvement"

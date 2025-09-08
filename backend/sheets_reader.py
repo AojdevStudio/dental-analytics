@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from google.oauth2 import service_account
@@ -19,7 +20,7 @@ class SheetsReader:
         """Initialize with service account credentials."""
         self.service = self._init_service(credentials_path)
 
-    def _init_service(self, credentials_path: str):
+    def _init_service(self, credentials_path: str) -> Any | None:
         """Initialize Google Sheets service."""
         if not Path(credentials_path).exists():
             logger.error(f"Credentials file not found: {credentials_path}")
@@ -33,14 +34,12 @@ class SheetsReader:
             logger.error(f"Failed to initialize service: {e}")
             return None
 
-    def is_connected(self) -> bool:
-        """Test Google Sheets connection."""
-        return self.service is not None
-
     def get_sheet_data(self, range_name: str) -> pd.DataFrame | None:
-        """Fetch data from sheet range."""
-        if not self.service or not range_name.strip():
+        """Fetch data from Google Sheets and return as DataFrame."""
+        if not self.service:
+            logger.error("Sheets service not initialized")
             return None
+
         try:
             result = (
                 self.service.spreadsheets()
@@ -48,10 +47,34 @@ class SheetsReader:
                 .get(spreadsheetId=SPREADSHEET_ID, range=range_name)
                 .execute()
             )
+
             values = result.get("values", [])
-            if len(values) <= 1:
-                return pd.DataFrame(columns=values[0] if values else [])
-            return pd.DataFrame(values[1:], columns=values[0])
-        except (HttpError, Exception) as e:
-            logger.error(f"Sheet read error: {e}")
+            if not values:
+                logger.warning(f"No data found in range: {range_name}")
+                return None
+
+            # Convert to DataFrame using first row as headers
+            if len(values) > 1:
+                df = pd.DataFrame(values[1:], columns=values[0])
+                logger.info(f"Retrieved {len(df)} rows from {range_name}")
+                return df
+            else:
+                logger.warning(f"Only headers found in {range_name}")
+                return None
+
+        except HttpError as e:
+            logger.error(f"Google Sheets API error: {e}")
             return None
+        except Exception as e:
+            logger.error(f"Unexpected error reading {range_name}: {e}")
+            return None
+
+    def get_eod_data(self) -> pd.DataFrame | None:
+        """Get EOD (End of Day) billing data from Baytown sheet."""
+        range_name = "EOD - Baytown Billing!A:N"
+        return self.get_sheet_data(range_name)
+
+    def get_front_kpi_data(self) -> pd.DataFrame | None:
+        """Get Front KPI data from Baytown sheet."""
+        range_name = "Front KPI - Baytown!A:N"
+        return self.get_sheet_data(range_name)
