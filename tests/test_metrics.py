@@ -1,6 +1,5 @@
 # Unit tests for metrics calculations
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -18,10 +17,11 @@ class TestKPICalculations:
 
     @pytest.mark.unit
     def test_calculate_production_total_success(self) -> None:
-        """Test successful production total calculation."""
-        test_data = pd.DataFrame({"total_production": [1000, 2000, 1500]})
+        """Test successful production total calculation for single day (MVP)."""
+        # MVP: Single day snapshot
+        test_data = pd.DataFrame({"total_production": [1000]})
         result = calculate_production_total(test_data)
-        assert result == 4500.0
+        assert result == 1000.0  # Single day value
         assert isinstance(result, float)
 
     @pytest.mark.unit
@@ -46,12 +46,13 @@ class TestKPICalculations:
 
     @pytest.mark.unit
     def test_calculate_collection_rate_success(self) -> None:
-        """Test successful collection rate calculation."""
+        """Test successful collection rate calculation for single day (MVP)."""
+        # MVP: Single day snapshot
         test_data = pd.DataFrame(
-            {"total_production": [1000, 2000], "total_collections": [900, 1800]}
+            {"total_production": [1000], "total_collections": [900]}
         )
         result = calculate_collection_rate(test_data)
-        assert result == 90.0  # (2700/3000) * 100
+        assert result == 90.0  # (900/1000) * 100
         assert isinstance(result, float)
 
     @pytest.mark.unit
@@ -78,18 +79,20 @@ class TestKPICalculations:
 
     @pytest.mark.unit
     def test_calculate_new_patients_success(self) -> None:
-        """Test successful new patient count calculation."""
-        test_data = pd.DataFrame({"new_patients": [3, 5, 2]})
+        """Test successful new patient count calculation for single day (MVP)."""
+        # MVP: Single day snapshot
+        test_data = pd.DataFrame({"new_patients": [3]})
         result = calculate_new_patients(test_data)
-        assert result == 10
+        assert result == 3  # Single day value
         assert isinstance(result, int)
 
     @pytest.mark.unit
     def test_calculate_new_patients_with_nulls(self) -> None:
-        """Test new patient count with null values."""
-        test_data = pd.DataFrame({"new_patients": [3, None, 2, np.nan, 1]})
+        """Test new patient count with null values for single day (MVP)."""
+        # MVP: Single day with null value
+        test_data = pd.DataFrame({"new_patients": [None]})
         result = calculate_new_patients(test_data)
-        assert result == 6  # Should handle nulls gracefully
+        assert result == 0  # Null treated as 0 for single day
 
     @pytest.mark.unit
     def test_calculate_new_patients_empty(self) -> None:
@@ -100,38 +103,41 @@ class TestKPICalculations:
 
     @pytest.mark.unit
     def test_calculate_treatment_acceptance_success(self) -> None:
-        """Test successful treatment acceptance rate calculation."""
+        """Test treatment acceptance rate calculation for single day (MVP)."""
+        # MVP: Single day snapshot
         test_data = pd.DataFrame(
             {
-                "treatments_presented": [1000, 2000, 1500],
-                "treatments_scheduled": [500, 1800, 1200],
+                "treatments_presented": [1000],
+                "treatments_scheduled": [500],
             }
         )
         result = calculate_treatment_acceptance(test_data)
-        # (3500 / 4500) * 100 = 77.78%
-        assert result is not None and abs(result - 77.78) < 0.01
+        # (500 / 1000) * 100 = 50%
+        assert result is not None and result == 50.0
 
     @pytest.mark.unit
     def test_calculate_treatment_acceptance_zero_presented(self) -> None:
-        """Test treatment acceptance with zero presented."""
+        """Test treatment acceptance with zero presented for single day (MVP)."""
+        # MVP: Single day with zero presented
         test_data = pd.DataFrame(
-            {"treatments_presented": [0, 0], "treatments_scheduled": [0, 0]}
+            {"treatments_presented": [0], "treatments_scheduled": [0]}
         )
         result = calculate_treatment_acceptance(test_data)
         assert result is None
 
     @pytest.mark.unit
     def test_calculate_hygiene_reappointment_success(self) -> None:
-        """Test successful hygiene reappointment rate calculation."""
+        """Test hygiene reappointment rate calculation for single day (MVP)."""
+        # MVP: Single day snapshot
         test_data = pd.DataFrame(
             {
-                "total_hygiene_appointments": [10, 20, 15],
-                "patients_not_reappointed": [1, 2, 1],
+                "total_hygiene_appointments": [10],
+                "patients_not_reappointed": [1],
             }
         )
         result = calculate_hygiene_reappointment(test_data)
-        # ((45 - 4) / 45) * 100 = 91.11%
-        assert result is not None and abs(result - 91.11) < 0.01
+        # ((10 - 1) / 10) * 100 = 90%
+        assert result is not None and result == 90.0
 
     @pytest.mark.unit
     def test_calculate_hygiene_reappointment_zero_appointments(self) -> None:

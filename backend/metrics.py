@@ -53,8 +53,9 @@ def safe_numeric_conversion(df: pd.DataFrame, column: str) -> float:
     # Handle case where value might be a pandas Series with single value
     value = df[column].iloc[0] if len(df) > 0 else 0
 
-    # Convert to numeric, return 0 if conversion fails
-    return pd.to_numeric(value, errors="coerce") or 0
+    # Convert to numeric, return 0 if conversion fails or is NaN
+    numeric_value = pd.to_numeric(value, errors="coerce")
+    return 0.0 if pd.isna(numeric_value) else float(numeric_value)
 
 
 def calculate_production_total(df: pd.DataFrame | None) -> float | None:
@@ -65,12 +66,22 @@ def calculate_production_total(df: pd.DataFrame | None) -> float | None:
     if df is None or df.empty:
         return None
 
+    # Check if required column exists
+    if "total_production" not in df.columns:
+        return None
+
     # Column I: Total Production Today
     production = safe_numeric_conversion(df, "total_production")
-    # Column J: Adjustments Today
-    adjustments = safe_numeric_conversion(df, "adjustments")
-    # Column K: Write-offs Today
-    writeoffs = safe_numeric_conversion(df, "writeoffs")
+    # Column J: Adjustments Today (optional)
+    adjustments = (
+        safe_numeric_conversion(df, "adjustments")
+        if "adjustments" in df.columns
+        else 0.0
+    )
+    # Column K: Write-offs Today (optional)
+    writeoffs = (
+        safe_numeric_conversion(df, "writeoffs") if "writeoffs" in df.columns else 0.0
+    )
 
     total = production + adjustments + writeoffs
     logger.info(
@@ -88,6 +99,10 @@ def calculate_collection_rate(df: pd.DataFrame | None) -> float | None:
     Returns percentage (0-100) or None if calculation fails.
     """
     if df is None or df.empty:
+        return None
+
+    # Check if required columns exist
+    if "total_production" not in df.columns or "total_collections" not in df.columns:
         return None
 
     production = safe_numeric_conversion(df, "total_production")
@@ -110,6 +125,10 @@ def calculate_new_patients(df: pd.DataFrame | None) -> int | None:
     if df is None or df.empty:
         return None
 
+    # Check if required column exists
+    if "new_patients" not in df.columns:
+        return None
+
     new_patients = safe_numeric_conversion(df, "new_patients")
     logger.info(f"New patients today: {new_patients}")
 
@@ -123,6 +142,13 @@ def calculate_treatment_acceptance(df: pd.DataFrame | None) -> float | None:
     Returns percentage (0-100) or None if calculation fails.
     """
     if df is None or df.empty:
+        return None
+
+    # Check if required columns exist
+    if (
+        "treatments_presented" not in df.columns
+        or "treatments_scheduled" not in df.columns
+    ):
         return None
 
     presented = safe_numeric_conversion(df, "treatments_presented")
@@ -146,6 +172,13 @@ def calculate_hygiene_reappointment(df: pd.DataFrame | None) -> float | None:
     Returns percentage (0-100) or None if calculation fails.
     """
     if df is None or df.empty:
+        return None
+
+    # Check if required columns exist
+    if (
+        "total_hygiene_appointments" not in df.columns
+        or "patients_not_reappointed" not in df.columns
+    ):
         return None
 
     total_hygiene = safe_numeric_conversion(df, "total_hygiene_appointments")
