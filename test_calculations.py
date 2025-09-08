@@ -55,8 +55,55 @@ def test_treatment_acceptance_calculation() -> None:
     print(f"✅ Treatment acceptance calculation test passed: {result:.2f}%")
 
 
+def test_hygiene_reappointment_calculation() -> None:
+    """Test hygiene reappointment rate calculation with known data."""
+    print("🧪 Testing hygiene reappointment calculation...")
+    test_data = pd.DataFrame(
+        {
+            "total_hygiene_appointments": [20, 25, 30],  # Column C
+            "patients_not_reappointed": [1, 2, 1],  # Column D
+        }
+    )
+    result = MetricsCalculator.calculate_hygiene_reappointment(test_data)
+    expected = 94.66666666666667  # ((75 - 4) / 75) * 100
+    assert (
+        result is not None and abs(result - expected) < 0.01
+    ), f"Expected {expected}, got {result}"
+    print(f"✅ Hygiene reappointment calculation test passed: {result:.2f}%")
+
+
+def test_hygiene_reappointment_thresholds() -> None:
+    """Test rate categorization thresholds."""
+    print("🧪 Testing hygiene reappointment thresholds...")
+
+    # Test high rate (95%+)
+    high_rate_data = pd.DataFrame(
+        {
+            "total_hygiene_appointments": [20],
+            "patients_not_reappointed": [1],  # 95% rate
+        }
+    )
+    result = MetricsCalculator.calculate_hygiene_reappointment(high_rate_data)
+    assert (
+        result is not None and result >= 95
+    ), f"95%+ rate should be flagged as good, got {result}"
+
+    # Test low rate (below 90%)
+    low_rate_data = pd.DataFrame(
+        {
+            "total_hygiene_appointments": [20],
+            "patients_not_reappointed": [3],  # 85% rate
+        }
+    )
+    result = MetricsCalculator.calculate_hygiene_reappointment(low_rate_data)
+    assert (
+        result is not None and result < 90
+    ), f"Below 90% rate should be flagged as concerning, got {result}"
+    print("✅ Hygiene reappointment thresholds test passed")
+
+
 def test_get_all_kpis_structure() -> None:
-    """Test that get_all_kpis returns all 4 expected KPIs."""
+    """Test that get_all_kpis returns all 5 expected KPIs."""
     print("🧪 Testing get_all_kpis structure...")
     # This would normally test with real data, but we'll test the structure
     try:
@@ -66,12 +113,13 @@ def test_get_all_kpis_structure() -> None:
             "collection_rate",
             "new_patients",
             "treatment_acceptance",
+            "hygiene_reappointment",
         ]
         assert all(
             key in kpis for key in expected_keys
         ), f"Missing expected KPI keys: {expected_keys}"
-        assert len(kpis) == 4, f"Expected 4 KPIs, got {len(kpis)}"
-        print("✅ All KPIs structure test passed")
+        assert len(kpis) == 5, f"Expected 5 KPIs, got {len(kpis)}"
+        print("✅ All 5 KPIs structure test passed")
     except Exception as e:
         print(f"⚠️  get_all_kpis test skipped (needs Google Sheets connection): {e}")
 
@@ -86,6 +134,7 @@ def test_error_conditions() -> None:
     assert MetricsCalculator.calculate_collection_rate(empty_df) is None
     assert MetricsCalculator.calculate_new_patients(empty_df) is None
     assert MetricsCalculator.calculate_treatment_acceptance(empty_df) is None
+    assert MetricsCalculator.calculate_hygiene_reappointment(empty_df) is None
     print("✅ Empty DataFrame handling works")
 
     # Test None DataFrame
@@ -93,6 +142,7 @@ def test_error_conditions() -> None:
     assert MetricsCalculator.calculate_collection_rate(None) is None
     assert MetricsCalculator.calculate_new_patients(None) is None
     assert MetricsCalculator.calculate_treatment_acceptance(None) is None
+    assert MetricsCalculator.calculate_hygiene_reappointment(None) is None
     print("✅ None DataFrame handling works")
 
     # Test missing columns
@@ -101,6 +151,7 @@ def test_error_conditions() -> None:
     assert MetricsCalculator.calculate_collection_rate(incomplete_df) is None
     assert MetricsCalculator.calculate_new_patients(incomplete_df) is None
     assert MetricsCalculator.calculate_treatment_acceptance(incomplete_df) is None
+    assert MetricsCalculator.calculate_hygiene_reappointment(incomplete_df) is None
     print("✅ Missing columns handling works")
 
     # Test division by zero
@@ -117,6 +168,13 @@ def test_error_conditions() -> None:
     assert MetricsCalculator.calculate_treatment_acceptance(zero_presented_df) is None
     print("✅ Treatment acceptance division by zero handling works")
 
+    # Test division by zero for hygiene reappointment
+    zero_hygiene_df = pd.DataFrame(
+        {"total_hygiene_appointments": [0, 0, 0], "patients_not_reappointed": [1, 2, 1]}
+    )
+    assert MetricsCalculator.calculate_hygiene_reappointment(zero_hygiene_df) is None
+    print("✅ Hygiene reappointment division by zero handling works")
+
 
 if __name__ == "__main__":
     print("🎯 Starting manual verification of metrics calculations...\n")
@@ -131,6 +189,12 @@ if __name__ == "__main__":
     print()
 
     test_treatment_acceptance_calculation()
+    print()
+
+    test_hygiene_reappointment_calculation()
+    print()
+
+    test_hygiene_reappointment_thresholds()
     print()
 
     test_get_all_kpis_structure()

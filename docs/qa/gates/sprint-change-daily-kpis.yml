@@ -1,0 +1,200 @@
+schema: 1
+story: 'Sprint Change'
+story_title: 'Daily KPI Calculations and Dual-Location Support'
+gate: PENDING
+status_reason: 'Sprint Change implementation ready for comprehensive QA validation'
+reviewer: 'QA Team'
+updated: '2025-09-05T16:00:00Z'
+
+top_issues:
+  - severity: high
+    category: calculation_accuracy
+    title: 'Daily vs aggregated KPI calculations must be validated'
+    description: 'Production should show daily values (e.g., $6,450 for 9/4) not cumulative totals'
+    status: pending_validation
+    suggested_owner: qa
+  - severity: high
+    category: data_filtering
+    title: 'Latest date filtering across all 5 KPIs requires validation'
+    description: 'All KPIs must use only the most recent date\'s data for calculations'
+    status: pending_validation
+    suggested_owner: qa
+  - severity: medium
+    category: dual_location
+    title: 'Independent Baytown and Humble calculations need verification'
+    description: 'Both location tabs must display correctly with location-specific data'
+    status: pending_validation
+    suggested_owner: qa
+
+waiver: 
+  active: false
+
+quality_score: 0
+expires: '2025-09-19T16:00:00Z'
+
+evidence:
+  tests_reviewed: 0
+  risks_identified: 3
+  trace:
+    sprint_changes_covered: [1, 2, 3, 4, 5]
+    validation_pending: [1, 2, 3, 4, 5]
+
+sprint_changes:
+  daily_calculations:
+    status: PENDING
+    description: 'Daily KPI values instead of aggregated totals'
+    validation_method: 'Manual calculation comparison'
+    expected_result: 'Production shows single day amount (e.g., $6,450)'
+  latest_date_filtering:
+    status: PENDING
+    description: 'All KPIs use most recent date only'
+    validation_method: 'Date-specific calculation verification'
+    expected_result: 'No data from previous dates included'
+  dual_location_support:
+    status: PENDING
+    description: 'Baytown and Humble tabs with independent calculations'
+    validation_method: 'Tab navigation and data comparison'
+    expected_result: 'Both locations display with location-specific values'
+  formula_accuracy:
+    status: PENDING
+    description: 'All 5 KPI formulas match business requirements'
+    validation_method: 'Manual formula verification'
+    expected_result: 'Calculations within 0.1% tolerance of manual verification'
+  error_handling:
+    status: PENDING
+    description: 'Graceful handling of missing data'
+    validation_method: 'Error scenario testing'
+    expected_result: '"Data Unavailable" displayed for failed metrics'
+
+kpi_validation:
+  production_total:
+    formula: 'I + J + K (latest date only)'
+    expected_range: '$5,000 - $15,000 daily'
+    validation_status: PENDING
+    data_source: 'EOD - [Location] Billing!A:S'
+  collection_rate:
+    formula: '(L + M + N) / (I + J + K) × 100 (latest date only)'
+    expected_range: '75% - 95%'
+    validation_status: PENDING
+    data_source: 'EOD - [Location] Billing!A:S'
+  new_patients:
+    formula: 'Column S (latest entry)'
+    expected_range: '5 - 50 per month'
+    validation_status: PENDING
+    data_source: 'EOD - [Location] Billing!A:S'
+  treatment_acceptance:
+    formula: 'Column R (latest entry)'
+    expected_range: '60% - 85%'
+    validation_status: PENDING
+    data_source: '[Location] Front KPIs Form responses!A:S'
+  hygiene_reappointment:
+    formula: '((Total - Not Reappointed) / Total) × 100 (latest date)'
+    expected_range: '85% - 95%'
+    validation_status: PENDING
+    data_source: '[Location] Front KPIs Form responses!A:S'
+
+location_validation:
+  baytown:
+    tab_display: PENDING
+    data_independence: PENDING
+    kpi_accuracy: PENDING
+    error_handling: PENDING
+  humble:
+    tab_display: PENDING
+    data_independence: PENDING
+    kpi_accuracy: PENDING
+    error_handling: PENDING
+
+nfr_validation:
+  performance:
+    status: PENDING
+    requirement: 'Dashboard loads in < 5 seconds'
+    notes: 'Load time validation pending'
+  usability:
+    status: PENDING
+    requirement: 'Intuitive tab navigation between locations'
+    notes: 'User experience validation pending'
+  reliability:
+    status: PENDING
+    requirement: 'Graceful error handling for data issues'
+    notes: 'Error scenario testing pending'
+  accuracy:
+    status: PENDING
+    requirement: 'All calculations within 0.1% tolerance'
+    notes: 'Formula accuracy validation pending'
+
+test_scenarios:
+  daily_production_validation:
+    description: 'Verify production shows daily values, not aggregated totals'
+    status: PENDING
+    priority: HIGH
+  latest_date_filtering:
+    description: 'Ensure all KPIs use most recent date\'s data'
+    status: PENDING
+    priority: HIGH
+  dual_location_display:
+    description: 'Verify both locations display correctly with independent data'
+    status: PENDING
+    priority: HIGH
+  error_handling:
+    description: 'Verify graceful handling of missing or invalid data'
+    status: PENDING
+    priority: MEDIUM
+  formula_accuracy:
+    description: 'Verify each KPI calculation matches business requirements'
+    status: PENDING
+    priority: HIGH
+
+recommendations:
+  immediate:
+    - action: 'Execute comprehensive QA validation using sprint-change-validation.md guide'
+      refs: ['docs/qa/sprint-change-validation.md']
+    - action: 'Verify daily production displays single day values (e.g., $6,450)'
+      refs: ['backend/metrics.py', 'Test Scenario 1']
+    - action: 'Validate latest date filtering across all 5 KPIs'
+      refs: ['backend/metrics.py', '_get_latest_entry() function']
+    - action: 'Test both Baytown and Humble location tabs independently'
+      refs: ['frontend/app.py', 'dual-location tabs']
+  validation_complete:
+    - action: 'Update gate status based on validation results'
+      refs: ['sprint-change-daily-kpis.yml']
+    - action: 'Document any issues found during validation'
+      refs: ['QA bug reports']
+    - action: 'Approve for production if all validations pass'
+      refs: ['deployment pipeline']
+
+validation_checklist:
+  setup:
+    - item: 'Dashboard accessible at http://localhost:8501'
+      status: PENDING
+    - item: 'Google Sheets credentials configured'
+      status: PENDING
+    - item: 'Both location data sheets accessible'
+      status: PENDING
+  core_functionality:
+    - item: 'Daily production displays single day amount'
+      status: PENDING
+    - item: 'Collection rate calculates from same-day values'
+      status: PENDING
+    - item: 'New patients shows month-to-date from latest entry'
+      status: PENDING
+    - item: 'Treatment acceptance from latest form response'
+      status: PENDING
+    - item: 'Hygiene reappointment from latest date data'
+      status: PENDING
+  dual_location:
+    - item: 'Baytown tab loads and displays 5 KPIs'
+      status: PENDING
+    - item: 'Humble tab loads and displays 5 KPIs'
+      status: PENDING
+    - item: 'Values differ between locations (independent calculations)'
+      status: PENDING
+    - item: 'Tab switching works smoothly'
+      status: PENDING
+  error_scenarios:
+    - item: '"Data Unavailable" shown for failed metrics'
+      status: PENDING
+    - item: 'Application doesn\'t crash on data errors'
+      status: PENDING
+    - item: 'Graceful degradation when some data unavailable'
+      status: PENDING

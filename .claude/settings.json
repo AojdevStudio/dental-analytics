@@ -29,11 +29,6 @@
     "command": "cd \"$CLAUDE_PROJECT_DIR\" && uv run .claude/status-lines/status_line_v3.py",
     "padding": 0
   },
-  "env": {
-    "USE_BUILTIN_RIPGREP": "1",
-    "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1",
-    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "0"
-  },
   "hooks": {
     "PreToolUse": [
       {

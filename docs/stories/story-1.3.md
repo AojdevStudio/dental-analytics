@@ -1,7 +1,7 @@
 # Story 1.3: Patient and Treatment KPI Calculations
 
 ## Status
-Ready for Review
+Done
 
 ## Story
 

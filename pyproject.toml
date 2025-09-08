@@ -22,6 +22,7 @@ dependencies = [
     "google-api-python-client>=2.103",
     "pandas>=2.1",
     "streamlit>=1.30",
+    "watchdog>=6.0.0",
 ]
 
 [project.optional-dependencies]
