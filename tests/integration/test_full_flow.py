@@ -20,15 +20,9 @@ class TestFullIntegration:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
-            # Mock different sheet responses
-            def get_sheet_side_effect(range_name: str) -> pd.DataFrame | None:
-                if "EOD" in range_name:
-                    return get_simple_eod_data()
-                elif "Front KPI" in range_name:
-                    return get_simple_front_kpi_data()
-                return None
-
-            mock_instance.get_sheet_data.side_effect = get_sheet_side_effect
+            # Mock the specific methods that get_all_kpis() calls
+            mock_instance.get_eod_data.return_value = get_simple_eod_data()
+            mock_instance.get_front_kpi_data.return_value = get_simple_front_kpi_data()
 
             # Execute full flow
             kpis = get_all_kpis()
@@ -64,12 +58,8 @@ class TestFullIntegration:
             mock_reader.return_value = mock_instance
 
             # EOD succeeds, Front KPI fails
-            def get_sheet_side_effect(range_name: str) -> pd.DataFrame | None:
-                if "EOD" in range_name:
-                    return get_simple_eod_data()
-                return None  # Front KPI fails
-
-            mock_instance.get_sheet_data.side_effect = get_sheet_side_effect
+            mock_instance.get_eod_data.return_value = get_simple_eod_data()
+            mock_instance.get_front_kpi_data.return_value = None
 
             kpis = get_all_kpis()
 
@@ -88,7 +78,10 @@ class TestFullIntegration:
         with patch("backend.sheets_reader.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
-            mock_instance.get_sheet_data.return_value = None
+
+            # Both data sources fail
+            mock_instance.get_eod_data.return_value = None
+            mock_instance.get_front_kpi_data.return_value = None
 
             kpis = get_all_kpis()
 
@@ -110,7 +103,8 @@ class TestFullIntegration:
             mock_reader.return_value = mock_instance
 
             # Fast mock responses
-            mock_instance.get_sheet_data.return_value = get_simple_eod_data()
+            mock_instance.get_eod_data.return_value = get_simple_eod_data()
+            mock_instance.get_front_kpi_data.return_value = get_simple_front_kpi_data()
 
             start = time.time()
             kpis = get_all_kpis()
@@ -146,14 +140,8 @@ class TestFullIntegration:
                 }
             )
 
-            def get_sheet_side_effect(range_name: str) -> pd.DataFrame | None:
-                if "EOD" in range_name:
-                    return test_eod_data
-                elif "Front KPI" in range_name:
-                    return test_front_data
-                return None
-
-            mock_instance.get_sheet_data.side_effect = get_sheet_side_effect
+            mock_instance.get_eod_data.return_value = test_eod_data
+            mock_instance.get_front_kpi_data.return_value = test_front_data
 
             kpis = get_all_kpis()
 
@@ -172,7 +160,8 @@ class TestFullIntegration:
             mock_reader.return_value = mock_instance
 
             # Simulate an exception during data retrieval
-            mock_instance.get_sheet_data.side_effect = Exception("Network error")
+            mock_instance.get_eod_data.side_effect = Exception("Network error")
+            mock_instance.get_front_kpi_data.side_effect = Exception("Network error")
 
             # Should not raise exception, but return None values
             kpis = get_all_kpis()

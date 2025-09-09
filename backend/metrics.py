@@ -29,19 +29,29 @@ def get_all_kpis() -> dict[str, float | int | None]:
     """
     from backend.sheets_reader import SheetsReader
 
-    reader = SheetsReader()
+    try:
+        reader = SheetsReader()
 
-    # Get data from both sheets
-    eod_data = reader.get_eod_data()
-    front_kpi_data = reader.get_front_kpi_data()
+        # Get data from both sheets
+        eod_data = reader.get_eod_data()
+        front_kpi_data = reader.get_front_kpi_data()
 
-    return {
-        "production_total": calculate_production_total(eod_data),
-        "collection_rate": calculate_collection_rate(eod_data),
-        "new_patients": calculate_new_patients(eod_data),
-        "treatment_acceptance": calculate_treatment_acceptance(front_kpi_data),
-        "hygiene_reappointment": calculate_hygiene_reappointment(front_kpi_data),
-    }
+        return {
+            "production_total": calculate_production_total(eod_data),
+            "collection_rate": calculate_collection_rate(eod_data),
+            "new_patients": calculate_new_patients(eod_data),
+            "treatment_acceptance": calculate_treatment_acceptance(front_kpi_data),
+            "hygiene_reappointment": calculate_hygiene_reappointment(front_kpi_data),
+        }
+    except Exception as e:
+        logger.error(f"Error retrieving KPI data: {e}")
+        return {
+            "production_total": None,
+            "collection_rate": None,
+            "new_patients": None,
+            "treatment_acceptance": None,
+            "hygiene_reappointment": None,
+        }
 
 
 def safe_numeric_conversion(df: pd.DataFrame, column: str) -> float:
@@ -101,89 +111,101 @@ def calculate_collection_rate(df: pd.DataFrame | None) -> float | None:
     if df is None or df.empty:
         return None
 
-    # Check if required columns exist
+    # Check required columns
     if "total_production" not in df.columns or "total_collections" not in df.columns:
         return None
 
+    # Column I: Production; Column J: Collections
     production = safe_numeric_conversion(df, "total_production")
     collections = safe_numeric_conversion(df, "total_collections")
 
+    # Avoid division by zero
     if production == 0:
-        logger.warning("Production is 0, cannot calculate collection rate")
+        logger.warning("Production is zero, cannot calculate collection rate")
         return None
 
     rate = (collections / production) * 100
     logger.info(
-        f"Collection rate: ${collections:,.0f} / ${production:,.0f} " f"= {rate:.1f}%"
+        f"Collection rate: ${collections:,.0f} / ${production:,.0f} = {rate:.1f}%"
     )
 
     return float(rate)
 
 
 def calculate_new_patients(df: pd.DataFrame | None) -> int | None:
-    """Calculate new patient count from Column J."""
+    """
+    Calculate new patients count from Column J.
+
+    Returns count or None if calculation fails.
+    """
     if df is None or df.empty:
         return None
 
-    # Check if required column exists
+    # Check required column
     if "new_patients" not in df.columns:
         return None
 
-    new_patients = safe_numeric_conversion(df, "new_patients")
-    logger.info(f"New patients today: {new_patients}")
+    # Column J: New Patients Today
+    count = safe_numeric_conversion(df, "new_patients")
+    logger.info(f"New patients: {count}")
 
-    return int(new_patients)
+    return int(count)
 
 
 def calculate_treatment_acceptance(df: pd.DataFrame | None) -> float | None:
     """
-    Calculate treatment acceptance rate: (Scheduled / Presented) * 100.
+    Calculate treatment acceptance: (Treatments Scheduled / Treatments Presented) * 100.
 
     Returns percentage (0-100) or None if calculation fails.
     """
     if df is None or df.empty:
         return None
 
-    # Check if required columns exist
+    # Check required columns exist
     if (
         "treatments_presented" not in df.columns
         or "treatments_scheduled" not in df.columns
     ):
         return None
 
+    # Column M: Treatments Presented, Column N: Treatments Scheduled
     presented = safe_numeric_conversion(df, "treatments_presented")
     scheduled = safe_numeric_conversion(df, "treatments_scheduled")
 
+    # Avoid division by zero
     if presented == 0:
         logger.warning("No treatments presented, cannot calculate acceptance rate")
         return None
 
     rate = (scheduled / presented) * 100
-    logger.info(f"Treatment acceptance: {scheduled} / {presented} = {rate:.1f}%")
+    logger.info(
+        f"Treatment acceptance: ${scheduled:,.0f} / ${presented:,.0f} = {rate:.1f}%"
+    )
 
     return float(rate)
 
 
 def calculate_hygiene_reappointment(df: pd.DataFrame | None) -> float | None:
     """
-    Calculate hygiene reappointment rate:
-    ((Total - Not Reappointed) / Total) * 100.
+    Calculate hygiene reappointment rate: ((Total - Not Reappointed) / Total) * 100.
 
     Returns percentage (0-100) or None if calculation fails.
     """
     if df is None or df.empty:
         return None
 
-    # Check if required columns exist
+    # Check required columns exist
     if (
         "total_hygiene_appointments" not in df.columns
         or "patients_not_reappointed" not in df.columns
     ):
         return None
 
+    # Column L: Total Hygiene, Column M: Patients Not Reappointed
     total_hygiene = safe_numeric_conversion(df, "total_hygiene_appointments")
     not_reappointed = safe_numeric_conversion(df, "patients_not_reappointed")
 
+    # Avoid division by zero
     if total_hygiene == 0:
         logger.warning("No hygiene appointments, cannot calculate reappointment rate")
         return None
@@ -191,8 +213,6 @@ def calculate_hygiene_reappointment(df: pd.DataFrame | None) -> float | None:
     reappointed = total_hygiene - not_reappointed
     rate = (reappointed / total_hygiene) * 100
 
-    logger.info(
-        f"Hygiene reappointment: {reappointed} / {total_hygiene} " f"= {rate:.1f}%"
-    )
+    logger.info(f"Hygiene reappointment: {reappointed} / {total_hygiene} = {rate:.1f}%")
 
     return float(rate)
