@@ -155,6 +155,50 @@ class TestKPICalculations:
         result = calculate_production_total(test_data)
         assert result is None
 
+    @pytest.mark.unit
+    def test_unprefixed_column_name_support(self) -> None:
+        """Test that unprefixed column names work correctly."""
+        # Test with unprefixed column names (Production, Collections)
+        df_unprefixed = pd.DataFrame({"Production": [1000], "Collections": [900]})
+
+        production = calculate_production_total(df_unprefixed)
+        collection_rate = calculate_collection_rate(df_unprefixed)
+
+        assert production == 1000.0
+        assert collection_rate == 90.0
+
+    @pytest.mark.unit
+    def test_prefixed_column_name_support(self) -> None:
+        """Test that prefixed column names still work correctly."""
+        # Test with prefixed column names (total_production, total_collections)
+        df_prefixed = pd.DataFrame(
+            {"total_production": [1000], "total_collections": [900]}
+        )
+
+        production = calculate_production_total(df_prefixed)
+        collection_rate = calculate_collection_rate(df_prefixed)
+
+        assert production == 1000.0
+        assert collection_rate == 90.0
+
+    @pytest.mark.unit
+    def test_mixed_column_name_scenarios(self) -> None:
+        """Test various column name combinations."""
+        # Test when only unprefixed exists
+        df_unprefixed_only = pd.DataFrame({"Production": [500], "Collections": [450]})
+        assert calculate_collection_rate(df_unprefixed_only) == 90.0
+
+        # Test when prefixed takes precedence
+        df_both = pd.DataFrame(
+            {
+                "total_production": [1000],
+                "Production": [500],  # Should be ignored
+                "total_collections": [800],
+                "Collections": [400],  # Should be ignored
+            }
+        )
+        assert calculate_collection_rate(df_both) == 80.0  # 800/1000
+
 
 class TestKPIThresholds:
     """Test KPI threshold validations."""
