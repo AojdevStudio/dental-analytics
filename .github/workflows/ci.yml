@@ -104,9 +104,9 @@ jobs:
       uses: trufflesecurity/trufflehog@main
       with:
         path: ./
-        base: ${{ github.event.repository.default_branch }}
-        head: HEAD
-        extra_args: --debug --only-verified
+        base: ${{ github.event.before }}
+        head: ${{ github.sha }}
+        extra_args: --debug --no-verification
 
     - name: Bandit security linting
       run: |
@@ -190,11 +190,13 @@ jobs:
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
+      if: secrets.CODECOV_TOKEN != ''
+      continue-on-error: true
       with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: true
+        fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Coverage comment on PR
@@ -354,12 +356,12 @@ jobs:
         name: dist-packages
         path: dist/
 
-  # Job 8: Deploy to Staging - Automated deployment for non-main branches
+  # Job 8: Deploy to Staging - Manual deployment for main branch only
   deploy-staging:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [build-validation, performance-test, integration-test]
-    if: github.ref != 'refs/heads/main' && github.event_name == 'push'
+    if: false  # Skip staging deployment during development phase
     environment: staging
 
     steps:
@@ -403,12 +405,12 @@ jobs:
         echo "Environment: staging"
         echo "URL: https://staging-dental-analytics.streamlit.app"
 
-  # Job 9: Deploy to Production - Manual approval required
+  # Job 9: Deploy to Production - SKIPPED (Development Phase)
   deploy-production:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [build-validation, performance-test, integration-test]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: false  # Skip production deployment during development
     environment: production
 
     steps:
