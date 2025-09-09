@@ -14,21 +14,15 @@ class TestFullIntegration:
     """Integration tests for complete KPI calculation flow."""
 
     @pytest.mark.integration
-    def test_complete_kpi_flow(self):
+    def test_complete_kpi_flow(self) -> None:
         """Test end-to-end KPI calculation."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
-            # Mock different sheet responses
-            def get_sheet_side_effect(range_name):
-                if "EOD" in range_name:
-                    return get_simple_eod_data()
-                elif "Front KPI" in range_name:
-                    return get_simple_front_kpi_data()
-                return None
-
-            mock_instance.get_sheet_data.side_effect = get_sheet_side_effect
+            # Mock the specific methods that get_all_kpis() calls
+            mock_instance.get_eod_data.return_value = get_simple_eod_data()
+            mock_instance.get_front_kpi_data.return_value = get_simple_front_kpi_data()
 
             # Execute full flow
             kpis = get_all_kpis()
@@ -41,26 +35,31 @@ class TestFullIntegration:
             assert "hygiene_reappointment" in kpis
 
             # Validate values are reasonable
-            assert kpis["production_total"] > 0
-            assert 0 <= kpis["collection_rate"] <= 100
-            assert kpis["new_patients"] >= 0
-            assert 0 <= kpis["treatment_acceptance"] <= 100
-            assert 0 <= kpis["hygiene_reappointment"] <= 100
+            assert kpis["production_total"] is not None and kpis["production_total"] > 0
+            assert (
+                kpis["collection_rate"] is not None
+                and 0 <= kpis["collection_rate"] <= 100
+            )
+            assert kpis["new_patients"] is not None and kpis["new_patients"] >= 0
+            assert (
+                kpis["treatment_acceptance"] is not None
+                and 0 <= kpis["treatment_acceptance"] <= 100
+            )
+            assert (
+                kpis["hygiene_reappointment"] is not None
+                and 0 <= kpis["hygiene_reappointment"] <= 100
+            )
 
     @pytest.mark.integration
-    def test_partial_data_failure(self):
+    def test_partial_data_failure(self) -> None:
         """Test handling when some data sources fail."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
             # EOD succeeds, Front KPI fails
-            def get_sheet_side_effect(range_name):
-                if "EOD" in range_name:
-                    return get_simple_eod_data()
-                return None  # Front KPI fails
-
-            mock_instance.get_sheet_data.side_effect = get_sheet_side_effect
+            mock_instance.get_eod_data.return_value = get_simple_eod_data()
+            mock_instance.get_front_kpi_data.return_value = None
 
             kpis = get_all_kpis()
 
@@ -74,12 +73,15 @@ class TestFullIntegration:
             assert kpis["hygiene_reappointment"] is None
 
     @pytest.mark.integration
-    def test_all_data_sources_fail(self):
+    def test_all_data_sources_fail(self) -> None:
         """Test handling when all data sources fail."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
-            mock_instance.get_sheet_data.return_value = None
+
+            # Both data sources fail
+            mock_instance.get_eod_data.return_value = None
+            mock_instance.get_front_kpi_data.return_value = None
 
             kpis = get_all_kpis()
 
@@ -92,16 +94,17 @@ class TestFullIntegration:
 
     @pytest.mark.integration
     @pytest.mark.slow
-    def test_performance_benchmark(self):
+    def test_performance_benchmark(self) -> None:
         """Test that KPI calculation completes within 1 second."""
         import time
 
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
             # Fast mock responses
-            mock_instance.get_sheet_data.return_value = get_simple_eod_data()
+            mock_instance.get_eod_data.return_value = get_simple_eod_data()
+            mock_instance.get_front_kpi_data.return_value = get_simple_front_kpi_data()
 
             start = time.time()
             kpis = get_all_kpis()
@@ -111,9 +114,9 @@ class TestFullIntegration:
             assert kpis is not None
 
     @pytest.mark.integration
-    def test_kpi_calculation_accuracy(self):
+    def test_kpi_calculation_accuracy(self) -> None:
         """Test that KPI calculations are accurate with known values."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
@@ -137,14 +140,8 @@ class TestFullIntegration:
                 }
             )
 
-            def get_sheet_side_effect(range_name):
-                if "EOD" in range_name:
-                    return test_eod_data
-                elif "Front KPI" in range_name:
-                    return test_front_data
-                return None
-
-            mock_instance.get_sheet_data.side_effect = get_sheet_side_effect
+            mock_instance.get_eod_data.return_value = test_eod_data
+            mock_instance.get_front_kpi_data.return_value = test_front_data
 
             kpis = get_all_kpis()
 
@@ -156,14 +153,15 @@ class TestFullIntegration:
             assert kpis["hygiene_reappointment"] == 90.0  # ((20-2)/20) * 100
 
     @pytest.mark.integration
-    def test_error_propagation(self):
+    def test_error_propagation(self) -> None:
         """Test that errors are properly handled and don't crash the system."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
             # Simulate an exception during data retrieval
-            mock_instance.get_sheet_data.side_effect = Exception("Network error")
+            mock_instance.get_eod_data.side_effect = Exception("Network error")
+            mock_instance.get_front_kpi_data.side_effect = Exception("Network error")
 
             # Should not raise exception, but return None values
             kpis = get_all_kpis()

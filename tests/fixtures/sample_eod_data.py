@@ -3,7 +3,7 @@
 import pandas as pd
 
 
-def get_sample_eod_data():
+def get_sample_eod_data() -> pd.DataFrame:
     """Get sample EOD - Baytown Billing sheet data based on actual structure."""
     # Based on actual column mappings from spreadsheet ID:
     # 1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8
@@ -19,7 +19,7 @@ def get_sample_eod_data():
     )
 
 
-def get_simple_eod_data():
+def get_simple_eod_data() -> pd.DataFrame:
     """Get simplified EOD data for unit testing with expected column names."""
     return pd.DataFrame(
         {
@@ -33,12 +33,12 @@ def get_simple_eod_data():
     )
 
 
-def get_empty_eod_data():
+def get_empty_eod_data() -> pd.DataFrame:
     """Get empty EOD data for testing edge cases."""
     return pd.DataFrame()
 
 
-def get_invalid_eod_data():
+def get_invalid_eod_data() -> pd.DataFrame:
     """Get EOD data with invalid values for testing."""
     return pd.DataFrame(
         {
@@ -52,7 +52,7 @@ def get_invalid_eod_data():
     )
 
 
-def get_zero_values_eod_data():
+def get_zero_values_eod_data() -> pd.DataFrame:
     """Get EOD data with zero values for testing edge cases."""
     return pd.DataFrame(
         {

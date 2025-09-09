@@ -1,10 +1,11 @@
 # Edge case test data fixtures
 
+
 import numpy as np
 import pandas as pd
 
 
-def get_edge_case_data():
+def get_edge_case_data() -> dict[str, pd.DataFrame]:
     """Generate edge case test data."""
     return {
         "zero_values": pd.DataFrame(

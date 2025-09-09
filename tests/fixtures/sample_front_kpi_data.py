@@ -3,7 +3,7 @@
 import pandas as pd
 
 
-def get_sample_front_kpi_data():
+def get_sample_front_kpi_data() -> pd.DataFrame:
     """Get sample Front KPIs Form responses sheet data based on actual structure."""
     # Based on actual column mappings from spreadsheet
     return pd.DataFrame(
@@ -30,7 +30,7 @@ def get_sample_front_kpi_data():
     )
 
 
-def get_simple_front_kpi_data():
+def get_simple_front_kpi_data() -> pd.DataFrame:
     """Get simplified Front KPI data for unit testing with expected column names."""
     return pd.DataFrame(
         {

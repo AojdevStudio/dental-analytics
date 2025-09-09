@@ -1,12 +1,13 @@
 # Shared pytest fixtures for all tests
 
+from typing import Any
 
 import pandas as pd
 import pytest
 
 
 @pytest.fixture
-def sample_eod_data():
+def sample_eod_data() -> pd.DataFrame:
     """Sample EOD billing sheet data based on real production data from August 2025."""
     # Real column names from spreadsheet verified via G-Drive MCP
     return pd.DataFrame(
@@ -47,7 +48,7 @@ def sample_eod_data():
 
 
 @pytest.fixture
-def sample_front_kpi_data():
+def sample_front_kpi_data() -> pd.DataFrame:
     """Sample Front KPI sheet data based on real production data from September 2025."""
     # Real column names from spreadsheet verified via G-Drive MCP
     return pd.DataFrame(
@@ -81,13 +82,13 @@ def sample_front_kpi_data():
 
 
 @pytest.fixture
-def empty_dataframe():
+def empty_dataframe() -> pd.DataFrame:
     """Empty DataFrame for edge case testing."""
     return pd.DataFrame()
 
 
 @pytest.fixture
-def mock_sheets_service(mocker):
+def mock_sheets_service(mocker: Any) -> Any:
     """Mock Google Sheets API service."""
     mock_service = mocker.Mock()
     mock_values = mocker.Mock()
@@ -106,7 +107,7 @@ def mock_sheets_service(mocker):
 
 
 @pytest.fixture
-def zero_values_data():
+def zero_values_data() -> pd.DataFrame:
     """Test data with zero values."""
     return pd.DataFrame(
         {
@@ -122,7 +123,7 @@ def zero_values_data():
 
 
 @pytest.fixture
-def negative_values_data():
+def negative_values_data() -> pd.DataFrame:
     """Test data with negative values."""
     return pd.DataFrame(
         {
@@ -136,7 +137,7 @@ def negative_values_data():
 
 
 @pytest.fixture
-def mixed_types_data():
+def mixed_types_data() -> pd.DataFrame:
     """Test data with mixed data types."""
     return pd.DataFrame(
         {
@@ -150,7 +151,7 @@ def mixed_types_data():
 
 
 @pytest.fixture
-def nulls_data():
+def nulls_data() -> pd.DataFrame:
     """Test data with null values."""
     import numpy as np
 
@@ -168,7 +169,7 @@ def nulls_data():
 
 
 @pytest.fixture
-def large_values_data():
+def large_values_data() -> pd.DataFrame:
     """Test data with very large values."""
     return pd.DataFrame(
         {

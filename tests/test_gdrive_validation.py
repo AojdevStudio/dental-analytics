@@ -16,7 +16,7 @@ class TestSheetsStructure:
     """Test Google Sheets data structure and access."""
 
     @pytest.mark.unit
-    def test_column_mappings(self):
+    def test_column_mappings(self) -> None:
         """Test that expected columns exist in sample data."""
         # Test EOD sheet structure
         eod_columns = [
@@ -51,7 +51,7 @@ class TestSheetsStructure:
             assert col in front_sample.columns
 
     @pytest.mark.unit
-    def test_eod_production_calculation(self):
+    def test_eod_production_calculation(self) -> None:
         """Test production total calculation with real data structure."""
         test_data = pd.DataFrame(
             {
@@ -69,7 +69,7 @@ class TestSheetsStructure:
         assert production_total == 9000.0
 
     @pytest.mark.unit
-    def test_eod_collection_calculation(self):
+    def test_eod_collection_calculation(self) -> None:
         """Test collection rate calculation with realistic values."""
         test_data = pd.DataFrame(
             {
@@ -87,7 +87,7 @@ class TestSheetsStructure:
         assert collection_rate == 95.0
 
     @pytest.mark.unit
-    def test_eod_new_patients_calculation(self):
+    def test_eod_new_patients_calculation(self) -> None:
         """Test new patient count calculation."""
         test_data = pd.DataFrame(
             {
@@ -104,7 +104,7 @@ class TestSheetsStructure:
         assert new_patients == 7
 
     @pytest.mark.unit
-    def test_front_kpi_treatment_acceptance(self):
+    def test_front_kpi_treatment_acceptance(self) -> None:
         """Test treatment acceptance calculation with Front KPI data."""
         test_data = pd.DataFrame(
             {
@@ -121,7 +121,7 @@ class TestSheetsStructure:
         assert acceptance_rate == 80.0
 
     @pytest.mark.unit
-    def test_front_kpi_hygiene_reappointment(self):
+    def test_front_kpi_hygiene_reappointment(self) -> None:
         """Test hygiene reappointment calculation with Front KPI data."""
         test_data = pd.DataFrame(
             {
@@ -138,7 +138,7 @@ class TestSheetsStructure:
         assert reappointment_rate == 90.0
 
     @pytest.mark.unit
-    def test_edge_case_zero_values(self):
+    def test_edge_case_zero_values(self) -> None:
         """Test handling of zero values in calculations."""
         # Test zero production (should return None for collection rate)
         zero_production = pd.DataFrame(
@@ -165,7 +165,7 @@ class TestSheetsStructure:
         assert hygiene_rate is None
 
     @pytest.mark.unit
-    def test_realistic_daily_numbers(self):
+    def test_realistic_daily_numbers(self) -> None:
         """Test with realistic daily numbers for Kam Dental."""
         # Typical daily EOD data
         daily_eod = pd.DataFrame(
@@ -207,7 +207,7 @@ class TestSheetsStructure:
         assert hygiene_reappointment == 92.0  # ((25-2)/25) * 100
 
     @pytest.mark.unit
-    def test_currency_format_handling(self):
+    def test_currency_format_handling(self) -> None:
         """Test handling of currency-formatted strings from sheets."""
         # Test data that might come with currency formatting
         currency_data = pd.DataFrame(
@@ -224,7 +224,7 @@ class TestSheetsStructure:
         assert collection_rate == 90.0
 
     @pytest.mark.unit
-    def test_spreadsheet_id_constant(self):
+    def test_spreadsheet_id_constant(self) -> None:
         """Verify the correct spreadsheet ID is being used."""
         expected_id = "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
 
@@ -235,7 +235,7 @@ class TestSheetsStructure:
         assert expected_id == SPREADSHEET_ID
 
     @pytest.mark.unit
-    def test_data_type_conversions(self):
+    def test_data_type_conversions(self) -> None:
         """Test that currency and percentage strings are properly converted."""
         from backend.metrics import safe_numeric_conversion
 
@@ -251,7 +251,7 @@ class TestSheetsStructure:
         assert isinstance(result, int | float)
 
     @pytest.mark.unit
-    def test_missing_column_handling(self):
+    def test_missing_column_handling(self) -> None:
         """Test graceful handling of missing columns."""
         from backend.metrics import safe_numeric_conversion
 
@@ -262,7 +262,7 @@ class TestSheetsStructure:
         assert result == 0.0  # Should return 0 for missing columns
 
     @pytest.mark.unit
-    def test_empty_dataframe_handling(self):
+    def test_empty_dataframe_handling(self) -> None:
         """Test handling of empty DataFrames."""
         empty_df = pd.DataFrame()
 
