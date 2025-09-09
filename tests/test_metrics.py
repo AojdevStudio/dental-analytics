@@ -188,6 +188,60 @@ class TestKPICalculations:
         df_unprefixed_only = pd.DataFrame({"Production": [500], "Collections": [450]})
         assert calculate_collection_rate(df_unprefixed_only) == 90.0
 
+    @pytest.mark.unit
+    def test_collection_rate_missing_collections_column(self) -> None:
+        """Test collection rate calculation with missing collections column."""
+        test_data = pd.DataFrame(
+            {
+                "total_production": [5000],
+                # Missing total_collections column
+            }
+        )
+
+        result = calculate_collection_rate(test_data)
+        assert result is None
+
+    @pytest.mark.unit
+    def test_new_patients_missing_column(self) -> None:
+        """Test new patients calculation with missing column."""
+        test_data = pd.DataFrame(
+            {
+                "Date": ["2024-01-15"],
+                # Missing new_patients column
+            }
+        )
+
+        result = calculate_new_patients(test_data)
+        assert result is None
+
+    @pytest.mark.unit
+    def test_treatment_acceptance_missing_columns(self) -> None:
+        """Test treatment acceptance with missing required columns."""
+        test_data = pd.DataFrame(
+            {
+                "Date": ["2024-01-15"],
+                "treatments_presented": [1000],
+                # Missing treatments_scheduled column
+            }
+        )
+
+        result = calculate_treatment_acceptance(test_data)
+        assert result is None
+
+    @pytest.mark.unit
+    def test_hygiene_reappointment_missing_columns(self) -> None:
+        """Test hygiene reappointment with missing required columns."""
+        test_data = pd.DataFrame(
+            {
+                "Date": ["2024-01-15"],
+                "total_hygiene_appointments": [10],
+                # Missing patients_not_reappointed column
+            }
+        )
+
+        result = calculate_hygiene_reappointment(test_data)
+        assert result is None
+
         # Test when prefixed takes precedence
         df_both = pd.DataFrame(
             {

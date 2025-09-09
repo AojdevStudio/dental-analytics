@@ -16,6 +16,7 @@ class TestSheetsReader:
         with (
             patch("backend.sheets_reader.service_account"),
             patch("backend.sheets_reader.build"),
+            patch("backend.sheets_reader.Path.exists", return_value=True),
         ):
             reader = SheetsReader()
             assert reader.service is not None
@@ -45,6 +46,7 @@ class TestSheetsReader:
         with (
             patch("backend.sheets_reader.service_account"),
             patch("backend.sheets_reader.build", return_value=mock_service),
+            patch("backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -64,6 +66,7 @@ class TestSheetsReader:
         with (
             patch("backend.sheets_reader.service_account"),
             patch("backend.sheets_reader.build", return_value=mock_service),
+            patch("backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -89,6 +92,7 @@ class TestSheetsReader:
         with (
             patch("backend.sheets_reader.service_account"),
             patch("backend.sheets_reader.build", return_value=mock_service),
+            patch("backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -105,6 +109,7 @@ class TestSheetsReader:
         with (
             patch("backend.sheets_reader.service_account"),
             patch("backend.sheets_reader.build", return_value=mock_service),
+            patch("backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -125,6 +130,7 @@ class TestSheetsReader:
         with (
             patch("backend.sheets_reader.service_account"),
             patch("backend.sheets_reader.build", return_value=mock_service),
+            patch("backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -138,3 +144,70 @@ class TestSheetsReader:
         """Test class constants are correctly defined."""
         assert SPREADSHEET_ID == "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
         assert SCOPES == ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+
+    def test_get_eod_data_calls_correct_range(self) -> None:
+        """Test that get_eod_data calls get_sheet_data with correct range."""
+        mock_service = Mock()
+        mock_values: list[list[str]] = [
+            ["Date", "Production"],
+            ["2024-01-15", "5000"],
+        ]
+        mock_result: dict[str, Any] = {"values": mock_values}
+        mock_service.spreadsheets().values().get().execute.return_value = mock_result
+
+        with (
+            patch("backend.sheets_reader.service_account"),
+            patch("backend.sheets_reader.build", return_value=mock_service),
+            patch("backend.sheets_reader.Path.exists", return_value=True),
+        ):
+            reader = SheetsReader()
+            df = reader.get_eod_data()
+
+            # Verify the correct range was called
+            mock_service.spreadsheets().values().get.assert_called_with(
+                spreadsheetId=SPREADSHEET_ID, range="EOD - Baytown Billing!A:N"
+            )
+            assert df is not None
+            assert len(df) == 1
+
+    def test_get_front_kpi_data_calls_correct_range(self) -> None:
+        """Test that get_front_kpi_data calls get_sheet_data with correct range."""
+        mock_service = Mock()
+        mock_values: list[list[str]] = [
+            ["Date", "Hygiene"],
+            ["2024-01-15", "5"],
+        ]
+        mock_result: dict[str, Any] = {"values": mock_values}
+        mock_service.spreadsheets().values().get().execute.return_value = mock_result
+
+        with (
+            patch("backend.sheets_reader.service_account"),
+            patch("backend.sheets_reader.build", return_value=mock_service),
+            patch("backend.sheets_reader.Path.exists", return_value=True),
+        ):
+            reader = SheetsReader()
+            df = reader.get_front_kpi_data()
+
+            # Verify the correct range was called
+            mock_service.spreadsheets().values().get.assert_called_with(
+                spreadsheetId=SPREADSHEET_ID, range="Front KPI - Baytown!A:N"
+            )
+            assert df is not None
+            assert len(df) == 1
+
+    def test_get_sheet_data_general_exception(self) -> None:
+        """Test sheet data retrieval with general exception."""
+        mock_service = Mock()
+        mock_service.spreadsheets().values().get().execute.side_effect = Exception(
+            "Network error"
+        )
+
+        with (
+            patch("backend.sheets_reader.service_account"),
+            patch("backend.sheets_reader.build", return_value=mock_service),
+            patch("backend.sheets_reader.Path.exists", return_value=True),
+        ):
+            reader = SheetsReader()
+            df = reader.get_sheet_data("TestSheet")
+
+            assert df is None

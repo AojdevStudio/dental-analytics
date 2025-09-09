@@ -16,7 +16,7 @@ class TestFullIntegration:
     @pytest.mark.integration
     def test_complete_kpi_flow(self) -> None:
         """Test end-to-end KPI calculation."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
@@ -53,7 +53,7 @@ class TestFullIntegration:
     @pytest.mark.integration
     def test_partial_data_failure(self) -> None:
         """Test handling when some data sources fail."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
@@ -75,7 +75,7 @@ class TestFullIntegration:
     @pytest.mark.integration
     def test_all_data_sources_fail(self) -> None:
         """Test handling when all data sources fail."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
@@ -98,7 +98,7 @@ class TestFullIntegration:
         """Test that KPI calculation completes within 1 second."""
         import time
 
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
@@ -116,7 +116,7 @@ class TestFullIntegration:
     @pytest.mark.integration
     def test_kpi_calculation_accuracy(self) -> None:
         """Test that KPI calculations are accurate with known values."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
@@ -155,7 +155,7 @@ class TestFullIntegration:
     @pytest.mark.integration
     def test_error_propagation(self) -> None:
         """Test that errors are properly handled and don't crash the system."""
-        with patch("backend.sheets_reader.SheetsReader") as mock_reader:
+        with patch("backend.metrics.SheetsReader") as mock_reader:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
