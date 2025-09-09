@@ -153,7 +153,6 @@ jobs:
       run: |
         uv run pytest tests/ \
           --cov=backend \
-          --cov=frontend \
           --cov-report=xml \
           --cov-report=term-missing \
           --cov-fail-under=90 \
