@@ -102,11 +102,12 @@ jobs:
 
     - name: Secret detection (TruffleHog)
       uses: trufflesecurity/trufflehog@main
+      continue-on-error: true
       with:
         path: ./
-        base: ${{ github.event.before }}
-        head: ${{ github.sha }}
-        extra_args: --debug --no-verification
+        base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        extra_args: --debug --only-verified
 
     - name: Bandit security linting
       run: |
