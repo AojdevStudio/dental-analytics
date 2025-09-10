@@ -203,7 +203,7 @@ The branch protection rules work in conjunction with the quality gate workflow t
 ### Contact Information
 
 For issues with branch protection or CI/CD pipeline:
-- Repository Owner: @ossieirondi
+- Repository Owner: @aojdevstudio
 - Review the workflow logs in Actions tab
 - Check repository Issues for known problems
 
