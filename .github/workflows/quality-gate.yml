@@ -251,6 +251,9 @@ jobs:
           const qualityPassed = '${{ needs.enforce-quality-gate.outputs.quality-passed }}' === 'true';
           const status = qualityPassed ? '✅ PASSED' : '❌ FAILED';
           const emoji = qualityPassed ? '🎉' : '🚫';
+          const formattingStatus = qualityPassed ? '✅' : '❌';
+          const lintingStatus = qualityPassed ? '✅' : '❌';
+          const typingStatus = qualityPassed ? '✅' : '❌';
 
           const body = `## ${emoji} Quality Gate Report
 
@@ -258,9 +261,9 @@ jobs:
 
           | Check | Status |
           |-------|---------|
-          | Code Formatting | ${{ needs.enforce-quality-gate.result == 'success' ? '✅' : '❌' }} |
-          | Linting | ${{ needs.enforce-quality-gate.result == 'success' ? '✅' : '❌' }} |
-          | Type Checking | ${{ needs.enforce-quality-gate.result == 'success' ? '✅' : '❌' }} |
+          | Code Formatting | ${formattingStatus} |
+          | Linting | ${lintingStatus} |
+          | Type Checking | ${typingStatus} |
           | Test Coverage | ${coverageData} |
           | Security Scan | ${securityData} |
 
