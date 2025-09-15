@@ -3,12 +3,19 @@ Kam Dental Analytics Dashboard - 5 KPIs from Google Sheets with
 Dual Location Support.
 """
 
+import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Literal
 
 import streamlit as st
 
-from apps.backend.metrics import get_all_kpis
+# Add project root to Python path for proper import resolution
+project_root = Path(__file__).parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from apps.backend.metrics import get_all_kpis  # noqa: E402
 
 # Configure Streamlit page settings
 st.set_page_config(
