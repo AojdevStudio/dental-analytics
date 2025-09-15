@@ -131,5 +131,5 @@ with col5:
 st.markdown("---")
 st.markdown(
     "**Data Source:** Google Sheets • **Updated:** Real-time • "
-    "**Locations:** Baytown & League City"
+    "**Locations:** Baytown & Humble"
 )

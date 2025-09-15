@@ -13,7 +13,7 @@ updates:
       time: "09:00"
     open-pull-requests-limit: 5
     assignees:
-      - "ossieirondi"
+      - "aojdevstudio"
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
@@ -64,7 +64,7 @@ updates:
       time: "09:00"
     open-pull-requests-limit: 3
     assignees:
-      - "ossieirondi"
+      - "aojdevstudio"
     commit-message:
       prefix: "ci"
       include: "scope"
