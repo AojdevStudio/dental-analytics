@@ -13,12 +13,12 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo "🖤 Running Black formatter..."
-uv run black backend/ frontend/ tests/ test_calculations.py
+uv run black apps/backend/ apps/frontend/ tests/ test_calculations.py
 echo -e "${GREEN}✅ Black formatting complete${NC}"
 
 echo ""
 echo "🔧 Running Ruff auto-fixes..."
-uv run ruff check --fix backend/ frontend/ tests/ test_calculations.py
+uv run ruff check --fix apps/backend/ apps/frontend/ tests/ test_calculations.py
 echo -e "${GREEN}✅ Ruff fixes applied${NC}"
 
 echo ""

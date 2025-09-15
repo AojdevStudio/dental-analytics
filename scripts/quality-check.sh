@@ -24,22 +24,22 @@ print_status() {
 }
 
 echo "📋 Step 1: Code formatting with Black..."
-uv run black --check backend/ frontend/ tests/ test_calculations.py
+uv run black --check apps/backend/ apps/frontend/ tests/ test_calculations.py
 print_status "Black formatting"
 
 echo ""
 echo "🔧 Step 2: Linting with Ruff..."
-uv run ruff check backend/ frontend/ tests/ test_calculations.py
+uv run ruff check apps/backend/ apps/frontend/ tests/ test_calculations.py
 print_status "Ruff linting"
 
 echo ""
 echo "🏷️  Step 3: Type checking with MyPy..."
-uv run mypy backend/ test_calculations.py
+uv run mypy apps/backend/ test_calculations.py
 print_status "MyPy type checking"
 
 echo ""
 echo "🧪 Step 4: Running pytest test suite..."
-uv run pytest tests/ -v --cov=backend --cov=frontend
+uv run pytest tests/ -v --cov=apps.backend --cov=apps.frontend
 print_status "Pytest tests"
 
 echo ""

@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from backend.metrics import (
+from apps.backend.metrics import (
     calculate_collection_rate,
     calculate_hygiene_reappointment,
     calculate_new_patients,
@@ -229,7 +229,7 @@ class TestSheetsStructure:
         expected_id = "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
 
         # Check if this ID is used in the sheets reader
-        from backend.sheets_reader import SPREADSHEET_ID
+        from apps.backend.sheets_reader import SPREADSHEET_ID
 
         # Verify the constant matches our expected ID
         assert expected_id == SPREADSHEET_ID
@@ -237,7 +237,7 @@ class TestSheetsStructure:
     @pytest.mark.unit
     def test_data_type_conversions(self) -> None:
         """Test that currency and percentage strings are properly converted."""
-        from backend.metrics import safe_numeric_conversion
+        from apps.backend.metrics import safe_numeric_conversion
 
         # Test currency conversion
         currency_df = pd.DataFrame({"amount": ["$1,234.56"]})
@@ -253,7 +253,7 @@ class TestSheetsStructure:
     @pytest.mark.unit
     def test_missing_column_handling(self) -> None:
         """Test graceful handling of missing columns."""
-        from backend.metrics import safe_numeric_conversion
+        from apps.backend.metrics import safe_numeric_conversion
 
         # DataFrame missing the requested column
         incomplete_df = pd.DataFrame({"other_column": [100]})

@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 from googleapiclient.errors import HttpError
 
-from backend.sheets_reader import SCOPES, SPREADSHEET_ID, SheetsReader
+from apps.backend.sheets_reader import SCOPES, SPREADSHEET_ID, SheetsReader
 
 
 class TestSheetsReader:
@@ -14,16 +14,16 @@ class TestSheetsReader:
     def test_initialization_success(self) -> None:
         """Test successful SheetsReader initialization."""
         with (
-            patch("backend.sheets_reader.service_account"),
-            patch("backend.sheets_reader.build"),
-            patch("backend.sheets_reader.Path.exists", return_value=True),
+            patch("apps.backend.sheets_reader.service_account"),
+            patch("apps.backend.sheets_reader.build"),
+            patch("apps.backend.sheets_reader.Path.exists", return_value=True),
         ):
             reader = SheetsReader()
             assert reader.service is not None
 
     def test_initialization_failure(self) -> None:
         """Test SheetsReader initialization failure."""
-        with patch("backend.sheets_reader.service_account") as mock_sa:
+        with patch("apps.backend.sheets_reader.service_account") as mock_sa:
             mock_sa.Credentials.from_service_account_file.side_effect = (
                 FileNotFoundError("credentials.json not found")
             )
@@ -44,9 +44,9 @@ class TestSheetsReader:
         mock_service.spreadsheets().values().get().execute.return_value = mock_result
 
         with (
-            patch("backend.sheets_reader.service_account"),
-            patch("backend.sheets_reader.build", return_value=mock_service),
-            patch("backend.sheets_reader.Path.exists", return_value=True),
+            patch("apps.backend.sheets_reader.service_account"),
+            patch("apps.backend.sheets_reader.build", return_value=mock_service),
+            patch("apps.backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -64,9 +64,9 @@ class TestSheetsReader:
         mock_service.spreadsheets().values().get().execute.return_value = mock_result
 
         with (
-            patch("backend.sheets_reader.service_account"),
-            patch("backend.sheets_reader.build", return_value=mock_service),
-            patch("backend.sheets_reader.Path.exists", return_value=True),
+            patch("apps.backend.sheets_reader.service_account"),
+            patch("apps.backend.sheets_reader.build", return_value=mock_service),
+            patch("apps.backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -90,9 +90,9 @@ class TestSheetsReader:
         )
 
         with (
-            patch("backend.sheets_reader.service_account"),
-            patch("backend.sheets_reader.build", return_value=mock_service),
-            patch("backend.sheets_reader.Path.exists", return_value=True),
+            patch("apps.backend.sheets_reader.service_account"),
+            patch("apps.backend.sheets_reader.build", return_value=mock_service),
+            patch("apps.backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -107,9 +107,9 @@ class TestSheetsReader:
         mock_service.spreadsheets().values().get().execute.return_value = mock_result
 
         with (
-            patch("backend.sheets_reader.service_account"),
-            patch("backend.sheets_reader.build", return_value=mock_service),
-            patch("backend.sheets_reader.Path.exists", return_value=True),
+            patch("apps.backend.sheets_reader.service_account"),
+            patch("apps.backend.sheets_reader.build", return_value=mock_service),
+            patch("apps.backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -128,9 +128,9 @@ class TestSheetsReader:
         mock_service.spreadsheets().values().get().execute.return_value = mock_result
 
         with (
-            patch("backend.sheets_reader.service_account"),
-            patch("backend.sheets_reader.build", return_value=mock_service),
-            patch("backend.sheets_reader.Path.exists", return_value=True),
+            patch("apps.backend.sheets_reader.service_account"),
+            patch("apps.backend.sheets_reader.build", return_value=mock_service),
+            patch("apps.backend.sheets_reader.Path.exists", return_value=True),
         ):
 
             reader = SheetsReader()
@@ -156,9 +156,9 @@ class TestSheetsReader:
         mock_service.spreadsheets().values().get().execute.return_value = mock_result
 
         with (
-            patch("backend.sheets_reader.service_account"),
-            patch("backend.sheets_reader.build", return_value=mock_service),
-            patch("backend.sheets_reader.Path.exists", return_value=True),
+            patch("apps.backend.sheets_reader.service_account"),
+            patch("apps.backend.sheets_reader.build", return_value=mock_service),
+            patch("apps.backend.sheets_reader.Path.exists", return_value=True),
         ):
             reader = SheetsReader()
             df = reader.get_eod_data()
@@ -181,9 +181,9 @@ class TestSheetsReader:
         mock_service.spreadsheets().values().get().execute.return_value = mock_result
 
         with (
-            patch("backend.sheets_reader.service_account"),
-            patch("backend.sheets_reader.build", return_value=mock_service),
-            patch("backend.sheets_reader.Path.exists", return_value=True),
+            patch("apps.backend.sheets_reader.service_account"),
+            patch("apps.backend.sheets_reader.build", return_value=mock_service),
+            patch("apps.backend.sheets_reader.Path.exists", return_value=True),
         ):
             reader = SheetsReader()
             df = reader.get_front_kpi_data()
@@ -203,9 +203,9 @@ class TestSheetsReader:
         )
 
         with (
-            patch("backend.sheets_reader.service_account"),
-            patch("backend.sheets_reader.build", return_value=mock_service),
-            patch("backend.sheets_reader.Path.exists", return_value=True),
+            patch("apps.backend.sheets_reader.service_account"),
+            patch("apps.backend.sheets_reader.build", return_value=mock_service),
+            patch("apps.backend.sheets_reader.Path.exists", return_value=True),
         ):
             reader = SheetsReader()
             df = reader.get_sheet_data("TestSheet")

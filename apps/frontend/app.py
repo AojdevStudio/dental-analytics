@@ -4,10 +4,11 @@ Dual Location Support.
 """
 
 from datetime import datetime
+from typing import Literal
 
 import streamlit as st
 
-from backend.metrics import get_all_kpis
+from apps.backend.metrics import get_all_kpis
 
 # Configure Streamlit page settings
 st.set_page_config(
@@ -73,12 +74,14 @@ with col1:
 with col2:
     if kpis.get("collection_rate") is not None:
         rate = kpis["collection_rate"]
-        delta_color = "normal" if rate >= 95 else "inverse"
+        rate_delta_color: Literal["normal", "inverse"] = (
+            "normal" if rate is not None and rate >= 95 else "inverse"
+        )
         st.metric(
             label="📊 COLLECTION RATE",
             value=f"{rate:.1f}%",
             delta="Target: 95%",
-            delta_color=delta_color,
+            delta_color=rate_delta_color,
             help="(Collections ÷ Production) × 100",
         )
     else:
@@ -102,12 +105,14 @@ with col3:
 with col4:
     if kpis.get("treatment_acceptance") is not None:
         acceptance = kpis["treatment_acceptance"]
-        delta_color = "normal" if acceptance >= 85 else "inverse"
+        acceptance_delta_color: Literal["normal", "inverse"] = (
+            "normal" if acceptance is not None and acceptance >= 85 else "inverse"
+        )
         st.metric(
             label="✅ TREATMENT ACCEPTANCE",
             value=f"{acceptance:.1f}%",
             delta="Target: 85%",
-            delta_color=delta_color,
+            delta_color=acceptance_delta_color,
             help="(Treatments Scheduled ÷ Treatments Presented) × 100",
         )
     else:
@@ -116,12 +121,14 @@ with col4:
 with col5:
     if kpis.get("hygiene_reappointment") is not None:
         reappointment = kpis["hygiene_reappointment"]
-        delta_color = "normal" if reappointment >= 90 else "inverse"
+        reappointment_delta_color: Literal["normal", "inverse"] = (
+            "normal" if reappointment is not None and reappointment >= 90 else "inverse"
+        )
         st.metric(
             label="🔄 HYGIENE REAPPOINTMENT",
             value=f"{reappointment:.1f}%",
             delta="Target: 90%",
-            delta_color=delta_color,
+            delta_color=reappointment_delta_color,
             help="((Total Hygiene - Not Reappointed) ÷ Total Hygiene) × 100",
         )
     else:

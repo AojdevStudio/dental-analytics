@@ -17,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 uv sync
 
 # Run application
-uv run streamlit run frontend/app.py
+uv run streamlit run apps/frontend/app.py
 
 # Access dashboard
 # Local URL: http://localhost:8501
@@ -44,7 +44,7 @@ uv pip list
 uv run pytest
 
 # Run with coverage
-uv run pytest --cov=backend --cov=frontend
+uv run pytest --cov=apps.backend --cov=apps.frontend
 
 # Run specific test file
 uv run pytest tests/test_metrics.py
@@ -70,10 +70,10 @@ uv run pytest-watch
 **Individual Tools:**
 ```bash
 # Format code with Black
-uv run black backend/ frontend/ tests/ test_calculations.py
+uv run black apps/backend/ apps/frontend/ tests/ test_calculations.py
 
 # Lint with Ruff
-uv run ruff check backend/ frontend/ tests/ test_calculations.py
+uv run ruff check apps/backend/ apps/frontend/ tests/ test_calculations.py
 
 # Type checking with MyPy
 uv run mypy backend/ test_calculations.py
@@ -103,12 +103,12 @@ uv run python
 uv run jupyter notebook
 
 # Test Google Sheets connection and KPI data
-uv run python -c "from backend.metrics import get_all_kpis; print(get_all_kpis())"
+uv run python -c "from apps.backend.metrics import get_all_kpis; print(get_all_kpis())"
 ```
 ### Dashboard Testing Procedures
 ```bash
 # Start dashboard server
-uv run streamlit run frontend/app.py
+uv run streamlit run apps/frontend/app.py
 
 # Access dashboard locally
 # URL: http://localhost:8501
@@ -117,7 +117,7 @@ uv run streamlit run frontend/app.py
 uv run python test_calculations.py
 
 # Verify KPI calculations manually
-uv run python -c "from backend.metrics import get_all_kpis; print(get_all_kpis())"
+uv run python -c "from apps.backend.metrics import get_all_kpis; print(get_all_kpis())"
 ```
 
 ### Memory & Knowledge System
@@ -137,7 +137,7 @@ uv run python -c "from backend.metrics import get_all_kpis; print(get_all_kpis()
 
 ### UI/UX Stack ✅ Complete
 - **Streamlit**: Web dashboard framework
-- **Brand Colors**: Navy (#142D54), Teal (#007E9E) 
+- **Brand Colors**: Navy (#142D54), Teal (#007E9E)
 - **Layout**: 2-column primary + 3-column secondary metrics
 - **Theme Configuration**: Custom .streamlit/config.toml
 
@@ -165,14 +165,15 @@ uv run python -c "from backend.metrics import get_all_kpis; print(get_all_kpis()
 ### File Organization
 ```
 dental-analytics/
-├── frontend/
-│   ├── app.py                    # Streamlit dashboard (80 lines) ✅
-│   └── .streamlit/
-│       └── config.toml           # Brand theme config ✅
-├── backend/
-│   ├── __init__.py
-│   ├── sheets_reader.py          # Google Sheets API (77 lines) ✅
-│   └── metrics.py                # KPI calculations (92 lines) ✅
+├── apps/
+│   ├── frontend/
+│   │   ├── app.py                    # Streamlit dashboard (80 lines) ✅
+│   │   └── .streamlit/
+│   │       └── config.toml           # Brand theme config ✅
+│   └── backend/
+│       ├── __init__.py
+│       ├── sheets_reader.py          # Google Sheets API (77 lines) ✅
+│       └── metrics.py                # KPI calculations (92 lines) ✅
 ├── config/
 │   └── credentials.json          # Google API credentials
 ├── tests/                        # Manual test suite (Story 1.6 pending)
@@ -270,7 +271,7 @@ logger = logging.getLogger(__name__)
 # tests/test_metrics.py
 import pytest
 import pandas as pd
-from backend.metrics import calculate_production_total, calculate_collection_rate
+from apps.backend.metrics import calculate_production_total, calculate_collection_rate
 
 class TestKPICalculations:
     def test_production_total_calculation(self):
@@ -339,7 +340,7 @@ exclude_lines = [
 
 ### Completed Stories ✅
 - **Story 1.1**: Project foundation with Google Sheets connection
-- **Story 1.2**: Daily production and collection rate calculations  
+- **Story 1.2**: Daily production and collection rate calculations
 - **Story 1.3**: New patient count and treatment acceptance tracking
 - **Story 1.4**: Hygiene reappointment rate monitoring
 - **Story 1.5**: Streamlit dashboard with brand styling
@@ -350,7 +351,7 @@ exclude_lines = [
 
 ### Dashboard Access
 - **Local URL**: http://localhost:8501
-- **Start Command**: `uv run streamlit run frontend/app.py`
+- **Start Command**: `uv run streamlit run apps/frontend/app.py`
 - **All 5 KPIs**: Production, Collection Rate, New Patients, Treatment Acceptance, Hygiene Reappointment
 
 ## Dental Practice Specific Guidelines
@@ -361,7 +362,7 @@ exclude_lines = [
 def calculate_production_total(df: pd.DataFrame) -> float | None:
     return float(pd.to_numeric(df["total_production"], errors="coerce").sum())
 
-# Collection Rate: (Collections / Production) × 100  
+# Collection Rate: (Collections / Production) × 100
 def calculate_collection_rate(df: pd.DataFrame) -> float | None:
     collections = pd.to_numeric(df["total_collections"], errors="coerce").sum()
     production = pd.to_numeric(df["total_production"], errors="coerce").sum()

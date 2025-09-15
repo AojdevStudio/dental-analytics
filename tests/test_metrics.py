@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from backend.metrics import (
+from apps.backend.metrics import (
     calculate_collection_rate,
     calculate_hygiene_reappointment,
     calculate_new_patients,
