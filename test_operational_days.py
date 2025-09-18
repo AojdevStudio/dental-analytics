@@ -57,31 +57,33 @@ def main():
     # Test fallback from Sunday to Saturday
     sunday = datetime(2025, 9, 21)  # Sunday
     latest_from_sunday = manager.get_latest_operational_date(sunday)
-    print(
-        f"  From Sunday {sunday.strftime('%Y-%m-%d')}: → {latest_from_sunday.strftime('%Y-%m-%d')} ({latest_from_sunday.strftime('%A')})"
-    )
+    sunday_date = sunday.strftime("%Y-%m-%d")
+    latest_date = latest_from_sunday.strftime("%Y-%m-%d")
+    latest_day = latest_from_sunday.strftime("%A")
+    print(f"  From Sunday {sunday_date}: → {latest_date} ({latest_day})")
 
     # Test operational day returns itself
     friday = datetime(2025, 9, 19)  # Friday
     latest_from_friday = manager.get_latest_operational_date(friday)
-    print(
-        f"  From Friday {friday.strftime('%Y-%m-%d')}: → {latest_from_friday.strftime('%Y-%m-%d')} ({latest_from_friday.strftime('%A')})"
-    )
+    friday_date = friday.strftime("%Y-%m-%d")
+    latest_fri_date = latest_from_friday.strftime("%Y-%m-%d")
+    latest_fri_day = latest_from_friday.strftime("%A")
+    print(f"  From Friday {friday_date}: → {latest_fri_date} ({latest_fri_day})")
 
     print()
     print("Testing date range calculation:")
 
     # Test 7-day range
     start_date, end_date = manager.get_date_range_for_period(7)
-    print(
-        f"  7-day range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
-    )
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+    print(f"  7-day range: {start_str} to {end_str}")
 
     # Test 30-day range
     start_date, end_date = manager.get_date_range_for_period(30)
-    print(
-        f"  30-day range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
-    )
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+    print(f"  30-day range: {start_str} to {end_str}")
 
     print()
     print("=== Operational Day Logic Summary ===")

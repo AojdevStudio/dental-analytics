@@ -254,7 +254,7 @@ def validate_data_source_config() -> bool:
 
 
 def validate_column_mappings_against_sheets() -> dict[str, bool]:
-    """Validation gate for Story 2.1: Verify column mappings against actual Google Sheets.
+    """Validation gate for Story 2.1: Verify column mappings against Google Sheets.
 
     This function validates that all mapped columns actually exist in the target sheets.
     Critical for ensuring data collection reliability in historical metrics.
@@ -262,9 +262,10 @@ def validate_column_mappings_against_sheets() -> dict[str, bool]:
     Returns:
         Dictionary with validation results per data source
     """
+    from pathlib import Path
+
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
-    from pathlib import Path
 
     log.info("column_validation.story_2_1_gate_start")
 
@@ -274,7 +275,7 @@ def validate_column_mappings_against_sheets() -> dict[str, bool]:
     credentials_path = "config/credentials.json"
     if not Path(credentials_path).exists():
         log.error("column_validation.credentials_missing", path=credentials_path)
-        return {source: False for source in DATA_SOURCES.keys()}
+        return dict.fromkeys(DATA_SOURCES.keys(), False)
 
     try:
         creds = service_account.Credentials.from_service_account_file(
@@ -323,7 +324,7 @@ def validate_column_mappings_against_sheets() -> dict[str, bool]:
 
     except Exception as e:
         log.error("column_validation.failed", error=str(e))
-        return {source: False for source in DATA_SOURCES.keys()}
+        return dict.fromkeys(DATA_SOURCES.keys(), False)
 
     all_valid = all(validation_results.values())
     log.info(
@@ -344,9 +345,10 @@ def get_actual_sheet_columns(source_name: str) -> list[str]:
     Returns:
         List of actual column names from the sheet
     """
+    from pathlib import Path
+
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
-    from pathlib import Path
 
     if source_name not in DATA_SOURCES:
         log.error("get_columns.invalid_source", source=source_name)

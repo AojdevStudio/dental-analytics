@@ -475,7 +475,7 @@ Front-office historical KPIs now flow through the aggregation stack, and treatme
 
 ### Test Results
 
-- `UV_CACHE_DIR=.uv-cache uv run pytest tests/test_historical_metrics.py tests/test_chart_data.py` *(blocked by macOS seatbelt sandbox; manual invocation failed before tests executed).* 
+- `UV_CACHE_DIR=.uv-cache uv run pytest tests/test_historical_metrics.py tests/test_chart_data.py` *(blocked by macOS seatbelt sandbox; manual invocation failed before tests executed).*
 
 ### Files Modified During Review
 

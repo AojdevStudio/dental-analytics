@@ -402,7 +402,7 @@ This story serves as a model implementation for future development work.
 
 **Key Changes Validated:**
 - **Daily Filtering**: Added `_get_latest_entry()` function to filter for most recent date instead of aggregating all historical data
-- **Column Mapping Fix**: Production now correctly uses columns I+J+K, Collection uses L+M+N  
+- **Column Mapping Fix**: Production now correctly uses columns I+J+K, Collection uses L+M+N
 - **Dual Location Support**: Separate `get_baytown_kpis()` and `get_humble_kpis()` functions implemented
 - **Data Structure Update**: `get_all_kpis()` now returns nested structure with both locations
 

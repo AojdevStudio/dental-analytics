@@ -6,22 +6,23 @@ and chart data processing for dental practice analytics.
 """
 
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pandas as pd
 import structlog
 
-# Import our new modules
-from config.data_sources import (
-    get_data_source_config,
-    get_latest_operational_date,
-    get_historical_date_range,
-    get_operational_days_in_range,
-    is_operational_day,
-)
 from apps.backend.chart_data import (
     format_all_chart_data,
     validate_chart_data,
+)
+
+# Import our new modules
+from config.data_sources import (
+    get_data_source_config,
+    get_historical_date_range,
+    get_latest_operational_date,
+    get_operational_days_in_range,
+    is_operational_day,
 )
 
 # Configure logging
@@ -92,8 +93,8 @@ def demonstrate_historical_range_calculation() -> None:
     # Get 30-day range
     start_date, end_date = get_historical_date_range(days_back=30)
     print(
-        f"30-day range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
-    )
+        f"30-day range: {start_date.strftime('%Y-%m-%d')} to "
+        f"{end_date.strftime('%Y-%m-%d')}"    )
 
     # Get operational days in that range
     operational_days = get_operational_days_in_range(start_date, end_date)
@@ -196,13 +197,13 @@ def demonstrate_chart_data_processing() -> None:
             print(f"    Range: {stats['min_value']:.1f} - {stats['max_value']:.1f}")
             print(f"    Average: {stats['average_value']:.1f}")
 
-    print(f"\nMetadata:")
+    print("\nMetadata:")
     print(f"  Generated at: {chart_data['metadata']['generated_at']}")
     print(
-        f"  EOD data available: {chart_data['metadata']['data_sources']['eod_available']}"
+        f"  EOD data: {chart_data['metadata']['data_sources']['eod_available']}"
     )
     print(
-        f"  Front KPI data available: {chart_data['metadata']['data_sources']['front_kpi_available']}"
+        f"  Front KPI: {chart_data['metadata']['data_sources']['front_kpi_available']}"
     )
 
     print()
@@ -223,11 +224,11 @@ def demonstrate_error_handling() -> None:
         if has_error:
             print(f"    Error message: {metric_data['error']}")
 
-    print(f"\n  Metadata shows no data available:")
+    print("\n  Metadata shows no data available:")
     print(f"    EOD: {chart_data['metadata']['data_sources']['eod_available']}")
     print(
-        f"    Front KPI: {chart_data['metadata']['data_sources']['front_kpi_available']}"
-    )
+        f"    Front KPI: "
+        f"{chart_data['metadata']['data_sources']['front_kpi_available']}"    )
 
     # Test with invalid data source
     print("\nTesting invalid data source:")
@@ -258,7 +259,7 @@ def demonstrate_weekend_scenario() -> None:
     monday = datetime(2025, 9, 22)
 
     operational_days = get_operational_days_in_range(friday, monday)
-    print(f"\nOperational days from Friday to Monday:")
+    print("\nOperational days from Friday to Monday:")
     for day in operational_days:
         print(f"  {day.strftime('%A, %Y-%m-%d')}")
 
