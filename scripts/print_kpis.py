@@ -13,14 +13,22 @@ from __future__ import annotations
 
 import argparse
 import json
-from typing import Dict, Iterable
+from collections.abc import Iterable
 
-from backend.metrics import get_all_kpis
-from backend.sheets_reader import SheetsReader
+from apps.backend.metrics import get_all_kpis, get_combined_kpis
+from apps.backend.sheets_reader import SheetsReader
 
-
-EOD_RANGE = "EOD - Baytown Billing!A:N"
-FRONT_RANGE = "Baytown Front KPIs Form responses!A:N"
+# Location-specific ranges
+LOCATION_RANGES = {
+    "baytown": {
+        "eod": "EOD - Baytown Billing!A:AG",
+        "front": "Baytown Front KPIs Form responses!A:Z",
+    },
+    "humble": {
+        "eod": "EOD - Humble Billing!A:AG",
+        "front": "Humble Front KPIs Form responses!A:Z",
+    },
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,31 +68,39 @@ def parse_args() -> argparse.Namespace:
         "--spreadsheet-id",
         help=("Temporarily override SheetsReader.SPREADSHEET_ID for this run only."),
     )
+    parser.add_argument(
+        "--location",
+        choices=["baytown", "humble", "both"],
+        default="baytown",
+        help="Location to get KPIs for (baytown, humble, or both). Default: baytown.",
+    )
     return parser.parse_args()
 
 
-def filter_metrics(all_kpis: Dict[str, float | None], names: Iterable[str] | None):
+def filter_metrics(all_kpis: dict[str, float | None], names: Iterable[str] | None):
     if not names:
         return all_kpis
     return {k: all_kpis.get(k) for k in names}
 
 
-def print_pretty(kpis: Dict[str, float | None]) -> None:
+def print_pretty(kpis: dict[str, float | None]) -> None:
     for name, value in kpis.items():
         print(f"{name:22} -> {value}")
 
 
-def print_raw(show_raw: list[str] | None) -> None:
+def print_raw(show_raw: list[str] | None, location: str = "baytown") -> None:
     if not show_raw:
         return
     reader = SheetsReader()
+    ranges = LOCATION_RANGES[location]
+
     if "eod" in show_raw:
-        df = reader.get_sheet_data(EOD_RANGE)
-        print("\n# Raw: EOD - first rows")
+        df = reader.get_sheet_data(ranges["eod"])
+        print(f"\n# Raw: EOD {location.title()} - first rows")
         print(df.head() if df is not None else "<no data>")
     if "front" in show_raw:
-        df = reader.get_sheet_data(FRONT_RANGE)
-        print("\n# Raw: Front KPIs - first rows")
+        df = reader.get_sheet_data(ranges["front"])
+        print(f"\n# Raw: Front KPIs {location.title()} - first rows")
         print(df.head() if df is not None else "<no data>")
 
 
@@ -94,15 +110,39 @@ def main() -> None:
     if args.spreadsheet_id:
         SheetsReader.SPREADSHEET_ID = args.spreadsheet_id  # type: ignore[attr-defined]
 
-    kpis = get_all_kpis()
-    kpis = filter_metrics(kpis, args.metrics)
+    if args.location == "both":
+        # Get KPIs for both locations
+        all_kpis = get_combined_kpis()
 
-    if args.json:
-        print(json.dumps(kpis, indent=args.indent))
+        for location, kpis in all_kpis.items():
+            filtered_kpis = filter_metrics(kpis, args.metrics)
+
+            if args.json:
+                print(f"# {location.title()} KPIs")
+                print(json.dumps(filtered_kpis, indent=args.indent))
+                print()  # Empty line between locations
+            else:
+                print(f"\n=== {location.title()} KPIs ===")
+                print_pretty(filtered_kpis)
+                print()
+
+            # Show raw data if requested
+            if args.show_raw:
+                print_raw(args.show_raw, location)
     else:
-        print_pretty(kpis)
+        # Get KPIs for single location
+        kpis = get_all_kpis(args.location)
+        kpis = filter_metrics(kpis, args.metrics)
 
-    print_raw(args.show_raw)
+        if not args.json:
+            print(f"=== {args.location.title()} KPIs ===")
+
+        if args.json:
+            print(json.dumps(kpis, indent=args.indent))
+        else:
+            print_pretty(kpis)
+
+        print_raw(args.show_raw, args.location)
 
 
 if __name__ == "__main__":

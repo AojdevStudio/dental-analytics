@@ -387,7 +387,7 @@ def calculate_hygiene_reappointment(df: pd.DataFrame) -> float | None:
 
 ### Data Sources ✅ Configured
 - **EOD Sheets**: "EOD - Baytown Billing!A:N" (Production, Collections, New Patients)
-- **Front KPI Sheets**: "Front KPI - Baytown!A:N" (Treatment Acceptance, Hygiene Reappointment)
+- **Front KPI Sheets**: "Baytown Front KPIs Form responses!A:N" (Treatment Acceptance, Hygiene Reappointment)
 - **Spreadsheet ID**: 1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8
 
 ### Dashboard Brand Implementation ✅
