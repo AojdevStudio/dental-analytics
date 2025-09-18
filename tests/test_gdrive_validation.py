@@ -113,12 +113,13 @@ class TestSheetsStructure:
                 "patients_not_reappointed": [3],
                 "treatments_presented": [150000.00],
                 "treatments_scheduled": [120000.00],
+                "$ Same Day Treatment": [15000.00],
             }
         )
 
         acceptance_rate = calculate_treatment_acceptance(test_data)
-        # ($120,000 / $150,000) * 100 = 80%
-        assert acceptance_rate == 80.0
+        # (($120,000 + $15,000) / $150,000) * 100 = 90%
+        assert acceptance_rate == 90.0
 
     @pytest.mark.unit
     def test_front_kpi_hygiene_reappointment(self) -> None:
@@ -187,6 +188,7 @@ class TestSheetsStructure:
                 "patients_not_reappointed": [2],  # ~8% not reappointed
                 "treatments_presented": [85000.00],  # Treatment presentations
                 "treatments_scheduled": [68000.00],  # ~80% acceptance
+                "$ Same Day Treatment": [4250.00],  # 5% of presented
             }
         )
 
@@ -201,7 +203,7 @@ class TestSheetsStructure:
         assert new_patients == 4
 
         treatment_acceptance = calculate_treatment_acceptance(daily_front)
-        assert treatment_acceptance == 80.0
+        assert treatment_acceptance == 85.0  # ((68000 + 4250) / 85000) * 100
 
         hygiene_reappointment = calculate_hygiene_reappointment(daily_front)
         assert hygiene_reappointment == 92.0  # ((25-2)/25) * 100

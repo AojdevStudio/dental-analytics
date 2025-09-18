@@ -109,18 +109,23 @@ class TestKPICalculations:
             {
                 "treatments_presented": [1000],
                 "treatments_scheduled": [500],
+                "$ Same Day Treatment": [100],
             }
         )
         result = calculate_treatment_acceptance(test_data)
-        # (500 / 1000) * 100 = 50%
-        assert result is not None and result == 50.0
+        # ((500 + 100) / 1000) * 100 = 60%
+        assert result is not None and result == 60.0
 
     @pytest.mark.unit
     def test_calculate_treatment_acceptance_zero_presented(self) -> None:
         """Test treatment acceptance with zero presented for single day (MVP)."""
         # MVP: Single day with zero presented
         test_data = pd.DataFrame(
-            {"treatments_presented": [0], "treatments_scheduled": [0]}
+            {
+                "treatments_presented": [0],
+                "treatments_scheduled": [0],
+                "$ Same Day Treatment": [0],
+            }
         )
         result = calculate_treatment_acceptance(test_data)
         assert result is None
@@ -222,6 +227,7 @@ class TestKPICalculations:
                 "Date": ["2024-01-15"],
                 "treatments_presented": [1000],
                 # Missing treatments_scheduled column
+                "$ Same Day Treatment": [100],
             }
         )
 

@@ -39,5 +39,6 @@ def get_simple_front_kpi_data() -> pd.DataFrame:
             "patients_not_reappointed": [0, 0, 0],
             "treatments_presented": [52085, 35822, 40141],
             "treatments_scheduled": [2715, 3019, 26739],
+            "$ Same Day Treatment": [1907, 0, 2606],
         }
     )

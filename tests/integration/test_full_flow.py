@@ -137,6 +137,7 @@ class TestFullIntegration:
                     "patients_not_reappointed": [2],
                     "treatments_presented": [50000],
                     "treatments_scheduled": [40000],
+                    "$ Same Day Treatment": [5000],
                 }
             )
 
@@ -149,7 +150,9 @@ class TestFullIntegration:
             assert kpis["production_total"] == 10000.00
             assert kpis["collection_rate"] == 90.0  # (9000/10000) * 100
             assert kpis["new_patients"] == 5
-            assert kpis["treatment_acceptance"] == 80.0  # (40000/50000) * 100
+            assert (
+                kpis["treatment_acceptance"] == 90.0
+            )  # ((40000 + 5000) / 50000) * 100
             assert kpis["hygiene_reappointment"] == 90.0  # ((20-2)/20) * 100
 
     @pytest.mark.integration

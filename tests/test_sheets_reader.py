@@ -165,7 +165,7 @@ class TestSheetsReader:
 
             # Verify the correct range was called
             mock_service.spreadsheets().values().get.assert_called_with(
-                spreadsheetId=SPREADSHEET_ID, range="EOD - Baytown Billing!A:N"
+                spreadsheetId=SPREADSHEET_ID, range="EOD - Baytown Billing!A:AG"
             )
             assert df is not None
             assert len(df) == 1
@@ -190,7 +190,8 @@ class TestSheetsReader:
 
             # Verify the correct range was called
             mock_service.spreadsheets().values().get.assert_called_with(
-                spreadsheetId=SPREADSHEET_ID, range="Front KPI - Baytown!A:N"
+                spreadsheetId=SPREADSHEET_ID,
+                range="Baytown Front KPIs Form responses!A:Z",
             )
             assert df is not None
             assert len(df) == 1
