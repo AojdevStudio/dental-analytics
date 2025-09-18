@@ -52,19 +52,68 @@ def get_sheet_data(spreadsheet_id: str, range_name: str) -> Optional[pd.DataFram
 ### KPI Formulas (exact implementations required)
 ```python
 def calculate_collection_rate(df: pd.DataFrame) -> float:
-    """Collection Rate = (Collections / Production) × 100"""
-    return (df['Collections'].sum() / df['Production'].sum()) * 100
+    """Collection Rate = (Patient + Unearned + Insurance Income) / Production × 100"""
+    production_total = (
+        df['Total Production Today'].sum()
+        + df['Adjustments Today'].sum()
+        + df['Write-offs Today'].sum()
+    )
+    collections_total = (
+        df['Patient Income Today'].sum()
+        + df['Unearned Income Today'].sum()
+        + df['Insurance Income Today'].sum()
+    )
+    if production_total == 0:
+        return 0.0
+    return (collections_total / production_total) * 100
 
-def calculate_treatment_acceptance(df: pd.DataFrame) -> float:
-    """Treatment Acceptance = (Scheduled / Presented) × 100"""
-    return (df['Scheduled'].sum() / df['Presented'].sum()) * 100
+
+def calculate_case_acceptance(df: pd.DataFrame) -> float:
+    """Case Acceptance = (Scheduled + Same Day) / Presented × 100"""
+    presented = df['treatments_presented'].sum()
+    scheduled = df['treatments_scheduled'].sum()
+    same_day = df['$ Same Day Treatment'].sum()
+    if presented == 0:
+        return 0.0
+    return ((scheduled + same_day) / presented) * 100
+
+
+def calculate_hygiene_reappointment(df: pd.DataFrame) -> float:
+    """Hygiene Reappointment = (Reappointed / Total) × 100"""
+    total = df['Total hygiene Appointments'].sum()
+    not_reappointed = df['Number of patients NOT reappointed?'].sum()
+    if total == 0:
+        return 0.0
+    return ((total - not_reappointed) / total) * 100
+
+
+def calculate_daily_new_patients(df: pd.DataFrame) -> pd.Series:
+    """Daily new patients from month-to-date cumulative values."""
+    ordered = df.sort_values('Submission Date')
+    cumulative = ordered['New Patients - Total Month to Date'].astype(float)
+    deltas = cumulative.diff().fillna(cumulative).clip(lower=0)
+    return deltas
 ```
 
 ### Data Validation
 ```python
 def validate_dental_data(df: pd.DataFrame) -> bool:
-    """Ensure data meets dental practice requirements."""
-    required_columns = ['Date', 'Provider', 'Production', 'Collections']
+    """Ensure Story 2.1 columns required for KPI calculations exist."""
+    required_columns = [
+        'Submission Date',
+        'Total Production Today',
+        'Adjustments Today',
+        'Write-offs Today',
+        'Patient Income Today',
+        'Unearned Income Today',
+        'Insurance Income Today',
+        'New Patients - Total Month to Date',
+        'treatments_presented',
+        'treatments_scheduled',
+        '$ Same Day Treatment',
+        'Total hygiene Appointments',
+        'Number of patients NOT reappointed?',
+    ]
     return all(col in df.columns for col in required_columns)
 ```
 
