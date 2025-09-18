@@ -8,7 +8,7 @@ audience: "Development Team"
 status: "Final"
 author: "AOJDevStudio"
 created_date: "2025-09-04"
-last_updated: "2025-09-04"
+last_updated: "2025-09-16"
 tags:
   - project-structure
   - file-organization
@@ -30,12 +30,14 @@ dental-analytics/
 ├── .claude/                 # Claude Code configuration
 ├── .serena/                 # Serena memory system
 ├── .streamlit/              # Streamlit configuration
-├── backend/                 # Backend Python modules
+├── apps/                    # Application modules (Story 2.0 refactor)
+│   ├── backend/            # Backend Python modules
+│   └── frontend/           # Frontend application code
 ├── config/                  # Configuration files
 ├── data/                    # Local data storage (if needed)
 ├── docs/                    # Documentation
-├── frontend/                # Frontend application code
 ├── htmlcov/                 # Test coverage reports
+├── scripts/                 # Development and utility scripts
 ├── tests/                   # Test suite
 ├── .coveragerc              # Coverage configuration
 ├── .gitignore               # Git ignore rules
@@ -50,27 +52,35 @@ dental-analytics/
 
 ## Core Application Structure
 
-### Backend Directory (`backend/`)
+### Backend Directory (`apps/backend/`)
 
 ```
-backend/
+apps/backend/
 ├── __init__.py              # Module initialization
-├── sheets_reader.py         # Google Sheets API interface (50 lines max)
-└── metrics.py               # KPI calculation logic (50 lines max)
+├── sheets_reader.py         # Google Sheets API interface
+├── metrics.py               # KPI calculation logic
+├── chart_data.py            # Chart data processing (Story 2.0+)
+└── historical_data.py       # Historical data management (Story 2.0+)
 ```
 
 **Purpose:** Framework-agnostic Python modules for data processing
 - No Streamlit dependencies
 - Pure business logic
 - Returns standard Python types (Dict, DataFrame)
+- Expanded with chart data and historical data modules (Story 2.0+)
 
-### Frontend Directory (`frontend/`)
+### Frontend Directory (`apps/frontend/`)
 
 ```
-frontend/
-├── app.py                   # Main Streamlit application (100 lines max)
-└── .streamlit/
-    └── config.toml          # Streamlit theme configuration
+apps/frontend/
+├── __init__.py              # Module initialization
+└── app.py                   # Main Streamlit application
+```
+
+**Note:** Streamlit configuration moved to project root:
+```
+.streamlit/
+└── config.toml              # Streamlit theme configuration
 ```
 
 **Purpose:** Presentation layer using Streamlit
@@ -222,29 +232,39 @@ htmlcov/                    # Coverage reports
 
 ```mermaid
 graph TD
-    A[frontend/app.py] --> B[backend/metrics.py]
-    B --> C[backend/sheets_reader.py]
+    A[apps/frontend/app.py] --> B[apps/backend/metrics.py]
+    A --> H[apps/backend/chart_data.py]
+    A --> I[apps/backend/historical_data.py]
+    B --> C[apps/backend/sheets_reader.py]
+    H --> C
+    I --> C
     C --> D[Google Sheets API]
     C --> E[config/credentials.json]
     A --> F[.streamlit/config.toml]
 
     T1[tests/test_metrics.py] --> B
     T2[tests/test_sheets_reader.py] --> C
+    T4[tests/test_chart_data.py] --> H
+    T5[tests/test_historical_data.py] --> I
     T3[tests/integration/] --> A
     T3 --> B
     T3 --> C
+    T3 --> H
+    T3 --> I
 ```
 
-## Code Line Constraints
+## Code Line Metrics
 
-Per project requirements, strict line limits:
+Current file sizes after Story 2.0 refactoring:
 
 | File | Max Lines | Current | Purpose |
 |------|-----------|---------|---------|
-| backend/sheets_reader.py | 50 | ~45 | Data retrieval |
-| backend/metrics.py | 50 | ~48 | KPI calculations |
-| frontend/app.py | 100 | ~95 | UI display |
-| **Total Production Code** | **200** | **~188** | Complete system |
+| apps/backend/sheets_reader.py | - | ~77 | Data retrieval |
+| apps/backend/metrics.py | - | ~92 | KPI calculations |
+| apps/backend/chart_data.py | - | ~50 | Chart data processing |
+| apps/backend/historical_data.py | - | ~60 | Historical data management |
+| apps/frontend/app.py | - | ~80 | UI display |
+| **Total Production Code** | **-** | **~359** | Complete system (Story 2.0+) |
 
 ## Import Structure
 
@@ -259,11 +279,13 @@ from typing import Optional, Dict, Any
 
 ### Frontend Module
 ```python
-# app.py
+# apps/frontend/app.py
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from backend.metrics import get_all_kpis
+from apps.backend.metrics import get_all_kpis
+from apps.backend.chart_data import get_chart_data
+from apps.backend.historical_data import get_historical_data
 ```
 
 ### Test Modules
@@ -272,8 +294,10 @@ from backend.metrics import get_all_kpis
 import pytest
 import pandas as pd
 from unittest.mock import Mock, patch
-from backend.metrics import MetricsCalculator
-from backend.sheets_reader import SheetsReader
+from apps.backend.metrics import get_all_kpis
+from apps.backend.sheets_reader import SheetsReader
+from apps.backend.chart_data import get_chart_data
+from apps.backend.historical_data import get_historical_data
 ```
 
 ## Environment Setup
@@ -297,12 +321,14 @@ uv (NOT pip, poetry, or conda)
 
 ## Data Flow Through Structure
 
-1. **Entry Point:** `frontend/app.py`
-2. **Business Logic:** `backend/metrics.py`
-3. **Data Access:** `backend/sheets_reader.py`
-4. **External Data:** Google Sheets API
-5. **Configuration:** `config/credentials.json`
-6. **Display:** Streamlit components
+1. **Entry Point:** `apps/frontend/app.py`
+2. **Business Logic:** `apps/backend/metrics.py`
+3. **Chart Processing:** `apps/backend/chart_data.py`
+4. **Historical Analysis:** `apps/backend/historical_data.py`
+5. **Data Access:** `apps/backend/sheets_reader.py`
+6. **External Data:** Google Sheets API
+7. **Configuration:** `config/credentials.json`
+8. **Display:** Streamlit components
 
 ## Security Considerations
 
@@ -362,13 +388,17 @@ For new developers, create files in this sequence:
    - README.md
 
 2. **Backend Implementation**
-   - backend/__init__.py
-   - backend/sheets_reader.py
-   - backend/metrics.py
+   - apps/__init__.py
+   - apps/backend/__init__.py
+   - apps/backend/sheets_reader.py
+   - apps/backend/metrics.py
+   - apps/backend/chart_data.py (Story 2.0+)
+   - apps/backend/historical_data.py (Story 2.0+)
 
 3. **Frontend Implementation**
    - .streamlit/config.toml
-   - frontend/app.py
+   - apps/frontend/__init__.py
+   - apps/frontend/app.py
 
 4. **Testing**
    - pytest.ini

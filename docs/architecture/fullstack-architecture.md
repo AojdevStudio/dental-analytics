@@ -8,7 +8,7 @@ audience: "Development Team, DevOps"
 status: "Final"
 author: "AOJDevStudio"
 created_date: "2025-09-04"
-last_updated: "2025-09-04"
+last_updated: "2025-09-16"
 tags:
   - fullstack-architecture
   - system-design
@@ -21,7 +21,7 @@ tags:
 
 ## Executive Summary
 
-A complete, production-ready architecture for a dental analytics dashboard that displays 5 critical KPIs. Built with radical simplicity in mind - under 200 lines of code total - while maintaining professional standards for security, performance, and reliability. Zero database, zero complexity, maximum value.
+A complete, production-ready architecture for a dental analytics dashboard that displays 5 critical KPIs. Built with radical simplicity in mind - expanded to ~360 lines after Story 2.0 refactoring with apps/ structure - while maintaining professional standards for security, performance, and reliability. Zero database, zero complexity, maximum value.
 
 ## System Architecture Overview
 
@@ -42,7 +42,7 @@ A complete, production-ready architecture for a dental analytics dashboard that 
 │                 PRESENTATION LAYER                         │
 │                   Streamlit Server                         │
 │  ┌─────────────────────────────────────────────────────┐  │
-│  │              frontend/app.py (100 lines)            │  │
+│  │           apps/frontend/app.py (~80 lines)          │  │
 │  │  • Page Configuration & Theming                     │  │
 │  │  • KPI Display Components (st.metric)               │  │
 │  │  • Layout Management (st.columns)                   │  │
@@ -55,7 +55,7 @@ A complete, production-ready architecture for a dental analytics dashboard that 
 │                  BUSINESS LOGIC LAYER                      │
 │              Backend Python Modules (100 lines)            │
 │  ┌─────────────────────────────────────────────────────┐  │
-│  │           backend/metrics.py (50 lines)             │  │
+│  │         apps/backend/metrics.py (~92 lines)         │  │
 │  │  • calculate_production_total()                     │  │
 │  │  • calculate_collection_rate()                      │  │
 │  │  • calculate_new_patients()                         │  │
@@ -65,7 +65,7 @@ A complete, production-ready architecture for a dental analytics dashboard that 
 │  └──────────────────┬──────────────────────────────────┘  │
 │                     │                                      │
 │  ┌──────────────────▼──────────────────────────────────┐  │
-│  │        backend/sheets_reader.py (50 lines)          │  │
+│  │      apps/backend/sheets_reader.py (~77 lines)      │  │
 │  │  • Service Account Authentication                   │  │
 │  │  • Google Sheets API Connection                     │  │
 │  │  • Data Retrieval & DataFrame Conversion            │  │
@@ -80,8 +80,8 @@ A complete, production-ready architecture for a dental analytics dashboard that 
 │  ┌─────────────────────────────────────────────────────┐  │
 │  │  • EOD - Baytown Billing (Production/Collections)   │  │
 │  │  • EOD - Humble Billing (Production/Collections)    │  │
-│  │  • Front KPI - Baytown (Treatment/Hygiene)          │  │
-│  │  • Front KPI - Humble (Treatment/Hygiene)           │  │
+│  │  • Baytown Front KPIs Form responses (Treatment/Hygiene)          │  │
+│  │  • Humble Front KPIs Form responses (Treatment/Hygiene)           │  │
 │  └─────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -109,7 +109,7 @@ Type Checking: mypy (optional)
 
 ## Component Architecture
 
-### 1. Frontend Layer (`frontend/app.py`)
+### 1. Frontend Layer (`apps/frontend/app.py`)
 
 **Responsibility:** User interface and data presentation
 
@@ -138,15 +138,18 @@ kpis = get_all_kpis()
 - **Reactive Updates:** Auto-refresh on page load
 - **Graceful Degradation:** "Data Unavailable" fallbacks
 
-### 2. Backend Layer (`backend/`)
+### 2. Backend Layer (`apps/backend/`)
 
 **Responsibility:** Data retrieval and business logic
 
 **Module Structure:**
 ```
-backend/
+apps/backend/
 ├── __init__.py           # Module initialization
 ├── sheets_reader.py      # Google Sheets API interface
+├── metrics.py            # KPI calculations
+├── chart_data.py         # Chart data processing
+├── historical_data.py    # Historical data management
 └── metrics.py           # KPI calculation logic
 ```
 
@@ -233,11 +236,15 @@ Google Sheets → API Response → JSON → DataFrame → Calculations → Dict 
 ```bash
 # Project Structure
 dental-analytics/
-├── frontend/
-│   └── app.py
-├── backend/
-│   ├── __init__.py
-│   ├── sheets_reader.py
+├── apps/
+│   ├── frontend/
+│   │   └── app.py
+│   └── backend/
+│       ├── __init__.py
+│       ├── sheets_reader.py
+│       ├── metrics.py
+│       ├── chart_data.py
+│       └── historical_data.py
 │   └── metrics.py
 ├── config/
 │   ├── credentials.json
@@ -251,7 +258,7 @@ dental-analytics/
 git clone <repository>
 cd dental-analytics
 uv sync
-uv run streamlit run frontend/app.py
+uv run streamlit run apps/frontend/app.py
 ```
 
 ### Production Deployment Options

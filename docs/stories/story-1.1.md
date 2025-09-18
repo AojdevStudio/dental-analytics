@@ -127,8 +127,8 @@ class SheetsReader:
 - **Target Sheets:**
   - "EOD - Baytown Billing"
   - "EOD - Humble Billing" (future)
-  - "Front KPI - Baytown" (future)
-  - "Front KPI - Humble" (future)
+  - "Baytown Front KPIs Form responses" (future)
+  - "Humble Front KPIs Form responses" (future)
 
 ### Error Handling Requirements
 [Source: architecture/backend/error-handling-philosophy.md]

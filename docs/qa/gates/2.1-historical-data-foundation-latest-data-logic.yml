@@ -1,0 +1,52 @@
+schema: 1
+story: "2.1"
+story_title: "Historical Data Foundation & Latest Data Logic"
+gate: PASS
+status_reason: "Historical aggregator now returns front-office KPIs and treatment acceptance includes same-day dollars, satisfying AC4."
+reviewer: "Quinn (Test Architect)"
+updated: "2025-09-17T22:05:00Z"
+
+waiver: { active: false }
+
+top_issues:
+  - severity: low
+    summary: "Treatment acceptance docstring still references legacy formula; update for clarity."
+    refs:
+      - "apps/backend/metrics.py:306-308"
+    suggested_owner: dev
+    ac_refs: []
+
+evidence:
+  tests_reviewed: 2
+  risks_identified: 1
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: "No auth surface touched in this iteration."
+  performance:
+    status: PASS
+    notes: "Vectorized pandas operations unchanged; no new bottlenecks introduced."
+  reliability:
+    status: PASS
+    notes: "Front-office series populate correctly; calculations align with standards."
+  maintainability:
+    status: CONCERNS
+    notes: "Docstring still references old formula; otherwise structure intact."
+
+quality_score: 95
+expires: "2025-10-08T00:00:00Z"
+
+recommendations:
+  immediate:
+    - action: "Refresh treatment acceptance docstring to match implemented formula."
+      refs:
+        - "apps/backend/metrics.py"
+  future:
+    - action: "Factor historical KPI logic into smaller modules per Story 2.1 function inventory to cut file size and ease maintenance."
+      refs:
+        - "apps/backend/metrics.py"
+        - "docs/qa/story-2.1-function-inventory.md"

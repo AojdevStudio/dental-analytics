@@ -1,6 +1,6 @@
 # Core Components
 
-## 1. Google Sheets Reader Module (`backend/sheets_reader.py`)
+## 1. Google Sheets Reader Module (`apps/backend/sheets_reader.py`)
 
 **Purpose:** Single responsibility - retrieve data from Google Sheets and return pandas DataFrames.
 
@@ -51,7 +51,7 @@ class SheetsReader:
 - Simple error handling returns None (fail gracefully)
 - No business logic - pure data retrieval
 
-## 2. Metrics Calculation Module (`backend/metrics.py`)
+## 2. Metrics Calculation Module (`apps/backend/metrics.py`)
 
 **Purpose:** Pure calculation functions transforming DataFrames into KPI values.
 
@@ -139,7 +139,7 @@ def get_all_kpis() -> Dict[str, Optional[float]]:
 
     # Fetch data from appropriate sheets
     eod_data = reader.get_sheet_data('EOD - Baytown Billing!A:N')
-    front_kpi_data = reader.get_sheet_data('Front KPI - Baytown!A:N')
+    front_kpi_data = reader.get_sheet_data('Baytown Front KPIs Form responses!A:N')
 
     return {
         'production_total': calculator.calculate_production_total(eod_data),

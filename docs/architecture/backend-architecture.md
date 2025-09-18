@@ -8,7 +8,7 @@ audience: "Development Team"
 status: "Final"
 author: "AOJDevStudio"
 created_date: "2025-09-04"
-last_updated: "2025-09-04"
+last_updated: "2025-09-16"
 tags:
   - backend-architecture
   - python
@@ -21,7 +21,7 @@ tags:
 
 ## Executive Summary
 
-A minimalist, framework-agnostic backend architecture delivering 5 critical dental KPIs through clean Python modules. Total implementation under 100 lines, focusing on data retrieval from Google Sheets and pure calculation logic with zero framework dependencies.
+A minimalist, framework-agnostic backend architecture delivering 5 critical dental KPIs through clean Python modules. Implementation expanded after Story 2.0 to include chart data and historical analysis, focusing on data retrieval from Google Sheets and pure calculation logic with zero framework dependencies.
 
 ## System Architecture Overview
 
@@ -59,7 +59,7 @@ A minimalist, framework-agnostic backend architecture delivering 5 critical dent
 
 ## Core Components
 
-### 1. Google Sheets Reader Module (`backend/sheets_reader.py`)
+### 1. Google Sheets Reader Module (`apps/backend/sheets_reader.py`)
 
 **Purpose:** Single responsibility - retrieve data from Google Sheets and return pandas DataFrames.
 
@@ -110,7 +110,7 @@ class SheetsReader:
 - Simple error handling returns None (fail gracefully)
 - No business logic - pure data retrieval
 
-### 2. Metrics Calculation Module (`backend/metrics.py`)
+### 2. Metrics Calculation Module (`apps/backend/metrics.py`)
 
 **Purpose:** Pure calculation functions transforming DataFrames into KPI values.
 
@@ -198,7 +198,7 @@ def get_all_kpis() -> Dict[str, Optional[float]]:
 
     # Fetch data from appropriate sheets
     eod_data = reader.get_sheet_data('EOD - Baytown Billing!A:N')
-    front_kpi_data = reader.get_sheet_data('Front KPI - Baytown!A:N')
+    front_kpi_data = reader.get_sheet_data('Baytown Front KPIs Form responses!A:N')
 
     return {
         'production_total': calculator.calculate_production_total(eod_data),
@@ -241,7 +241,7 @@ Exception → Log Error → Return None → Frontend Shows "Data Unavailable"
 ## Module Dependencies
 
 ```yaml
-backend/:
+apps/backend/:
   __init__.py:
     - Empty file for module initialization
 

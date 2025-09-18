@@ -35,8 +35,8 @@ uv run python scripts/setup-dev.py
 
 # Daily development
 uv run python scripts/check-quality.py  # Full quality check
-uv run streamlit run frontend/app.py     # Start application
-uv run pytest --cov=backend --cov=frontend  # Run tests with coverage
+uv run streamlit run apps/frontend/app.py     # Start application
+uv run pytest --cov=apps.backend --cov=apps.frontend  # Run tests with coverage
 ```
 
 ## Development Workflow Phases
@@ -155,7 +155,7 @@ Every development session should include continuous quality validation:
 3. **Comprehensive Validation** (Before PR)
    ```bash
    # Full test suite with coverage
-   uv run pytest --cov=backend --cov=frontend --cov-report=term-missing
+   uv run pytest --cov=apps.backend --cov=apps.frontend --cov-report=term-missing
    ```
 
 #### Quality Check Interpretation
@@ -307,7 +307,7 @@ uv run python scripts/check-quality.py
 # Add to frontend/app.py
 
 # 7. Final validation
-uv run pytest --cov=backend --cov=frontend
+uv run pytest --cov=apps.backend --cov=apps.frontend
 ```
 
 ### Scenario 2: Bug Fix with TDD
@@ -338,7 +338,7 @@ uv run python scripts/check-quality.py
 
 ```bash
 # 1. Establish baseline
-uv run pytest --cov=backend --cov=frontend  # Note current coverage
+uv run pytest --cov=apps.backend --cov=apps.frontend  # Note current coverage
 uv run python scripts/check-quality.py     # Ensure clean state
 
 # 2. Refactor incrementally
@@ -419,7 +419,7 @@ uv run mypy backend/ frontend/
 **Test Coverage Drops**
 ```bash
 # Identify: Show uncovered lines
-uv run pytest --cov=backend --cov=frontend --cov-report=term-missing
+uv run pytest --cov=apps.backend --cov=apps.frontend --cov-report=term-missing
 
 # Fix: Add tests for uncovered lines
 # Focus on backend business logic first
@@ -467,8 +467,8 @@ uv run pre-commit run --all-files
 ```bash
 # Full development cycle
 uv run python scripts/check-quality.py  # Quality validation
-uv run pytest --cov=backend --cov=frontend  # Test with coverage
-uv run streamlit run frontend/app.py  # Start application
+uv run pytest --cov=apps.backend --cov=apps.frontend  # Test with coverage
+uv run streamlit run apps/frontend/app.py  # Start application
 
 # Quality tools individual runs
 uv run black .           # Format code

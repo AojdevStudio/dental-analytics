@@ -17,7 +17,7 @@
 │                 PRESENTATION LAYER                         │
 │                   Streamlit Server                         │
 │  ┌─────────────────────────────────────────────────────┐  │
-│  │              frontend/app.py (100 lines)            │  │
+│  │           apps/frontend/app.py (~80 lines)          │  │
 │  │  • Page Configuration & Theming                     │  │
 │  │  • KPI Display Components (st.metric)               │  │
 │  │  • Layout Management (st.columns)                   │  │
@@ -30,7 +30,7 @@
 │                  BUSINESS LOGIC LAYER                      │
 │              Backend Python Modules (100 lines)            │
 │  ┌─────────────────────────────────────────────────────┐  │
-│  │           backend/metrics.py (50 lines)             │  │
+│  │         apps/backend/metrics.py (~92 lines)         │  │
 │  │  • calculate_production_total()                     │  │
 │  │  • calculate_collection_rate()                      │  │
 │  │  • calculate_new_patients()                         │  │
@@ -40,7 +40,7 @@
 │  └──────────────────┬──────────────────────────────────┘  │
 │                     │                                      │
 │  ┌──────────────────▼──────────────────────────────────┐  │
-│  │        backend/sheets_reader.py (50 lines)          │  │
+│  │      apps/backend/sheets_reader.py (~77 lines)      │  │
 │  │  • Service Account Authentication                   │  │
 │  │  • Google Sheets API Connection                     │  │
 │  │  • Data Retrieval & DataFrame Conversion            │  │
@@ -55,8 +55,8 @@
 │  ┌─────────────────────────────────────────────────────┐  │
 │  │  • EOD - Baytown Billing (Production/Collections)   │  │
 │  │  • EOD - Humble Billing (Production/Collections)    │  │
-│  │  • Front KPI - Baytown (Treatment/Hygiene)          │  │
-│  │  • Front KPI - Humble (Treatment/Hygiene)           │  │
+│  │  • Baytown Front KPIs Form responses (Treatment/Hygiene)          │  │
+│  │  • Humble Front KPIs Form responses (Treatment/Hygiene)           │  │
 │  └─────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```

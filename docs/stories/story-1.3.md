@@ -118,14 +118,14 @@ class MetricsCalculator:
     @staticmethod
     def get_all_kpis() -> Dict[str, Optional[float]]:
         """Orchestrate all KPI calculations."""
-        from backend.sheets_reader import SheetsReader
+        from apps.backend.sheets_reader import SheetsReader
         reader = SheetsReader()
 
         # Get EOD data for production, collections, and new patients
         eod_data = reader.get_sheet_data('EOD - Baytown Billing!A:N')
 
         # Get Front KPI data for treatment acceptance
-        front_kpi_data = reader.get_sheet_data('Front KPI - Baytown!A:N')
+        front_kpi_data = reader.get_sheet_data('Baytown Front KPIs Form responses!A:N')
 
         return {
             'production_total': cls.calculate_production_total(eod_data),
@@ -140,7 +140,7 @@ class MetricsCalculator:
 - **EOD Sheets:** "EOD - Baytown Billing" with production, collection, and patient data
   - Column J: `new_patients` (daily new patient count)
   - Columns E, F: Production and collection data (already implemented)
-- **Front KPI Sheets:** "Front KPI - Baytown" with treatment and hygiene metrics
+- **Front KPI Sheets:** "Baytown Front KPIs Form responses" with treatment and hygiene metrics
   - Column L: `treatments_presented` (treatments offered to patients)
   - Column M: `treatments_scheduled` (treatments accepted/scheduled)
 

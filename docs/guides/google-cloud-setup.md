@@ -234,8 +234,8 @@ uv run python test_connection.py
    Sheets found: 4
    - EOD - Baytown Billing
    - EOD - Humble Billing
-   - Front KPI - Baytown
-   - Front KPI - Humble
+   - Baytown Front KPIs Form responses
+   - Humble Front KPIs Form responses
 ```
 
 ## Step 8: Troubleshooting

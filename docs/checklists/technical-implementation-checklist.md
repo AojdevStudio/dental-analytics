@@ -125,7 +125,7 @@
 
 ### Local Testing
 - [ ] Run `uv sync` to ensure all dependencies installed
-- [ ] Execute: `uv run streamlit run frontend/app.py`
+- [ ] Execute: `uv run streamlit run apps/frontend/app.py`
 - [ ] Access http://localhost:8501
 - [ ] Verify dashboard loads within 3 seconds
 

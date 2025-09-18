@@ -1,7 +1,7 @@
 # Story 2.0: Project Structure Refactoring - Brownfield Addition
 
 ## Status
-Ready for Review
+Done
 
 ## Story
 **As a** developer,

@@ -99,14 +99,14 @@ class MetricsCalculator:
     @staticmethod
     def get_all_kpis() -> Dict[str, Optional[float]]:
         """Orchestrate all KPI calculations."""
-        from backend.sheets_reader import SheetsReader
+        from apps.backend.sheets_reader import SheetsReader
         reader = SheetsReader()
 
         # Get EOD data for production, collections, and new patients
         eod_data = reader.get_sheet_data('EOD - Baytown Billing!A:N')
 
         # Get Front KPI data for treatment acceptance AND hygiene reappointment
-        front_kpi_data = reader.get_sheet_data('Front KPI - Baytown!A:N')
+        front_kpi_data = reader.get_sheet_data('Baytown Front KPIs Form responses!A:N')
 
         return {
             'production_total': cls.calculate_production_total(eod_data),
@@ -119,7 +119,7 @@ class MetricsCalculator:
 
 ### Google Sheets Data Schema
 [Source: Story 1.1 and Epic 1 requirements]
-- **Front KPI Sheets:** "Front KPI - Baytown" with treatment and hygiene metrics
+- **Front KPI Sheets:** "Baytown Front KPIs Form responses" with treatment and hygiene metrics
   - Column C: `total_hygiene_appointments` (total hygiene appointments scheduled)
   - Column D: `patients_not_reappointed` (patients who left without reappointment)
   - **Calculation:** Reappointment Rate = ((C - D) / C) × 100
