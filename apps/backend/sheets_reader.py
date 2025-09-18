@@ -69,12 +69,26 @@ class SheetsReader:
             logger.error(f"Unexpected error reading {range_name}: {e}")
             return None
 
-    def get_eod_data(self) -> pd.DataFrame | None:
-        """Get EOD (End of Day) billing data from Baytown sheet."""
-        range_name = "EOD - Baytown Billing!A:N"
+    def get_eod_data(self, location: str = "baytown") -> pd.DataFrame | None:
+        """Get EOD (End of Day) billing data from specified location sheet.
+
+        Args:
+            location: Location name ('baytown' or 'humble')
+        """
+        if location.lower() == "humble":
+            range_name = "EOD - Humble Billing!A:AG"
+        else:  # Default to baytown
+            range_name = "EOD - Baytown Billing!A:AG"
         return self.get_sheet_data(range_name)
 
-    def get_front_kpi_data(self) -> pd.DataFrame | None:
-        """Get Front KPI data from Baytown sheet."""
-        range_name = "Front KPI - Baytown!A:N"
+    def get_front_kpi_data(self, location: str = "baytown") -> pd.DataFrame | None:
+        """Get Front KPI data from specified location sheet.
+
+        Args:
+            location: Location name ('baytown' or 'humble')
+        """
+        if location.lower() == "humble":
+            range_name = "Humble Front KPIs Form responses!A:Z"
+        else:  # Default to baytown
+            range_name = "Baytown Front KPIs Form responses!A:Z"
         return self.get_sheet_data(range_name)
