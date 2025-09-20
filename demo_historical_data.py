@@ -94,7 +94,8 @@ def demonstrate_historical_range_calculation() -> None:
     start_date, end_date = get_historical_date_range(days_back=30)
     print(
         f"30-day range: {start_date.strftime('%Y-%m-%d')} to "
-        f"{end_date.strftime('%Y-%m-%d')}"    )
+        f"{end_date.strftime('%Y-%m-%d')}"
+    )
 
     # Get operational days in that range
     operational_days = get_operational_days_in_range(start_date, end_date)
@@ -199,9 +200,7 @@ def demonstrate_chart_data_processing() -> None:
 
     print("\nMetadata:")
     print(f"  Generated at: {chart_data['metadata']['generated_at']}")
-    print(
-        f"  EOD data: {chart_data['metadata']['data_sources']['eod_available']}"
-    )
+    print(f"  EOD data: {chart_data['metadata']['data_sources']['eod_available']}")
     print(
         f"  Front KPI: {chart_data['metadata']['data_sources']['front_kpi_available']}"
     )
@@ -228,7 +227,8 @@ def demonstrate_error_handling() -> None:
     print(f"    EOD: {chart_data['metadata']['data_sources']['eod_available']}")
     print(
         f"    Front KPI: "
-        f"{chart_data['metadata']['data_sources']['front_kpi_available']}"    )
+        f"{chart_data['metadata']['data_sources']['front_kpi_available']}"
+    )
 
     # Test with invalid data source
     print("\nTesting invalid data source:")

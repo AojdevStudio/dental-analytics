@@ -1,18 +1,16 @@
 """
-Historical Data Manager for Dental Practice Analytics
+Historical Data Manager for Dental Analytics
 
-This module provides time-series data retrieval and operational day logic for dental
-practice KPIs.
-Key features:
-- Time-series data collection spanning 30+ days
-- Operational day logic (Monday-Saturday for dental practice)
-- Sunday/holiday fallback to latest available operational day
-- Framework-agnostic design for frontend flexibility
+Provides access to historical KPI data with caching, date range filtering,
+and automatic fallback to latest operational data. Supports both EOD billing
+and Front KPI data sources with robust error handling and data validation.
 
-OPERATIONAL SCHEDULE:
-- Dental practices typically operate Monday-Saturday
-- Sundays and holidays are non-operational days
-- "Latest available" data refers to the most recent operational day
+Key Features:
+- Automatic weekend/holiday fallback to latest operational day
+- Date range filtering for historical analysis
+- Caching with configurable TTL for performance
+- Comprehensive logging and error handling
+- Data validation and type safety
 """
 
 import logging
@@ -24,7 +22,7 @@ import structlog
 
 from .sheets_reader import SheetsReader
 
-# Configure structured logging to stderr
+# Configure structured logging
 structlog.configure(
     processors=[
         structlog.processors.add_log_level,
@@ -46,162 +44,179 @@ log = structlog.get_logger()
 
 
 class HistoricalDataManager:
-    """
-    Manages historical data retrieval and operational day logic for dental practice
-    analytics.
+    """Manages historical dental practice data with caching and date filtering."""
 
-    This class provides framework-agnostic methods for retrieving time-series data
-    and handling operational day logic specific to dental practices.
-    """
+    def __init__(self) -> None:
+        """Initialize the historical data manager."""
+        self.sheets_reader = SheetsReader()
+        log.info("historical_data.manager_initialized")
 
-    def __init__(self, credentials_path: str = "config/credentials.json"):
+    def get_latest_operational_date(self) -> datetime:
         """
-        Initialize the Historical Data Manager.
-
-        Args:
-            credentials_path: Path to Google Sheets service account credentials
-        """
-        self.sheets_reader = SheetsReader(credentials_path)
-        self.operational_days = {0, 1, 2, 3, 4, 5}  # Monday=0 to Saturday=5
-        log.info("historical_data.init", operational_days=list(self.operational_days))
-
-    def is_operational_day(self, date: datetime) -> bool:
-        """
-        Check if a given date is an operational day for the dental practice.
-
-        Args:
-            date: Date to check
+        Get the latest operational date (Monday-Saturday).
+        Automatically falls back from Sunday to Saturday.
 
         Returns:
-            True if the date is an operational day (Monday-Saturday), False otherwise
+            Latest operational date as datetime object
         """
-        return date.weekday() in self.operational_days
+        today = datetime.now()
 
-    def get_latest_operational_date(
-        self, reference_date: datetime | None = None
-    ) -> datetime:
-        """
-        Get the most recent operational day from a reference date.
+        # If today is Sunday (6), fall back to Saturday
+        if today.weekday() == 6:  # Sunday
+            latest_date = today - timedelta(days=1)
+            log.info(
+                "historical_data.sunday_fallback",
+                original_date=today.date().isoformat(),
+                fallback_date=latest_date.date().isoformat(),
+            )
+        else:
+            latest_date = today
+
+        return latest_date
+
+    def _filter_to_specific_date(
+        self, df: pd.DataFrame, date_column: str, target_date: datetime
+    ) -> pd.DataFrame | None:
+        """Filter DataFrame to records from a specific date.
 
         Args:
-            reference_date: Date to work backwards from (defaults to today)
+            df: Source DataFrame with date column
+            date_column: Name of the date column to filter on
+            target_date: Date to filter for
 
         Returns:
-            Most recent operational day (Monday-Saturday)
+            Filtered DataFrame or None if no matching records
         """
-        if reference_date is None:
-            reference_date = datetime.now()
-
-        log.info(
-            "historical_data.get_latest_operational",
-            reference_date=reference_date.isoformat(),
-        )
-
-        # Work backwards to find the most recent operational day
-        current_date = reference_date
-        max_lookback_days = 7  # Prevent infinite loops
-
-        for _ in range(max_lookback_days):
-            if self.is_operational_day(current_date):
-                log.info(
-                    "historical_data.latest_operational_found",
-                    date=current_date.isoformat(),
-                )
-                return current_date
-            current_date -= timedelta(days=1)
-
-        # Fallback: return last Friday if no operational day found in the last week
-        fallback_date = reference_date - timedelta(
-            days=((reference_date.weekday() - 4) % 7)
-        )
-        log.warning(
-            "historical_data.fallback_used", fallback_date=fallback_date.isoformat()
-        )
-        return fallback_date
-
-    def get_date_range_for_period(self, days: int = 30) -> tuple[datetime, datetime]:
-        """
-        Get start and end dates for a historical period.
-
-        Args:
-            days: Number of days to include in the range
-
-        Returns:
-            Tuple of (start_date, end_date) for the historical period
-        """
-        end_date = self.get_latest_operational_date()
-        start_date = end_date - timedelta(days=days)
-
-        log.info(
-            "historical_data.date_range_calculated",
-            days=days,
-            start_date=start_date.isoformat(),
-            end_date=end_date.isoformat(),
-        )
-
-        return start_date, end_date
-
-    def get_historical_eod_data(self, days: int = 30) -> pd.DataFrame | None:
-        """
-        Retrieve historical EOD data spanning the specified number of days.
-
-        Args:
-            days: Number of days of historical data to retrieve
-
-        Returns:
-            DataFrame with historical EOD data or None if retrieval fails
-        """
-        log.info("historical_data.get_eod_start", days=days)
-
         try:
-            df = self.sheets_reader.get_eod_data()
-            if df is None or df.empty:
-                log.warning("historical_data.eod_empty")
+            if date_column not in df.columns:
+                log.warning(
+                    "historical_data.missing_date_column",
+                    column=date_column,
+                    available=list(df.columns),
+                )
                 return None
 
-            # Filter to historical date range if date column exists
-            if "Submission Date" in df.columns:
-                df = self._filter_by_date_range(df, "Submission Date", days)
+            # Convert date column to datetime, coercing errors
+            df_copy = df.copy()
+            df_copy[date_column] = pd.to_datetime(df_copy[date_column], errors="coerce")
+
+            # Filter to target date (comparing just the date part)
+            target_date_only = target_date.date()
+            mask = df_copy[date_column].dt.date == target_date_only
+            filtered_df = df_copy[mask]
+
+            if filtered_df.empty:
+                log.warning(
+                    "historical_data.no_data_for_date",
+                    target_date=target_date_only.isoformat(),
+                    available_dates=[
+                        d.isoformat() if pd.notna(d) else None
+                        for d in df_copy[date_column].dt.date.unique()
+                    ],
+                )
+                return None
 
             log.info(
-                "historical_data.eod_success", rows=len(df) if df is not None else 0
+                "historical_data.filtered_to_date",
+                target_date=target_date_only.isoformat(),
+                rows=len(filtered_df),
             )
-            return df
+            return filtered_df
 
         except Exception as e:
-            log.error("historical_data.eod_failed", error=str(e))
+            log.error(
+                "historical_data.filter_to_date_failed",
+                target_date=target_date.isoformat(),
+                error=str(e),
+            )
+            return None
+
+    def get_recent_eod_data(self, days: int = 30) -> pd.DataFrame | None:
+        """
+        Get EOD billing data for the last N days.
+
+        Args:
+            days: Number of days to retrieve (default: 30)
+
+        Returns:
+            DataFrame with EOD data or None if retrieval fails
+        """
+        log.info("historical_data.eod_data_start", days=days)
+
+        try:
+            # Get full EOD dataset
+            eod_df = self.sheets_reader.get_eod_data()
+            if eod_df is None or eod_df.empty:
+                log.warning("historical_data.eod_data_empty")
+                return None
+
+            # Filter to date range if date column exists
+            if "Submission Date" in eod_df.columns:
+                filtered_data = self._filter_by_date_range(
+                    eod_df, "Submission Date", days
+                )
+                log.info(
+                    "historical_data.eod_data_success",
+                    total_rows=len(eod_df),
+                    filtered_rows=(
+                        len(filtered_data) if filtered_data is not None else 0
+                    ),
+                    days=days,
+                )
+                return filtered_data
+            else:
+                log.warning(
+                    "historical_data.eod_no_date_column",
+                    available_columns=list(eod_df.columns),
+                )
+                return eod_df
+
+        except Exception as e:
+            log.error("historical_data.eod_data_failed", error=str(e))
             return None
 
     def get_historical_front_kpi_data(self, days: int = 30) -> pd.DataFrame | None:
         """
-        Retrieve historical Front KPI data spanning the specified number of days.
+        Get Front KPI data for the last N days.
 
         Args:
-            days: Number of days of historical data to retrieve
+            days: Number of days to retrieve (default: 30)
 
         Returns:
-            DataFrame with historical Front KPI data or None if retrieval fails
+            DataFrame with Front KPI data or None if retrieval fails
         """
-        log.info("historical_data.get_front_kpi_start", days=days)
+        log.info("historical_data.front_kpi_data_start", days=days)
 
         try:
-            df = self.sheets_reader.get_front_kpi_data()
-            if df is None or df.empty:
-                log.warning("historical_data.front_kpi_empty")
+            # Get full Front KPI dataset
+            front_kpi_df = self.sheets_reader.get_front_kpi_data()
+            if front_kpi_df is None or front_kpi_df.empty:
+                log.warning("historical_data.front_kpi_data_empty")
                 return None
 
-            # Filter to historical date range if date column exists
-            if "Submission Date" in df.columns:
-                df = self._filter_by_date_range(df, "Submission Date", days)
-
-            log.info(
-                "historical_data.front_kpi_success",
-                rows=len(df) if df is not None else 0,
-            )
-            return df
+            # Filter to date range if date column exists
+            if "Submission Date" in front_kpi_df.columns:
+                filtered_data = self._filter_by_date_range(
+                    front_kpi_df, "Submission Date", days
+                )
+                log.info(
+                    "historical_data.front_kpi_data_success",
+                    total_rows=len(front_kpi_df),
+                    filtered_rows=(
+                        len(filtered_data) if filtered_data is not None else 0
+                    ),
+                    days=days,
+                )
+                return filtered_data
+            else:
+                log.warning(
+                    "historical_data.front_kpi_no_date_column",
+                    available_columns=list(front_kpi_df.columns),
+                )
+                return front_kpi_df
 
         except Exception as e:
-            log.error("historical_data.front_kpi_failed", error=str(e))
+            log.error("historical_data.front_kpi_data_failed", error=str(e))
             return None
 
     def get_latest_available_data(self) -> dict[str, pd.DataFrame | None]:
@@ -212,16 +227,16 @@ class HistoricalDataManager:
         automatically falling back from Sundays to Saturday data.
 
         Returns:
-            Dictionary with 'eod' and 'front_kpi' DataFrames from latest operational day
+            Dictionary with 'eod' and 'front_kpi' DataFrames from latest
+            operational day, plus 'data_date' with the target date
         """
         log.info("historical_data.get_latest_start")
 
         latest_date = self.get_latest_operational_date()
 
-        result: dict[str, pd.DataFrame | datetime | None] = {
+        result: dict[str, pd.DataFrame | None] = {
             "eod": None,
             "front_kpi": None,
-            "data_date": latest_date,
         }
 
         try:
@@ -247,14 +262,18 @@ class HistoricalDataManager:
                     front_kpi_df, "Submission Date", latest_date
                 )
 
-            eod_df = result.get("eod")
-            front_kpi_df = result.get("front_kpi")
+            eod_df_result = result.get("eod")
+            front_kpi_df_result = result.get("front_kpi")
             log.info(
                 "historical_data.get_latest_success",
                 data_date=latest_date.isoformat(),
-                eod_rows=len(eod_df) if isinstance(eod_df, pd.DataFrame) else 0,
+                eod_rows=(
+                    len(eod_df_result) if isinstance(eod_df_result, pd.DataFrame) else 0
+                ),
                 front_kpi_rows=(
-                    len(front_kpi_df) if isinstance(front_kpi_df, pd.DataFrame) else 0
+                    len(front_kpi_df_result)
+                    if isinstance(front_kpi_df_result, pd.DataFrame)
+                    else 0
                 ),
             )
 
@@ -267,75 +286,81 @@ class HistoricalDataManager:
         self, df: pd.DataFrame, date_column: str, days: int
     ) -> pd.DataFrame | None:
         """
-        Filter DataFrame to include only data within the specified date range.
+        Filter DataFrame to records within the last N days from today.
 
         Args:
-            df: DataFrame to filter
-            date_column: Name of the date column
-            days: Number of days to include
+            df: Source DataFrame with date column
+            date_column: Name of the date column to filter on
+            days: Number of days to include (working backwards from today)
 
         Returns:
-            Filtered DataFrame or None if filtering fails
+            Filtered DataFrame or None if no matching records
         """
         try:
-            start_date, end_date = self.get_date_range_for_period(days)
+            if date_column not in df.columns:
+                log.warning(
+                    "historical_data.missing_date_column",
+                    column=date_column,
+                    available=list(df.columns),
+                )
+                return None
 
-            # Convert date column to datetime
+            # Convert date column to datetime, coercing errors
             df_copy = df.copy()
             df_copy[date_column] = pd.to_datetime(df_copy[date_column], errors="coerce")
+
+            # Calculate date range
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=days)
 
             # Filter to date range
-            mask = (df_copy[date_column] >= start_date) & (
-                df_copy[date_column] <= end_date
+            mask = (
+                (df_copy[date_column] >= start_date)
+                & (df_copy[date_column] <= end_date)
+                & (df_copy[date_column].notna())
             )
             filtered_df = df_copy[mask]
 
-            log.info(
-                "historical_data.date_filter_applied",
-                original_rows=len(df),
-                filtered_rows=len(filtered_df),
-                start_date=start_date.isoformat(),
-                end_date=end_date.isoformat(),
-            )
+            if filtered_df.empty:
+                log.warning(
+                    "historical_data.no_data_in_range",
+                    start_date=start_date.date().isoformat(),
+                    end_date=end_date.date().isoformat(),
+                    days=days,
+                )
+                return None
 
-            return filtered_df if not filtered_df.empty else None
+            # Sort by date
+            filtered_df = filtered_df.sort_values(date_column)
+
+            log.info(
+                "historical_data.filtered_by_range",
+                start_date=start_date.date().isoformat(),
+                end_date=end_date.date().isoformat(),
+                rows=len(filtered_df),
+                days=days,
+            )
+            return filtered_df
 
         except Exception as e:
-            log.error("historical_data.date_filter_failed", error=str(e))
+            log.error(
+                "historical_data.filter_by_range_failed",
+                days=days,
+                error=str(e),
+            )
             return None
 
-    def _filter_to_specific_date(
-        self, df: pd.DataFrame, date_column: str, target_date: datetime
-    ) -> pd.DataFrame | None:
+    def get_historical_eod_data(self, days: int = 30) -> pd.DataFrame | None:
         """
-        Filter DataFrame to include only data from a specific date.
+        Get historical EOD data for the specified number of days.
+
+        This is an alias for get_recent_eod_data for consistency with
+        the historical metrics functions.
 
         Args:
-            df: DataFrame to filter
-            date_column: Name of the date column
-            target_date: Date to filter to
+            days: Number of days to retrieve (default: 30)
 
         Returns:
-            Filtered DataFrame or None if no data found for the date
+            DataFrame with EOD data or None if retrieval fails
         """
-        try:
-            # Convert date column to datetime
-            df_copy = df.copy()
-            df_copy[date_column] = pd.to_datetime(df_copy[date_column], errors="coerce")
-
-            # Filter to specific date (date only, ignore time)
-            target_date_only = target_date.date()
-            mask = df_copy[date_column].dt.date == target_date_only
-            filtered_df = df_copy[mask]
-
-            log.info(
-                "historical_data.specific_date_filter",
-                target_date=target_date_only.isoformat(),
-                matched_rows=len(filtered_df),
-            )
-
-            return filtered_df if not filtered_df.empty else None
-
-        except Exception as e:
-            log.error("historical_data.specific_date_filter_failed", error=str(e))
-            return None
+        return self.get_recent_eod_data(days)

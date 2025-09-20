@@ -6,8 +6,8 @@
 - **Priority:** High
 - **Status:** Draft
 - **Created:** 2025-09-15
-- **Updated:** 2025-09-15 (Project Structure Enhancement Added)
-- **Estimated Effort:** 2-4 Weeks (including 0.5 day structure refactoring)
+- **Updated:** 2025-09-18 (Multi-Location Frontend UI Added)
+- **Estimated Effort:** 2-4 Weeks (including 0.5 day structure refactoring + 0.5-1 day location UI)
 - **Developer Checklist:** [../checklists/epic-2-developer-checklist.md]
 
 ## Executive Summary
@@ -345,6 +345,16 @@ HistoricalMetrics = {
 - Create historical data aggregation functions
 - Handle weekend/holiday data gaps intelligently
 
+### Story 2.1a: Multi-Location Frontend UI
+**Effort: 0.5-1 day**
+
+- Add location selector component to Streamlit dashboard (radio buttons/dropdown)
+- Implement location state management and session persistence
+- Update dashboard to call `get_all_kpis(location)` with selected location parameter
+- Add visual indication of current selected location in dashboard header
+- Update footer to accurately reflect location context
+- Test location switching functionality for both Baytown and Humble
+
 ### Story 2.2: Plotly Chart Integration
 **Effort: 2-3 days**
 
@@ -383,7 +393,8 @@ HistoricalMetrics = {
 - [ ] All acceptance criteria met for functional and non-functional requirements
 - [ ] Project structure refactored with `apps/frontend/` and `apps/backend/` directories
 - [ ] Multi-location support operational for both Baytown and Humble locations
-- [ ] Combined and individual location reporting working correctly
+- [ ] Location selector UI functional with session state persistence
+- [ ] Individual location reporting working correctly with visual indicators
 - [ ] Backend/frontend separation maintained with clear API boundaries
 - [ ] 90%+ test coverage across all new functionality
 - [ ] Performance requirements met (<5 second load times)

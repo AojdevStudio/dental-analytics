@@ -681,12 +681,12 @@ def calculate_historical_collection_rate(
             df_copy[production_col] = pd.to_numeric(
                 df_copy[production_col], errors="coerce"
             )
-            total_collections = 0.0
+            total_collections = pd.Series([0.0] * len(df_copy), index=df_copy.index)
             for col in income_columns:
                 # Clean currency formatting before conversion
                 df_copy[col] = df_copy[col].apply(clean_currency_string)
                 df_copy[col] = pd.to_numeric(df_copy[col], errors="coerce").fillna(0.0)
-                total_collections += df_copy[col]
+                total_collections = total_collections + df_copy[col]
 
             df_copy["_total_collections"] = total_collections
             df_copy["collection_rate"] = (
@@ -802,7 +802,9 @@ def calculate_historical_new_patients(
         daily_counts = df_copy[mtd_column].diff()
         if not daily_counts.empty:
             daily_counts.iloc[0] = df_copy[mtd_column].iloc[0]
-        daily_counts = daily_counts.where(daily_counts >= 0, df_copy[mtd_column])
+        daily_counts = daily_counts.where(
+            pd.to_numeric(daily_counts, errors="coerce") >= 0, df_copy[mtd_column]
+        )
         df_copy["_daily_new_patients"] = daily_counts.fillna(0.0)
 
         time_series = safe_time_series_conversion(
@@ -1044,11 +1046,12 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
         historical_manager = HistoricalDataManager()
 
         # Get historical data
-        eod_data = historical_manager.get_historical_eod_data(days)
+        eod_data = historical_manager.get_recent_eod_data(days)
         # Note: front_kpi_data fetched but not used in current implementation
         front_kpi_data = historical_manager.get_historical_front_kpi_data(days)
 
-        # Get latest available data for current values
+        # Get latest date and available data for current values
+        latest_date = historical_manager.get_latest_operational_date()
         latest_data = historical_manager.get_latest_available_data()
 
         # Calculate historical metrics
@@ -1080,7 +1083,7 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
         result = {
             "historical": historical_kpis,
             "current": current_kpis,
-            "data_date": latest_data.get("data_date"),
+            "data_date": latest_date,
             "period_days": days,
         }
 
@@ -1098,6 +1101,6 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
                 "treatment_acceptance": None,
                 "hygiene_reappointment": None,
             },
-            "data_date": None,
             "period_days": days,
+            "data_date": None,
         }

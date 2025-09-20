@@ -25,44 +25,93 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Custom CSS for KamDental branding
+# Location Selector (Task 1 & 2: Location UI and State Management)
+location = st.radio(
+    "📍 **Select Location:**",
+    options=["baytown", "humble"],
+    format_func=lambda x: x.title(),
+    horizontal=True,
+    key="location_selector",
+    help="Choose which practice location to view KPI data for",
+)
+
+# Custom CSS for KamDental branding with location-specific accents
+location_colors = {
+    "baytown": {
+        "primary": "#142D54",
+        "accent": "#00556B",
+        "bg": "rgba(20, 45, 84, 0.05)",
+    },
+    "humble": {
+        "primary": "#007E9E",
+        "accent": "#FF6642",
+        "bg": "rgba(0, 126, 158, 0.05)",
+    },
+}
+
+current_colors = location_colors[location]
+
 st.markdown(
-    """
+    f"""
 <style>
-    .main > div {
+    .main > div {{
         padding-top: 2rem;
-    }
-    .metric-container {
+        background: {current_colors['bg']};
+        border-radius: 0.5rem;
+    }}
+    .metric-container {{
         background: white;
         padding: 1rem;
         border-radius: 0.5rem;
-        border-left: 4px solid #007E9E;
+        border-left: 4px solid {current_colors['primary']};
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .stMetric > label {
-        color: #142D54 !important;
+    }}
+    .stMetric > label {{
+        color: {current_colors['primary']} !important;
         font-weight: 600;
-    }
-    .stMetric > div {
-        color: #007E9E !important;
-    }
+    }}
+    .stMetric > div {{
+        color: {current_colors['accent']} !important;
+    }}
+    .stRadio > div {{
+        border: 2px solid {current_colors['primary']};
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        background: white;
+    }}
+    .location-indicator {{
+        background: {current_colors['primary']};
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-left: 0.5rem;
+    }}
 </style>
 """,
     unsafe_allow_html=True,
 )
 
-# Header section
-st.markdown("# 🦷 KamDental Analytics Dashboard")
+# Header section with location indicator
+st.markdown(
+    f"""
+    # 🦷 KamDental Analytics Dashboard
+    <span class="location-indicator">{location.title()}</span>
+    """,
+    unsafe_allow_html=True,
+)
 st.markdown(f"**Daily KPI Report** • {datetime.now().strftime('%B %d, %Y')}")
 st.markdown("---")
 
-# Load KPI data
-with st.spinner("Loading KPI data from Google Sheets..."):
+# Load KPI data (Task 3: Location-aware data calls)
+with st.spinner(f"Loading {location.title()} KPI data from Google Sheets..."):
     try:
-        kpis = get_all_kpis()
-        st.success("✅ Data loaded successfully")
+        kpis = get_all_kpis(location=location)
+        st.success(f"✅ {location.title()} data loaded successfully")
     except Exception as e:
-        st.error(f"❌ Failed to load data: {str(e)}")
+        st.error(f"❌ Failed to load {location.title()} data: {str(e)}")
         kpis = {}
 
 # Primary metrics row (2 columns)
@@ -141,9 +190,9 @@ with col5:
     else:
         st.metric(label="🔄 HYGIENE REAPPOINTMENT", value="Data Unavailable")
 
-# Footer
+# Footer (Task 5: Location-specific footer)
 st.markdown("---")
 st.markdown(
-    "**Data Source:** Google Sheets • **Updated:** Real-time • "
-    "**Locations:** Baytown & Humble"
+    f"**Data Source:** Google Sheets • **Updated:** Real-time • "
+    f"**Current Location:** {location.title()}"
 )
