@@ -1050,8 +1050,7 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
         # Note: front_kpi_data fetched but not used in current implementation
         front_kpi_data = historical_manager.get_historical_front_kpi_data(days)
 
-        # Get latest date and available data for current values
-        latest_date = historical_manager.get_latest_operational_date()
+        # Get latest available data for current values
         latest_data = historical_manager.get_latest_available_data()
 
         # Calculate historical metrics
@@ -1068,22 +1067,27 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
         }
 
         # Calculate current values from latest available data
+        # Cast to proper types to satisfy mypy
+        eod_df = latest_data.get("eod")
+        front_kpi_df = latest_data.get("front_kpi")
+
+        eod_data_df = eod_df if isinstance(eod_df, pd.DataFrame) else None
+        front_kpi_data_df = (
+            front_kpi_df if isinstance(front_kpi_df, pd.DataFrame) else None
+        )
+
         current_kpis = {
-            "production_total": calculate_production_total(latest_data.get("eod")),
-            "collection_rate": calculate_collection_rate(latest_data.get("eod")),
-            "new_patients": calculate_new_patients(latest_data.get("eod")),
-            "treatment_acceptance": calculate_treatment_acceptance(
-                latest_data.get("front_kpi")
-            ),
-            "hygiene_reappointment": calculate_hygiene_reappointment(
-                latest_data.get("front_kpi")
-            ),
+            "production_total": calculate_production_total(eod_data_df),
+            "collection_rate": calculate_collection_rate(eod_data_df),
+            "new_patients": calculate_new_patients(eod_data_df),
+            "treatment_acceptance": calculate_treatment_acceptance(front_kpi_data_df),
+            "hygiene_reappointment": calculate_hygiene_reappointment(front_kpi_data_df),
         }
 
         result = {
             "historical": historical_kpis,
             "current": current_kpis,
-            "data_date": latest_date,
+            "data_date": latest_data.get("data_date"),
             "period_days": days,
         }
 
