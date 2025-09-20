@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-from backend.sheets_reader import SheetsReader
+from apps.backend.data_providers import build_sheets_provider
 
 
 def test_google_sheets_connection():
@@ -22,30 +22,26 @@ def test_google_sheets_connection():
     print(f"✅ Found credentials file: {credentials_path}")
 
     try:
-        # Initialize SheetsReader
-        reader = SheetsReader()
+        # Initialize SheetsProvider
+        provider = build_sheets_provider()
 
-        if not reader.service:
-            print("❌ Failed to initialize Google Sheets service")
-            return False
+        print("✅ Google Sheets provider initialized successfully")
 
-        print("✅ Google Sheets service initialized successfully")
+        # Test connection by reading Baytown EOD data
+        alias = "baytown_eod"
+        print(f"📊 Testing data read using alias '{alias}'...")
 
-        # Test connection by reading "EOD - Baytown Billing" sheet
-        sheet_name = "EOD - Baytown Billing"
-        print(f"📊 Testing data read from '{sheet_name}' sheet...")
-
-        df = reader.get_sheet_data(sheet_name)
+        df = provider.fetch(alias)
 
         if df is None:
             print("❌ Failed to read sheet data")
             print("   Possible causes:")
             print("   - Service account not shared on spreadsheet")
-            print("   - Invalid spreadsheet ID")
-            print("   - Sheet name doesn't exist")
+            print("   - Invalid spreadsheet ID or alias configuration")
+            print("   - Sheet alias doesn't exist in config")
             return False
 
-        print(f"✅ Successfully read {len(df)} rows from '{sheet_name}'")
+        print(f"✅ Successfully read {len(df)} rows using alias '{alias}'")
         print(f"📋 Columns found: {list(df.columns)}")
 
         # Show first few rows (without sensitive data)
@@ -76,19 +72,16 @@ def test_error_handling():
     print("\n🧪 Testing error handling...")
 
     try:
-        reader = SheetsReader()
-        if not reader.service:
-            print("⚠️  Skipping error handling test (service not initialized)")
-            return True
+        provider = build_sheets_provider()
 
-        # Test with invalid sheet name
-        result = reader.get_sheet_data("NonExistentSheet")
+        # Test with invalid alias
+        result = provider.fetch("NonExistentAlias")
 
         if result is None:
-            print("✅ Error handling works: None returned for invalid sheet")
+            print("✅ Error handling works: None returned for invalid alias")
             return True
         else:
-            print("❌ Error handling failed: Should return None for invalid sheet")
+            print("❌ Error handling failed: Should return None for invalid alias")
             return False
 
     except Exception as e:

@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import structlog
 
-from .sheets_reader import SheetsReader
+from .data_providers import build_sheets_provider
 
 # Configure structured logging
 structlog.configure(
@@ -48,7 +48,7 @@ class HistoricalDataManager:
 
     def __init__(self) -> None:
         """Initialize the historical data manager."""
-        self.sheets_reader = SheetsReader()
+        self.provider = build_sheets_provider()
         log.info("historical_data.manager_initialized")
 
     def get_latest_operational_date(self) -> datetime:
@@ -145,7 +145,9 @@ class HistoricalDataManager:
 
         try:
             # Get full EOD dataset
-            eod_df = self.sheets_reader.get_eod_data()
+            # Using default location 'baytown' for backward compatibility
+            eod_alias = self.provider.get_location_aliases("baytown", "eod")
+            eod_df = self.provider.fetch(eod_alias) if eod_alias else None
             if eod_df is None or eod_df.empty:
                 log.warning("historical_data.eod_data_empty")
                 return None
@@ -189,7 +191,9 @@ class HistoricalDataManager:
 
         try:
             # Get full Front KPI dataset
-            front_kpi_df = self.sheets_reader.get_front_kpi_data()
+            # Using default location 'baytown' for backward compatibility
+            front_alias = self.provider.get_location_aliases("baytown", "front")
+            front_kpi_df = self.provider.fetch(front_alias) if front_alias else None
             if front_kpi_df is None or front_kpi_df.empty:
                 log.warning("historical_data.front_kpi_data_empty")
                 return None
@@ -241,7 +245,9 @@ class HistoricalDataManager:
 
         try:
             # Get EOD data and filter to latest operational day
-            eod_df = self.sheets_reader.get_eod_data()
+            # Using default location 'baytown' for backward compatibility
+            eod_alias = self.provider.get_location_aliases("baytown", "eod")
+            eod_df = self.provider.fetch(eod_alias) if eod_alias else None
             if (
                 eod_df is not None
                 and not eod_df.empty
@@ -252,7 +258,9 @@ class HistoricalDataManager:
                 )
 
             # Get Front KPI data and filter to latest operational day
-            front_kpi_df = self.sheets_reader.get_front_kpi_data()
+            # Using default location 'baytown' for backward compatibility
+            front_alias = self.provider.get_location_aliases("baytown", "front")
+            front_kpi_df = self.provider.fetch(front_alias) if front_alias else None
             if (
                 front_kpi_df is not None
                 and not front_kpi_df.empty

@@ -24,6 +24,7 @@ dependencies = [
     "streamlit>=1.30",
     "watchdog>=6.0.0",
     "structlog>=25.4.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]

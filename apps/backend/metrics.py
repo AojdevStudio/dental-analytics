@@ -33,7 +33,7 @@ except (
 import pandas as pd
 import structlog
 
-from .sheets_reader import SheetsReader
+from .data_providers import build_sheets_provider
 
 # Configure structured logging to stderr
 structlog.configure(
@@ -411,12 +411,15 @@ def get_all_kpis(location: str = "baytown") -> dict[str, float | int | None]:
         - hygiene_reappointment: float or None
     """
     try:
-        # Initialize sheets reader
-        reader = SheetsReader()
+        # Initialize sheets provider
+        provider = build_sheets_provider()
 
-        # Get data from location-specific sheets
-        eod_data = reader.get_eod_data(location)
-        front_kpi_data = reader.get_front_kpi_data(location)
+        # Get data from location-specific sheets using alias system
+        eod_alias = provider.get_location_aliases(location, "eod")
+        front_alias = provider.get_location_aliases(location, "front")
+
+        eod_data = provider.fetch(eod_alias) if eod_alias else None
+        front_kpi_data = provider.fetch(front_alias) if front_alias else None
 
         # Calculate all KPIs
         kpis = {

@@ -16,7 +16,7 @@ import json
 from collections.abc import Iterable
 
 from apps.backend.metrics import get_all_kpis, get_combined_kpis
-from apps.backend.sheets_reader import SheetsReader
+from apps.backend.data_providers import build_sheets_provider
 
 # Location-specific ranges
 LOCATION_RANGES = {
@@ -66,7 +66,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--spreadsheet-id",
-        help=("Temporarily override SheetsReader.SPREADSHEET_ID for this run only."),
+        help=("Temporarily override spreadsheet ID for this run (not implemented with new provider)."),
     )
     parser.add_argument(
         "--location",
@@ -91,15 +91,16 @@ def print_pretty(kpis: dict[str, float | None]) -> None:
 def print_raw(show_raw: list[str] | None, location: str = "baytown") -> None:
     if not show_raw:
         return
-    reader = SheetsReader()
-    ranges = LOCATION_RANGES[location]
+    provider = build_sheets_provider()
 
     if "eod" in show_raw:
-        df = reader.get_sheet_data(ranges["eod"])
+        eod_alias = provider.get_location_aliases(location, "eod")
+        df = provider.fetch(eod_alias) if eod_alias else None
         print(f"\n# Raw: EOD {location.title()} - first rows")
         print(df.head() if df is not None else "<no data>")
     if "front" in show_raw:
-        df = reader.get_sheet_data(ranges["front"])
+        front_alias = provider.get_location_aliases(location, "front")
+        df = provider.fetch(front_alias) if front_alias else None
         print(f"\n# Raw: Front KPIs {location.title()} - first rows")
         print(df.head() if df is not None else "<no data>")
 
@@ -108,7 +109,8 @@ def main() -> None:
     args = parse_args()
 
     if args.spreadsheet_id:
-        SheetsReader.SPREADSHEET_ID = args.spreadsheet_id  # type: ignore[attr-defined]
+        print("Warning: --spreadsheet-id is not implemented with new provider system")
+        # TODO: Implement custom config loading if needed
 
     if args.location == "both":
         # Get KPIs for both locations
