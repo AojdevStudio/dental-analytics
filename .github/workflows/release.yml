@@ -97,8 +97,8 @@ jobs:
       run: |
         echo "🧪 Running complete test suite for release validation..."
         uv run pytest tests/ \
-          --cov=backend \
-          --cov=frontend \
+          --cov=apps.backend \
+          --cov=apps.frontend \
           --cov-report=term-missing \
           --cov-fail-under=90 \
           -v
@@ -108,7 +108,7 @@ jobs:
         echo "🔒 Running security validation..."
         uv add pip-audit bandit[toml]
         uv run pip-audit --desc
-        uv run bandit -r backend/ frontend/ -ll
+        uv run bandit -r apps/backend/ apps/frontend/ -ll
 
     - name: Performance validation
       run: |
@@ -120,7 +120,7 @@ jobs:
         """Performance validation for release."""
         import pytest
         import pandas as pd
-        from backend.metrics import calculate_production_total
+        from apps.backend.metrics import calculate_production_total
 
         def test_release_performance():
             """Validate performance meets release standards."""
@@ -288,7 +288,7 @@ jobs:
 
         # Create deployment package
         mkdir -p deployment-package
-        cp -r backend/ frontend/ config/ deployment-package/
+        cp -r apps/backend/ apps/frontend/ config/ deployment-package/
         cp pyproject.toml uv.lock README.md deployment-package/
         tar -czf dental-analytics-${{ needs.detect-version.outputs.version }}-deployment.tar.gz deployment-package/
 
