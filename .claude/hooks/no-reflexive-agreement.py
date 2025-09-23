@@ -29,7 +29,7 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any
 
 
 class ReflexiveAgreementDetector:
@@ -67,7 +67,7 @@ class ReflexiveAgreementDetector:
             re.compile(pattern) for pattern in self.AGREEMENT_PATTERNS
         ]
 
-    def analyze_message_content(self, message: Dict[str, Any]) -> bool:
+    def analyze_message_content(self, message: dict[str, Any]) -> bool:
         """
         Analyze a single message for reflexive agreement patterns.
 
@@ -134,7 +134,7 @@ class ReflexiveAgreementDetector:
                 return False
 
             # Read and parse transcript
-            with open(transcript_path, "r", encoding="utf-8") as f:
+            with open(transcript_path, encoding="utf-8") as f:
                 transcript_content = f.read()
 
             # Extract assistant messages (last 5)
@@ -180,7 +180,7 @@ class ReflexiveAgreementDetector:
 
     def _extract_assistant_messages(
         self, transcript_content: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Extract assistant messages from transcript content.
 
@@ -216,7 +216,7 @@ class ReflexiveAgreementDetector:
 
         return assistant_messages
 
-    def _get_message_preview(self, message: Dict[str, Any]) -> str:
+    def _get_message_preview(self, message: dict[str, Any]) -> str:
         """
         Get a preview of the message content for logging.
 
@@ -233,7 +233,7 @@ class ReflexiveAgreementDetector:
         except (KeyError, IndexError, TypeError):
             return "<unable to extract preview>"
 
-    def log_event(self, event_data: Dict[str, Any]) -> None:
+    def log_event(self, event_data: dict[str, Any]) -> None:
         """
         Log an event to the hook's log file following CDEV standards.
 
@@ -246,7 +246,7 @@ class ReflexiveAgreementDetector:
 
             # Read existing log data or initialize empty list
             if self.log_path.exists():
-                with open(self.log_path, "r", encoding="utf-8") as f:
+                with open(self.log_path, encoding="utf-8") as f:
                     try:
                         log_data = json.load(f)
                     except (json.JSONDecodeError, ValueError):

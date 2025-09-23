@@ -16,7 +16,7 @@ import threading
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Configure logging for cache operations
 logging.basicConfig(level=logging.WARNING)
@@ -31,7 +31,7 @@ class ThreadSafeLRUCache:
         self._cache: OrderedDict = OrderedDict()
         self._lock = threading.RLock()
 
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
+    def get(self, key: str) -> dict[str, Any] | None:
         """Get cached value if exists and not expired"""
         with self._lock:
             if key not in self._cache:
@@ -47,7 +47,7 @@ class ThreadSafeLRUCache:
             self._cache.move_to_end(key)
             return entry["result"]
 
-    def set(self, key: str, value: Dict[str, Any]) -> None:
+    def set(self, key: str, value: dict[str, Any]) -> None:
         """Set cached value with automatic cleanup"""
         with self._lock:
             # Remove oldest entries if at capacity
@@ -88,19 +88,19 @@ FAST_MODE = "--fast" in sys.argv
 
 
 class TypeScriptValidator:
-    def __init__(self, hook_input: Dict[str, Any]):
+    def __init__(self, hook_input: dict[str, Any]):
         self.hook_input = hook_input
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
-        self.violations: List[Dict[str, Any]] = []
-        self.blockers: List[str] = []
-        self.results: Dict[str, Any] = {
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
+        self.violations: list[dict[str, Any]] = []
+        self.blockers: list[str] = []
+        self.results: dict[str, Any] = {
             "biome": None,
             "typecheck": None,
             "codeStandards": None,
         }
 
-    async def validate(self) -> Dict[str, Any]:
+    async def validate(self) -> dict[str, Any]:
         """Main validation entry point"""
         tool_input = self.hook_input.get("tool_input")
         phase = self.hook_input.get("phase")
@@ -141,7 +141,7 @@ class TypeScriptValidator:
 
         return final_result
 
-    def extract_file_path(self, tool_input: Any) -> Optional[str]:
+    def extract_file_path(self, tool_input: Any) -> str | None:
         """Extract file path from tool input"""
         if isinstance(tool_input, dict):
             return tool_input.get("file_path")
@@ -155,13 +155,13 @@ class TypeScriptValidator:
         ext = Path(file_path).suffix
         return ext in [".ts", ".tsx", ".js", ".jsx"]
 
-    def get_cached_result(self, file_path: str) -> Optional[Dict[str, Any]]:
+    def get_cached_result(self, file_path: str) -> dict[str, Any] | None:
         """Get cached validation result"""
         try:
             if not Path(file_path).exists():
                 return None
 
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             mtime = Path(file_path).stat().st_mtime
@@ -186,13 +186,13 @@ class TypeScriptValidator:
             logger.error(f"Unexpected error in cache lookup for {file_path}: {e}")
             return None
 
-    def cache_result(self, file_path: str, result: Dict[str, Any]):
+    def cache_result(self, file_path: str, result: dict[str, Any]):
         """Cache validation result"""
         try:
             if not Path(file_path).exists():
                 return
 
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             mtime = Path(file_path).stat().st_mtime
@@ -221,8 +221,8 @@ class TypeScriptValidator:
             logger.error(f"Unexpected error caching result for {file_path}: {e}")
 
     def determine_validation_mode(
-        self, tool_input: Any, phase: Optional[str]
-    ) -> Dict[str, str]:
+        self, tool_input: Any, phase: str | None
+    ) -> dict[str, str]:
         """Determine validation mode based on phase and context"""
         if phase == "Stop":
             return {"type": "full", "reason": "Stop phase requires full validation"}
@@ -232,7 +232,7 @@ class TypeScriptValidator:
 
         return {"type": "incremental", "reason": "Incremental validation"}
 
-    def validate_biome(self, file_path: str, validation_mode: Dict[str, str]):
+    def validate_biome(self, file_path: str, validation_mode: dict[str, str]):
         """Run Biome validation (formatting, linting, imports)"""
         try:
             biome_command = self.build_biome_command(file_path, validation_mode)
@@ -274,7 +274,7 @@ class TypeScriptValidator:
                 ),
             }
 
-    def validate_typecheck(self, validation_mode: Dict[str, str]):
+    def validate_typecheck(self, validation_mode: dict[str, str]):
         """Run TypeScript type checking"""
         try:
             typecheck_command = self.build_typecheck_command(validation_mode)
@@ -342,8 +342,8 @@ class TypeScriptValidator:
             }
 
     def build_biome_command(
-        self, file_path: str, validation_mode: Dict[str, str]
-    ) -> List[str]:
+        self, file_path: str, validation_mode: dict[str, str]
+    ) -> list[str]:
         """Build Biome command based on validation mode"""
         if validation_mode["type"] == "full":
             return ["pnpm", "biome:check", "--apply"]
@@ -390,7 +390,7 @@ class TypeScriptValidator:
         except subprocess.CalledProcessError:
             return ["pnpm", "biome", "check", file_path, "--apply"]
 
-    def build_typecheck_command(self, validation_mode: Dict[str, str]) -> List[str]:
+    def build_typecheck_command(self, validation_mode: dict[str, str]) -> list[str]:
         """Build TypeScript check command"""
         if validation_mode["type"] == "full":
             return ["pnpm", "typecheck"]
@@ -523,14 +523,14 @@ class TypeScriptValidator:
                 }
             )
 
-    def get_final_result(self) -> Dict[str, Any]:
+    def get_final_result(self) -> dict[str, Any]:
         """Determine final validation result"""
         if self.errors or self.blockers:
             return self.block()
         else:
             return self.approve()
 
-    def approve(self, custom_message: Optional[str] = None) -> Dict[str, Any]:
+    def approve(self, custom_message: str | None = None) -> dict[str, Any]:
         """Approve validation"""
         message = custom_message or "✅ TypeScript validation passed"
         if self.warnings:
@@ -538,7 +538,7 @@ class TypeScriptValidator:
 
         return {"approve": True, "message": message}
 
-    def block(self) -> Dict[str, Any]:
+    def block(self) -> dict[str, Any]:
         """Block validation due to errors"""
         message_parts = ["❌ TypeScript validation failed:"]
 
@@ -565,7 +565,7 @@ async def main():
 
         # Read existing log data or initialize empty list
         if log_path.exists():
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 try:
                     log_data = json.load(f)
                 except (json.JSONDecodeError, ValueError):
@@ -605,7 +605,7 @@ async def main():
             log_path = log_dir / "typescript_validator.json"
 
             if log_path.exists():
-                with open(log_path, "r") as f:
+                with open(log_path) as f:
                     try:
                         log_data = json.load(f)
                     except (json.JSONDecodeError, ValueError):

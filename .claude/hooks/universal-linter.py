@@ -11,14 +11,14 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Simple file validation cache to prevent redundant work
 validation_cache = {}
 CACHE_TTL = timedelta(minutes=5)
 
 
-def get_file_hash(file_path: str) -> Optional[str]:
+def get_file_hash(file_path: str) -> str | None:
     """Generate file hash for cache key"""
     try:
         path = Path(file_path)
@@ -32,7 +32,7 @@ def get_file_hash(file_path: str) -> Optional[str]:
         return None
 
 
-def is_cached_valid(file_path: str) -> Optional[Dict[str, Any]]:
+def is_cached_valid(file_path: str) -> dict[str, Any] | None:
     """Check if file was recently validated"""
     file_hash = get_file_hash(file_path)
     if not file_hash:
@@ -47,7 +47,7 @@ def is_cached_valid(file_path: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def cache_result(file_path: str, result: Dict[str, Any]):
+def cache_result(file_path: str, result: dict[str, Any]):
     """Cache validation result"""
     file_hash = get_file_hash(file_path)
     if not file_hash:
@@ -363,7 +363,7 @@ def run_type_checks(project_type: str) -> list:
     return results
 
 
-def validate_file(file_path: str) -> Dict[str, Any]:
+def validate_file(file_path: str) -> dict[str, Any]:
     """Validate a single file"""
     # Check cache first
     cached = is_cached_valid(file_path)
@@ -465,7 +465,7 @@ def main():
 
             # Read existing log data or initialize empty list
             if log_path.exists():
-                with open(log_path, "r") as f:
+                with open(log_path) as f:
                     try:
                         log_data = json.load(f)
                     except (json.JSONDecodeError, ValueError):

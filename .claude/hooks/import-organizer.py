@@ -10,11 +10,11 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 class ImportOrganizer:
-    def __init__(self, input_data: Dict[str, Any]):
+    def __init__(self, input_data: dict[str, Any]):
         self.input = input_data
         self.import_groups = {
             "react": [],
@@ -24,7 +24,7 @@ class ImportOrganizer:
             "types": [],
         }
 
-    def organize(self) -> Dict[str, Any]:
+    def organize(self) -> dict[str, Any]:
         """Main organization entry point"""
         tool_input = self.input.get("tool_input", {})
         output = self.input.get("output", {})
@@ -173,7 +173,7 @@ class ImportOrganizer:
             for pattern in react_patterns
         )
 
-    def build_organized_imports(self) -> List[str]:
+    def build_organized_imports(self) -> list[str]:
         """Build organized import groups"""
         groups = []
 
@@ -203,7 +203,7 @@ class ImportOrganizer:
 
         return groups
 
-    def sort_imports(self, imports: List[str]) -> List[str]:
+    def sort_imports(self, imports: list[str]) -> list[str]:
         """Sort imports alphabetically within a group"""
 
         def get_path(imp: str) -> str:
@@ -220,15 +220,15 @@ class ImportOrganizer:
         except Exception as error:
             raise Exception(f"Failed to write file: {error}")
 
-    def success(self, message: str) -> Dict[str, Any]:
+    def success(self, message: str) -> dict[str, Any]:
         """Return success response"""
         return {"success": True, "message": f"✅ {message}", "modified": True}
 
-    def skip(self, reason: str) -> Dict[str, Any]:
+    def skip(self, reason: str) -> dict[str, Any]:
         """Return skip response"""
         return {"success": True, "message": f"ℹ️  Skipped: {reason}", "modified": False}
 
-    def error(self, message: str) -> Dict[str, Any]:
+    def error(self, message: str) -> dict[str, Any]:
         """Return error response"""
         return {"success": False, "message": f"❌ {message}", "modified": False}
 
@@ -243,7 +243,7 @@ def log_import_organizer_activity(input_data, result):
 
         # Read existing log data or initialize empty list
         if log_path.exists():
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 try:
                     log_data = json.load(f)
                 except (json.JSONDecodeError, ValueError):

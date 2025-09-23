@@ -7,10 +7,9 @@
 # ///
 
 import json
-import os
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 try:
     from dotenv import load_dotenv
@@ -29,7 +28,7 @@ def log_status_line(input_data, status_line_output, error_message=None):
 
     # Read existing log data or initialize empty list
     if log_file.exists():
-        with open(log_file, "r") as f:
+        with open(log_file) as f:
             try:
                 log_data = json.load(f)
             except (json.JSONDecodeError, ValueError):
@@ -65,7 +64,7 @@ def get_last_prompt(session_id):
         return None, f"Session file {session_file} does not exist"
 
     try:
-        with open(session_file, "r") as f:
+        with open(session_file) as f:
             session_data = json.load(f)
             prompts = session_data.get("prompts", [])
             if prompts:

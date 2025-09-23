@@ -13,10 +13,10 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
-async def enforce_task_completion(hook_input: Dict[str, Any]):
+async def enforce_task_completion(hook_input: dict[str, Any]):
     """Main enforcement function"""
     tool_input = hook_input.get("tool_input")
     phase = hook_input.get("phase", os.environ.get("CLAUDE_HOOK_PHASE", "unknown"))
@@ -102,7 +102,7 @@ def is_task_completion_attempt(tool_input: Any) -> bool:
     )
 
 
-async def run_compliance_checks(tool_input: Any) -> Dict[str, Any]:
+async def run_compliance_checks(tool_input: Any) -> dict[str, Any]:
     """Run all compliance checks"""
     results = {"allPassed": True, "checks": [], "failures": []}
 
@@ -151,7 +151,7 @@ async def run_compliance_checks(tool_input: Any) -> Dict[str, Any]:
     # 2. Test check (if tests exist)
     if Path("package.json").exists():
         try:
-            with open("package.json", "r") as f:
+            with open("package.json") as f:
                 package_json = json.load(f)
 
             if package_json.get("scripts", {}).get("test"):
@@ -197,7 +197,7 @@ async def run_compliance_checks(tool_input: Any) -> Dict[str, Any]:
 
 async def run_typescript_validator(
     validator_path: Path, tool_input: Any
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Run the TypeScript validator"""
     try:
         input_data = json.dumps(
@@ -230,7 +230,7 @@ async def run_typescript_validator(
         }
 
 
-def determine_validation_scope(tool_input: Any) -> Dict[str, str]:
+def determine_validation_scope(tool_input: Any) -> dict[str, str]:
     """Determine the validation scope based on task completion type"""
     content = (
         json.dumps(tool_input) if isinstance(tool_input, dict) else str(tool_input)
@@ -303,7 +303,7 @@ def determine_validation_scope(tool_input: Any) -> Dict[str, str]:
     }
 
 
-def get_changed_files() -> List[str]:
+def get_changed_files() -> list[str]:
     """Get list of changed files from git"""
     try:
         unstaged = subprocess.run(
@@ -327,7 +327,7 @@ def get_changed_files() -> List[str]:
         return []
 
 
-def generate_blocking_message(results: Dict[str, Any]) -> str:
+def generate_blocking_message(results: dict[str, Any]) -> str:
     """Generate blocking message for failed compliance checks"""
     message = f"""🛑 TASK COMPLETION BLOCKED 🛑
 
@@ -376,7 +376,7 @@ async def main():
 
         # Read existing log data or initialize empty list
         if log_path.exists():
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 try:
                     log_data = json.load(f)
                 except (json.JSONDecodeError, ValueError):
@@ -409,7 +409,7 @@ async def main():
             log_path = log_dir / "task_completion_enforcer.json"
 
             if log_path.exists():
-                with open(log_path, "r") as f:
+                with open(log_path) as f:
                     try:
                         log_data = json.load(f)
                     except (json.JSONDecodeError, ValueError):

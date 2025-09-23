@@ -10,15 +10,15 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class CommitMessageValidator:
-    def __init__(self, input_data: Dict[str, Any]):
+    def __init__(self, input_data: dict[str, Any]):
         self.input = input_data
         self.valid_types = ["feat", "fix", "docs", "style", "refactor", "test", "chore"]
 
-    def validate(self) -> Dict[str, Any]:
+    def validate(self) -> dict[str, Any]:
         """Main validation entry point"""
         tool_name = self.input.get("tool_name")
         tool_input = self.input.get("tool_input", {})
@@ -45,7 +45,7 @@ class CommitMessageValidator:
         else:
             return self.block(validation["errors"], validation["suggestions"])
 
-    def is_commit_command(self, command: Optional[str]) -> bool:
+    def is_commit_command(self, command: str | None) -> bool:
         """Check if command is a git commit"""
         return command and (
             "git commit" in command
@@ -76,7 +76,7 @@ class CommitMessageValidator:
         # Get just the first line for conventional commit validation
         return message.split("\n")[0].strip()
 
-    def validate_message(self, message: str) -> Dict[str, Any]:
+    def validate_message(self, message: str) -> dict[str, Any]:
         """Validate commit message format"""
         errors = []
         suggestions = []
@@ -173,7 +173,7 @@ class CommitMessageValidator:
             "details": details,
         }
 
-    def approve(self, details: Optional[List[str]] = None) -> Dict[str, Any]:
+    def approve(self, details: list[str] | None = None) -> dict[str, Any]:
         """Approve the operation"""
         message = "✅ Commit message validation passed"
         if details:
@@ -181,7 +181,7 @@ class CommitMessageValidator:
 
         return {"approve": True, "message": message}
 
-    def block(self, errors: List[str], suggestions: List[str]) -> Dict[str, Any]:
+    def block(self, errors: list[str], suggestions: list[str]) -> dict[str, Any]:
         """Block the operation due to invalid format"""
         message_parts = [
             "❌ Invalid commit message format:",
@@ -219,7 +219,7 @@ def main():
 
         # Read existing log data or initialize empty list
         if log_path.exists():
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 try:
                     log_data = json.load(f)
                 except (json.JSONDecodeError, ValueError):

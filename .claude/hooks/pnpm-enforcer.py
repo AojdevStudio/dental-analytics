@@ -10,14 +10,14 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class PnpmEnforcer:
-    def __init__(self, input_data: Dict[str, Any]):
+    def __init__(self, input_data: dict[str, Any]):
         self.input = input_data
 
-    def detect_npm_usage(self, command: str) -> Optional[Dict[str, Any]]:
+    def detect_npm_usage(self, command: str) -> dict[str, Any] | None:
         """Check if command contains npm or npx usage"""
         if not command or not isinstance(command, str):
             return None
@@ -98,7 +98,7 @@ class PnpmEnforcer:
 
         return suggestion
 
-    def validate(self) -> Dict[str, Any]:
+    def validate(self) -> dict[str, Any]:
         """Validate and process the bash command"""
         try:
             # Parse Claude Code hook input format
@@ -124,11 +124,11 @@ class PnpmEnforcer:
         except Exception as error:
             return self.approve(f"PNPM enforcer error: {error}")
 
-    def approve(self, custom_message: Optional[str] = None) -> Dict[str, Any]:
+    def approve(self, custom_message: str | None = None) -> dict[str, Any]:
         """Approve the command"""
         return {"approve": True, "message": custom_message or "✅ Command approved"}
 
-    def block(self, npm_usage: Dict[str, Any]) -> Dict[str, Any]:
+    def block(self, npm_usage: dict[str, Any]) -> dict[str, Any]:
         """Block npm/npx command and suggest pnpm alternative"""
         message = [
             "🚫 NPM/NPX Usage Blocked",
@@ -167,7 +167,7 @@ def main():
 
         # Read existing log data or initialize empty list
         if log_path.exists():
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 try:
                     log_data = json.load(f)
                 except (json.JSONDecodeError, ValueError):
