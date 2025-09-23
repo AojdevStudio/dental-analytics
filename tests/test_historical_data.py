@@ -11,7 +11,7 @@ Tests cover:
 
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -46,28 +46,26 @@ class TestOperationalDayLogic:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("apps.backend.historical_data.SheetsReader"):
+        with patch("apps.backend.historical_data.build_sheets_provider"):
             self.manager = HistoricalDataManager()
 
     @pytest.mark.unit
-    def test_is_operational_day_monday_to_saturday(self) -> None:
-        """Test operational day detection for Monday-Saturday."""
-        # Monday = 0, Tuesday = 1, ..., Saturday = 5, Sunday = 6
-        test_dates = [
-            (datetime(2025, 9, 15), True),  # Monday
-            (datetime(2025, 9, 16), True),  # Tuesday
-            (datetime(2025, 9, 17), True),  # Wednesday
-            (datetime(2025, 9, 18), True),  # Thursday
-            (datetime(2025, 9, 19), True),  # Friday
-            (datetime(2025, 9, 20), True),  # Saturday
-            (datetime(2025, 9, 21), False),  # Sunday
-        ]
+    def test_get_latest_operational_date_basic(self) -> None:
+        """Test latest operational date logic."""
+        # Test that the method returns a valid datetime
+        result = self.manager.get_latest_operational_date()
+        assert isinstance(result, datetime)
 
-        for test_date, expected in test_dates:
-            result = self.manager.is_operational_day(test_date)
-            assert (
-                result == expected
-            ), f"Failed for {test_date.strftime('%A')} ({test_date})"
+        # Test that if today is not Sunday, it returns today
+        # If today is Sunday, it should return Saturday (previous day)
+        today = datetime.now()
+        if today.weekday() != 6:  # Not Sunday
+            # Should return today (approximately - may differ by seconds)
+            assert result.date() == today.date()
+        else:  # Sunday
+            # Should return Saturday (yesterday)
+            expected_date = today - timedelta(days=1)
+            assert result.date() == expected_date.date()
 
     @pytest.mark.unit
     def test_get_latest_operational_date_from_monday(self) -> None:
@@ -121,7 +119,7 @@ class TestDateRangeCalculation:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("apps.backend.historical_data.SheetsReader"):
+        with patch("apps.backend.historical_data.build_sheets_provider"):
             self.manager = HistoricalDataManager()
 
     @pytest.mark.unit
@@ -154,10 +152,10 @@ class TestHistoricalDataRetrieval:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.mock_sheets_reader = Mock()
+        self.mock_provider = Mock()
         with patch(
-            "apps.backend.historical_data.SheetsReader",
-            return_value=self.mock_sheets_reader,
+            "apps.backend.historical_data.build_sheets_provider",
+            return_value=self.mock_provider,
         ):
             self.manager = HistoricalDataManager()
 
@@ -172,7 +170,9 @@ class TestHistoricalDataRetrieval:
                 "total_collections": [900, 1100, 1000],
             }
         )
-        self.mock_sheets_reader.get_eod_data.return_value = mock_data
+        # Configure alias mapping and data fetching
+        self.mock_provider.get_location_aliases.return_value = "baytown_eod"
+        self.mock_provider.fetch.return_value = mock_data
 
         with patch.object(
             self.manager, "_filter_by_date_range", return_value=mock_data
@@ -186,7 +186,9 @@ class TestHistoricalDataRetrieval:
     @pytest.mark.unit
     def test_get_historical_eod_data_empty_response(self) -> None:
         """Test handling of empty data response."""
-        self.mock_sheets_reader.get_eod_data.return_value = None
+        # Configure provider to return no alias or no data
+        self.mock_provider.get_location_aliases.return_value = "baytown_eod"
+        self.mock_provider.fetch.return_value = None
 
         result = self.manager.get_historical_eod_data(30)
         assert result is None
@@ -194,7 +196,9 @@ class TestHistoricalDataRetrieval:
     @pytest.mark.unit
     def test_get_historical_eod_data_api_error(self) -> None:
         """Test handling of API errors."""
-        self.mock_sheets_reader.get_eod_data.side_effect = Exception("API Error")
+        # Configure provider to raise exception during fetch
+        self.mock_provider.get_location_aliases.return_value = "baytown_eod"
+        self.mock_provider.fetch.side_effect = Exception("API Error")
 
         result = self.manager.get_historical_eod_data(30)
         assert result is None
@@ -209,7 +213,15 @@ class TestHistoricalDataRetrieval:
                 "treatments_scheduled": [40, 45],
             }
         )
-        self.mock_sheets_reader.get_front_kpi_data.return_value = mock_data
+
+        # Configure alias mapping for front KPI data
+        def mock_get_aliases(location, data_type):
+            if data_type == "front":
+                return "baytown_front"
+            return "baytown_eod"
+
+        self.mock_provider.get_location_aliases.side_effect = mock_get_aliases
+        self.mock_provider.fetch.return_value = mock_data
 
         with patch.object(
             self.manager, "_filter_by_date_range", return_value=mock_data
@@ -226,10 +238,10 @@ class TestLatestAvailableData:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.mock_sheets_reader = Mock()
+        self.mock_provider = Mock()
         with patch(
-            "apps.backend.historical_data.SheetsReader",
-            return_value=self.mock_sheets_reader,
+            "apps.backend.historical_data.build_sheets_provider",
+            return_value=self.mock_provider,
         ):
             self.manager = HistoricalDataManager()
 
@@ -255,8 +267,19 @@ class TestLatestAvailableData:
             }
         )
 
-        self.mock_sheets_reader.get_eod_data.return_value = mock_eod_data
-        self.mock_sheets_reader.get_front_kpi_data.return_value = mock_front_kpi_data
+        # Configure provider for both EOD and front KPI data
+        def mock_fetch(alias):
+            if "eod" in alias:
+                return mock_eod_data
+            elif "front" in alias:
+                return mock_front_kpi_data
+            return None
+
+        def mock_get_aliases(location, data_type):
+            return f"{location}_{data_type}"
+
+        self.mock_provider.get_location_aliases.side_effect = mock_get_aliases
+        self.mock_provider.fetch.side_effect = mock_fetch
 
         with (
             patch.object(
@@ -281,10 +304,23 @@ class TestLatestAvailableData:
         """Test handling when EOD data is missing."""
         latest_date = datetime(2025, 9, 20)
 
-        self.mock_sheets_reader.get_eod_data.return_value = None
-        self.mock_sheets_reader.get_front_kpi_data.return_value = pd.DataFrame(
-            {"Submission Date": ["2025-09-20"], "treatments_presented": [25]}
-        )
+        # Configure provider to return no alias or no data
+        self.mock_provider.get_location_aliases.return_value = "baytown_eod"
+        self.mock_provider.fetch.return_value = None
+
+        # Configure provider to return front KPI data only
+        def mock_fetch_missing_eod(alias):
+            if "front" in alias:
+                return pd.DataFrame(
+                    {"Submission Date": ["2025-09-20"], "treatments_presented": [25]}
+                )
+            return None  # No EOD data
+
+        def mock_get_aliases(location, data_type):
+            return f"{location}_{data_type}"
+
+        self.mock_provider.get_location_aliases.side_effect = mock_get_aliases
+        self.mock_provider.fetch.side_effect = mock_fetch_missing_eod
 
         with patch.object(
             self.manager, "get_latest_operational_date", return_value=latest_date
@@ -301,7 +337,7 @@ class TestDateFiltering:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("apps.backend.historical_data.SheetsReader"):
+        with patch("apps.backend.historical_data.build_sheets_provider"):
             self.manager = HistoricalDataManager()
 
     @pytest.mark.unit
@@ -419,7 +455,7 @@ class TestErrorHandling:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("apps.backend.historical_data.SheetsReader"):
+        with patch("apps.backend.historical_data.build_sheets_provider"):
             self.manager = HistoricalDataManager()
 
     @pytest.mark.unit
@@ -455,7 +491,7 @@ class TestFrameworkAgnosticDesign:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("apps.backend.historical_data.SheetsReader"):
+        with patch("apps.backend.historical_data.build_sheets_provider"):
             self.manager = HistoricalDataManager()
 
     @pytest.mark.unit

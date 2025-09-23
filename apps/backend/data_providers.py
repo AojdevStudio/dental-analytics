@@ -1,4 +1,9 @@
-"""Multi-location data provider with enhanced configuration support."""
+"""Data provider implementations for dental analytics.
+
+Provides abstracted data access through configurable providers.
+Supports Google Sheets with alias-based configuration and prepares
+interface for future SQLite provider integration.
+"""
 
 import logging
 from pathlib import Path
@@ -14,106 +19,71 @@ logger = logging.getLogger(__name__)
 
 
 class ConfigurationError(Exception):
-    """Raised when configuration is invalid or missing."""
+    """Raised when provider configuration is invalid."""
 
     pass
 
 
 class DataProvider(Protocol):
-    """Protocol defining the interface for data providers."""
+    """Protocol for data access providers."""
 
     def fetch(self, alias: str) -> pd.DataFrame | None:
-        """Fetch data by alias."""
+        """Fetch data by alias.
+
+        Args:
+            alias: Data source alias (e.g., 'baytown_eod', 'humble_front')
+
+        Returns:
+            DataFrame with data or None if fetch fails
+        """
         ...
 
     def list_available_aliases(self) -> list[str]:
-        """Get list of available aliases."""
+        """Get list of available data aliases."""
         ...
 
     def validate_alias(self, alias: str) -> bool:
-        """Check if alias is valid."""
+        """Check if alias is valid and accessible."""
         ...
 
 
 class SheetsProvider:
-    """Legacy alias for MultiLocationDataProvider.
+    """Google Sheets data provider with alias-based configuration.
 
-    Maintained for backward compatibility during transition.
+    Replaces legacy SheetsReader with configurable multi-sheet support.
+    Uses aliases to map logical data sources to specific spreadsheet
+    IDs and ranges, enabling clean separation of concerns.
     """
 
-    def __init__(self, config_path: str = "config/sheets.yml") -> None:
-        """Initialize with legacy interface."""
-        self._provider = MultiLocationDataProvider(config_path)
-
-    def fetch(self, alias: str) -> pd.DataFrame | None:
-        """Fetch data by alias."""
-        return self._provider.fetch(alias)
-
-    def list_available_aliases(self) -> list[str]:
-        """Get list of available aliases."""
-        return self._provider.list_available_aliases()
-
-    def validate_alias(self, alias: str) -> bool:
-        """Check if alias is valid."""
-        return self._provider.validate_alias(alias)
-
-    def get_location_aliases(self, location: str, data_type: str) -> str | None:
-        """Get alias for location and data type combination."""
-        return self._provider.get_location_aliases(location, data_type)
-
-
-class MultiLocationDataProvider:
-    """Enhanced data provider supporting multiple locations via configuration.
-
-    Provides unified interface for fetching data from multiple Google Sheets
-    across different dental office locations using alias-based configuration.
-
-    Features:
-    - Configuration-driven sheet mapping
-    - Alias-based data access (e.g., 'baytown_eod', 'humble_front')
-    - Robust error handling and logging
-    - Location-aware data routing
-    """
-
-    def __init__(self, config_path: str = "config/sheets.yml") -> None:
-        """Initialize provider with configuration file.
+    def __init__(self, config_path: Path | str | None = None):
+        """Initialize provider with configuration.
 
         Args:
-            config_path: Path to YAML configuration file
+            config_path: Path to sheets configuration YAML file
 
         Raises:
-            ConfigurationError: If configuration is invalid
+            ConfigurationError: If config is invalid or missing
         """
-        self.config_path = Path(config_path)
-        self.config = self._load_configuration()
+        self.config = self._load_config(config_path)
         self.service = self._init_google_service()
+
+        # Validate all aliases on startup
         self._validate_configuration()
 
-        alias_count = len(self.config["sheets"])
-        logger.info(f"MultiLocationDataProvider initialized with {alias_count} aliases")
+    def _load_config(self, config_path: Path | str | None) -> dict[str, Any]:
+        """Load and validate sheets configuration."""
+        if config_path is None:
+            config_path = "config/sheets.yml"
 
-    def _load_configuration(self) -> dict[str, Any]:
-        """Load and validate YAML configuration.
-
-        Returns:
-            Loaded configuration dictionary
-
-        Raises:
-            ConfigurationError: If file missing or invalid
-        """
-        if not self.config_path.exists():
-            raise ConfigurationError(
-                f"Configuration file not found: {self.config_path}"
-            )
+        config_file = Path(config_path)
+        if not config_file.exists():
+            raise ConfigurationError(f"Configuration file not found: {config_path}")
 
         try:
-            with self.config_path.open() as f:
+            with config_file.open() as f:
                 config = yaml.safe_load(f)
 
-            if not isinstance(config, dict):
-                raise ConfigurationError("Configuration must be a dictionary")
-
-            # Validate required top-level sections
+            # Validate required sections
             required_sections = ["sheets", "locations", "provider_config"]
             for section in required_sections:
                 if section not in config:
@@ -225,16 +195,21 @@ class MultiLocationDataProvider:
         Returns:
             Alias string or None if not found
         """
-        # Build expected alias pattern
-        expected_alias = f"{location}_{data_type}"
+        locations_config = self.config.get("locations", {})
+        location_config = locations_config.get(location.lower())
 
-        if self.validate_alias(expected_alias):
-            return expected_alias
+        if not location_config:
+            logger.warning(f"Location not configured: {location}")
+            return None
 
-        logger.warning(
-            f"No alias found for location '{location}' and data type '{data_type}'"
-        )
-        return None
+        alias = location_config.get(data_type)
+        if not alias:
+            logger.warning(
+                f"Data type '{data_type}' not configured for location '{location}'"
+            )
+            return None
+
+        return alias
 
     def get_location_info(self, location: str) -> dict[str, Any] | None:
         """Get location configuration details.
@@ -246,7 +221,7 @@ class MultiLocationDataProvider:
             Location configuration or None if not found
         """
         locations_config: dict[str, Any] = self.config.get("locations", {})
-        location_info = locations_config.get(location)
+        location_info = locations_config.get(location.lower())
         return location_info if location_info is not None else None
 
     def get_spreadsheet_info(self, alias: str) -> dict[str, str] | None:
@@ -269,15 +244,21 @@ class MultiLocationDataProvider:
 
 
 def build_sheets_provider(config_path: Path | str | None = None) -> SheetsProvider:
-    """Build a configured SheetsProvider instance.
+    """Factory function to create and configure SheetsProvider.
 
     Args:
         config_path: Optional path to configuration file
 
     Returns:
         Configured SheetsProvider instance
-    """
-    if config_path is None:
-        config_path = "config/sheets.yml"
 
-    return SheetsProvider(str(config_path))
+    Raises:
+        ConfigurationError: If provider cannot be initialized
+    """
+    try:
+        provider = SheetsProvider(config_path)
+        logger.info("SheetsProvider factory initialization successful")
+        return provider
+    except Exception as e:
+        logger.error(f"Failed to build SheetsProvider: {e}")
+        raise

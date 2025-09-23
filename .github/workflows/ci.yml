@@ -47,16 +47,16 @@ jobs:
       run: uv sync --all-extras --dev
 
     - name: Code formatting check (Black)
-      run: uv run black --check --diff backend/ frontend/ tests/
+      run: uv run black --check --diff apps/backend/ apps/frontend/ tests/
 
     - name: Linting and import sorting (Ruff)
-      run: uv run ruff check backend/ frontend/ tests/
+      run: uv run ruff check apps/backend/ apps/frontend/ tests/
 
     - name: Type checking (MyPy)
-      run: uv run mypy backend/ tests/
+      run: uv run mypy apps/backend/ tests/
 
     - name: Check for dead code
-      run: uv run ruff check --select F401,F841 backend/ frontend/ tests/
+      run: uv run ruff check --select F401,F841 apps/backend/ apps/frontend/ tests/
 
     - name: Minimize uv cache
       run: uv cache prune
@@ -112,7 +112,7 @@ jobs:
     - name: Bandit security linting
       run: |
         uv add bandit[toml]
-        uv run bandit -r backend/ -f json -o bandit-report.json
+        uv run bandit -r apps/backend/ -f json -o bandit-report.json
       continue-on-error: true
 
     - name: Upload Bandit report
@@ -153,7 +153,7 @@ jobs:
     - name: Run unit tests with coverage
       run: |
         uv run pytest tests/ \
-          --cov=backend \
+          --cov=apps.backend \
           --cov-report=xml \
           --cov-report=term-missing \
           --cov-fail-under=90 \
@@ -246,7 +246,7 @@ jobs:
         """Performance benchmarks for dental analytics functions."""
         import pytest
         import pandas as pd
-        from backend.metrics import calculate_production_total, calculate_collection_rate
+        from apps.backend.metrics import calculate_production_total, calculate_collection_rate
 
         class TestPerformance:
             def test_production_calculation_performance(self, benchmark):

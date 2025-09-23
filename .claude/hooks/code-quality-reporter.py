@@ -9,7 +9,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class CodeQualityReporter:
@@ -31,7 +31,7 @@ class CodeQualityReporter:
         """Load or initialize session data"""
         try:
             if self.session_file.exists():
-                with open(self.session_file, "r", encoding="utf-8") as f:
+                with open(self.session_file, encoding="utf-8") as f:
                     data = json.load(f)
                     # Convert list back to set for filesModified
                     self.session = data
@@ -44,7 +44,7 @@ class CodeQualityReporter:
         except Exception:
             self.session = self.create_new_session()
 
-    def create_new_session(self) -> Dict[str, Any]:
+    def create_new_session(self) -> dict[str, Any]:
         """Create a new session"""
         return {
             "startTime": datetime.now().isoformat(),
@@ -59,7 +59,7 @@ class CodeQualityReporter:
             },
         }
 
-    def process_event(self, input_data: Dict[str, Any]) -> Optional[Dict[str, str]]:
+    def process_event(self, input_data: dict[str, Any]) -> dict[str, str] | None:
         """Process hook event"""
         event = input_data.get("event")
         tool_name = input_data.get("tool_name")
@@ -102,7 +102,7 @@ class CodeQualityReporter:
 
         return None
 
-    def record_violation(self, message: str, file_path: Optional[str]):
+    def record_violation(self, message: str, file_path: str | None):
         """Record a violation"""
         lines = message.split("\n")
         violations = [
@@ -120,7 +120,7 @@ class CodeQualityReporter:
                 }
             )
 
-    def record_improvement(self, message: str, file_path: Optional[str]):
+    def record_improvement(self, message: str, file_path: str | None):
         """Record an improvement"""
         self.session["improvements"].append(
             {
@@ -144,7 +144,7 @@ class CodeQualityReporter:
             # Silently fail - don't interrupt the workflow
             pass
 
-    def generate_report(self) -> Dict[str, str]:
+    def generate_report(self) -> dict[str, str]:
         """Generate quality report"""
         duration = self.calculate_duration()
         top_issues = self.get_top_issues()
@@ -232,7 +232,7 @@ class CodeQualityReporter:
             return f"{hours}h {minutes}m"
         return f"{minutes}m"
 
-    def get_top_issues(self) -> List[Dict[str, Any]]:
+    def get_top_issues(self) -> list[dict[str, Any]]:
         """Get top issues by frequency"""
         issue_counts = {}
 
@@ -246,7 +246,7 @@ class CodeQualityReporter:
             reverse=True,
         )[:5]
 
-    def get_file_statistics(self) -> Dict[str, List[Dict[str, Any]]]:
+    def get_file_statistics(self) -> dict[str, list[dict[str, Any]]]:
         """Get file statistics"""
         file_issues = {}
 
@@ -267,7 +267,7 @@ class CodeQualityReporter:
 
         return {"mostProblematic": most_problematic}
 
-    def get_recommendations(self) -> List[str]:
+    def get_recommendations(self) -> list[str]:
         """Generate recommendations based on findings"""
         recommendations = []
         top_issues = self.get_top_issues()
@@ -342,7 +342,7 @@ def main():
 
         # Read existing log data or initialize empty list
         if log_path.exists():
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 try:
                     log_data = json.load(f)
                 except (json.JSONDecodeError, ValueError):

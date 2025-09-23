@@ -1,7 +1,6 @@
 """Test script for Sprint Change Proposal implementation."""
 
 import pandas as pd
-
 from backend.metrics import (
     _get_latest_entry,
     get_all_kpis,

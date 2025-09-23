@@ -43,7 +43,7 @@ jobs:
       id: formatting
       run: |
         echo "🔍 Checking code formatting..."
-        if uv run black --check backend/ frontend/ tests/; then
+        if uv run black --check apps/backend/ apps/frontend/ tests/; then
           echo "✅ Code formatting passed"
           echo "formatting=passed" >> $GITHUB_OUTPUT
         else
@@ -56,7 +56,7 @@ jobs:
       id: linting
       run: |
         echo "🔍 Running linting checks..."
-        if uv run ruff check backend/ frontend/ tests/; then
+        if uv run ruff check apps/backend/ apps/frontend/ tests/; then
           echo "✅ Linting passed"
           echo "linting=passed" >> $GITHUB_OUTPUT
         else
@@ -112,7 +112,7 @@ jobs:
         uv add radon
 
         # Check cyclomatic complexity
-        COMPLEX_FILES=$(uv run radon cc backend/ frontend/ -a -nc | grep -E "^[ABCDEF]" | grep -v "^A" || true)
+        COMPLEX_FILES=$(uv run radon cc apps/backend/ apps/frontend/ -a -nc | grep -E "^[ABCDEF]" | grep -v "^A" || true)
 
         if [ -z "$COMPLEX_FILES" ]; then
           echo "✅ Code complexity within acceptable limits"
@@ -154,7 +154,7 @@ jobs:
         *.conftest
         EOF
 
-        DEAD_CODE=$(uv run vulture backend/ frontend/ --whitelist vulture-whitelist.py || true)
+        DEAD_CODE=$(uv run vulture apps/backend/ apps/frontend/ --whitelist vulture-whitelist.py || true)
 
         if [ -z "$DEAD_CODE" ]; then
           echo "✅ No dead code detected"

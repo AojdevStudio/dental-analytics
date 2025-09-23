@@ -8,11 +8,10 @@
 
 import argparse
 import json
-import os
-import sys
 import subprocess
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 try:
     from dotenv import load_dotenv
@@ -31,7 +30,7 @@ def log_session_start(input_data):
 
     # Read existing log data or initialize empty list
     if log_file.exists():
-        with open(log_file, "r") as f:
+        with open(log_file) as f:
             try:
                 log_data = json.load(f)
             except (json.JSONDecodeError, ValueError):
@@ -130,7 +129,7 @@ def load_development_context(source):
     for file_path in context_files:
         if Path(file_path).exists():
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     content = f.read().strip()
                     if content:
                         context_parts.append(f"\n--- Content from {file_path} ---")

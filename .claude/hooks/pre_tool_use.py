@@ -356,7 +356,7 @@ def get_claude_session_id():
     # Try to read existing session ID
     if session_file.exists():
         try:
-            with open(session_file, "r") as f:
+            with open(session_file) as f:
                 session_id = f.read().strip()
                 if session_id:
                     return session_id
@@ -402,7 +402,7 @@ def log_tool_call(tool_name, tool_input, decision, reason=None, block_message=No
 
         # Read existing log data or initialize empty list
         if log_path.exists():
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 try:
                     log_data = json.load(f)
                 except (json.JSONDecodeError, ValueError):

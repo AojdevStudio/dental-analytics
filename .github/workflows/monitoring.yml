@@ -57,8 +57,8 @@ jobs:
         echo "📊 Collecting test coverage metrics..."
 
         uv run pytest tests/ \
-          --cov=backend \
-          --cov=frontend \
+          --cov=apps.backend \
+          --cov=apps.frontend \
           --cov-report=xml \
           --cov-report=json \
           --quiet
@@ -82,13 +82,13 @@ jobs:
         uv add radon vulture
 
         # Cyclomatic complexity
-        COMPLEXITY=$(uv run radon cc backend/ frontend/ -a -s | grep "Average complexity" | grep -o "[0-9.]*" | head -1)
+        COMPLEXITY=$(uv run radon cc apps/backend/ apps/frontend/ -a -s | grep "Average complexity" | grep -o "[0-9.]*" | head -1)
 
         # Maintainability index
-        MAINTAINABILITY=$(uv run radon mi backend/ frontend/ -s | grep "Average MI" | grep -o "[0-9.]*" | head -1)
+        MAINTAINABILITY=$(uv run radon mi apps/backend/ apps/frontend/ -s | grep "Average MI" | grep -o "[0-9.]*" | head -1)
 
         # Lines of code
-        LOC=$(find backend frontend -name "*.py" -exec wc -l {} + | tail -1 | awk '{print $1}')
+        LOC=$(find apps/backend apps/frontend -name "*.py" -exec wc -l {} + | tail -1 | awk '{print $1}')
 
         # Test count
         TEST_COUNT=$(find tests -name "test_*.py" -exec grep -c "def test_" {} + | paste -sd+ | bc)
@@ -182,7 +182,7 @@ jobs:
         import time
         import psutil
         import os
-        from backend.metrics import (
+        from apps.backend.metrics import (
             calculate_production_total,
             calculate_collection_rate,
             calculate_new_patients,
@@ -345,7 +345,7 @@ jobs:
 
         # Static code analysis for security issues
         echo "Running static security analysis..."
-        uv run bandit -r backend/ frontend/ -f json -o static-security-issues.json || true
+        uv run bandit -r apps/backend/ apps/frontend/ -f json -o static-security-issues.json || true
 
         # Check for known security issues
         echo "Checking for known security patterns..."

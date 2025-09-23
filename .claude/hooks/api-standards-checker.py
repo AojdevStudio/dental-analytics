@@ -22,7 +22,6 @@ import urllib.parse
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 
 @dataclass
@@ -30,17 +29,17 @@ class Violation:
     rule: str
     message: str
     severity: str
-    file_path: Optional[str] = None
-    line_number: Optional[int] = None
+    file_path: str | None = None
+    line_number: int | None = None
 
 
 class ApiStandardsChecker:
-    def __init__(self, file_path: Optional[str] = None):
+    def __init__(self, file_path: str | None = None):
         self.file_path = file_path
-        self.violations: List[Violation] = []
-        self.suggestions: List[Violation] = []
+        self.violations: list[Violation] = []
+        self.suggestions: list[Violation] = []
 
-    def validate_file(self, file_path: str, content: str) -> List[Violation]:
+    def validate_file(self, file_path: str, content: str) -> list[Violation]:
         """Validate a single file's content"""
         self.file_path = file_path
         self.violations = []
@@ -263,10 +262,10 @@ class ApiStandardsChecker:
                 )
 
 
-def check_file(file_path: str) -> List[Violation]:
+def check_file(file_path: str) -> list[Violation]:
     """Check a single file"""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         checker = ApiStandardsChecker()
@@ -282,7 +281,7 @@ def check_file(file_path: str) -> List[Violation]:
         ]
 
 
-def check_directory(directory: str) -> List[Violation]:
+def check_directory(directory: str) -> list[Violation]:
     """Check all API route files in a directory"""
     all_violations = []
 
@@ -296,7 +295,7 @@ def check_directory(directory: str) -> List[Violation]:
     return all_violations
 
 
-def is_safe_path(file_path: str, base_dir: Optional[str] = None) -> bool:
+def is_safe_path(file_path: str, base_dir: str | None = None) -> bool:
     """
     Robust path traversal security check that handles various attack vectors.
 
@@ -418,7 +417,7 @@ def is_safe_path(file_path: str, base_dir: Optional[str] = None) -> bool:
         return False
 
 
-def hook_mode() -> Dict:
+def hook_mode() -> dict:
     """Claude Code hook compatibility mode"""
     try:
         input_data = json.loads(sys.stdin.read())
@@ -430,7 +429,7 @@ def hook_mode() -> Dict:
 
         # Read existing log data or initialize empty list
         if log_path.exists():
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 try:
                     log_data = json.load(f)
                 except (json.JSONDecodeError, ValueError):
@@ -515,7 +514,7 @@ def hook_mode() -> Dict:
             log_path = log_dir / "api_standards_checker.json"
 
             if log_path.exists():
-                with open(log_path, "r") as f:
+                with open(log_path) as f:
                     try:
                         log_data = json.load(f)
                     except (json.JSONDecodeError, ValueError):
@@ -544,7 +543,7 @@ def hook_mode() -> Dict:
         return {"approve": True, "message": f"API checker error: {str(e)}"}
 
 
-def format_violations(violations: List[Violation]) -> str:
+def format_violations(violations: list[Violation]) -> str:
     """Format violations for display"""
     if not violations:
         return "✅ No API standards violations found!"

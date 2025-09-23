@@ -15,6 +15,7 @@ import argparse
 import json
 from collections.abc import Iterable
 
+from apps.backend.data_providers import build_sheets_provider
 from apps.backend.metrics import get_all_kpis, get_combined_kpis
 
 
@@ -52,6 +53,13 @@ def parse_args() -> argparse.Namespace:
         help="Also print first rows of raw data for the selected sheet(s).",
     )
     parser.add_argument(
+        "--spreadsheet-id",
+        help=(
+            "Temporarily override spreadsheet ID for this run "
+            "(not implemented with new provider)."
+        ),
+    )
+    parser.add_argument(
         "--location",
         choices=["baytown", "humble", "both"],
         default="baytown",
@@ -77,8 +85,6 @@ def print_raw(show_raw: list[str] | None, location: str = "baytown") -> None:
     if not show_raw:
         return
 
-    from apps.backend.data_providers import build_sheets_provider
-
     provider = build_sheets_provider()
 
     if "eod" in show_raw:
@@ -95,6 +101,10 @@ def print_raw(show_raw: list[str] | None, location: str = "baytown") -> None:
 
 def main() -> None:
     args = parse_args()
+
+    if args.spreadsheet_id:
+        print("Warning: --spreadsheet-id is not implemented with new provider system")
+        # TODO: Implement custom config loading if needed
 
     if args.location == "both":
         # Get KPIs for both locations

@@ -5,7 +5,7 @@ provider_type: "sheets"  # Prepare for 'sqlite' option
 sheets:
   baytown_eod:
     spreadsheet_id: "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
-    range: "EOD - Baytown Billing!A:N"
+    range: "EOD - Baytown Billing!A:AG"
     description: "Baytown end-of-day billing data"
 
   humble_eod:

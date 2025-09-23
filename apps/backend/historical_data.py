@@ -20,6 +20,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 import structlog
 
+from .data_providers import build_sheets_provider
+
 # Configure structured logging
 structlog.configure(
     processors=[
@@ -46,8 +48,6 @@ class HistoricalDataManager:
 
     def __init__(self) -> None:
         """Initialize the historical data manager."""
-        from .data_providers import build_sheets_provider
-
         self.provider = build_sheets_provider()
         log.info("historical_data.manager_initialized")
 
@@ -150,7 +150,6 @@ class HistoricalDataManager:
             # Get EOD data using new provider pattern
             eod_alias = self.provider.get_location_aliases(location, "eod")
             eod_df = self.provider.fetch(eod_alias) if eod_alias else None
-
             if eod_df is None or eod_df.empty:
                 log.warning("historical_data.eod_data_empty", location=location)
                 return None
@@ -203,7 +202,6 @@ class HistoricalDataManager:
             # Get Front KPI data using new provider pattern
             front_alias = self.provider.get_location_aliases(location, "front")
             front_kpi_df = self.provider.fetch(front_alias) if front_alias else None
-
             if front_kpi_df is None or front_kpi_df.empty:
                 log.warning("historical_data.front_kpi_data_empty", location=location)
                 return None
@@ -266,7 +264,6 @@ class HistoricalDataManager:
             # Get EOD data and filter to latest operational day
             eod_alias = self.provider.get_location_aliases(location, "eod")
             eod_df = self.provider.fetch(eod_alias) if eod_alias else None
-
             if (
                 eod_df is not None
                 and not eod_df.empty
@@ -279,7 +276,6 @@ class HistoricalDataManager:
             # Get Front KPI data and filter to latest operational day
             front_alias = self.provider.get_location_aliases(location, "front")
             front_kpi_df = self.provider.fetch(front_alias) if front_alias else None
-
             if (
                 front_kpi_df is not None
                 and not front_kpi_df.empty
