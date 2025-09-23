@@ -1,7 +1,7 @@
 """Test suite for data providers module.
 
-Tests the new alias-based SheetsProvider implementation that replaces
-the legacy SheetsReader with configurable multi-sheet support.
+Tests the alias-based SheetsProvider implementation with configurable
+multi-sheet support for dental analytics data access.
 """
 
 from unittest.mock import Mock, patch

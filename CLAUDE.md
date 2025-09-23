@@ -383,6 +383,18 @@ mcp__serena__insert_after_symbol --name_path="calculate_hygiene_reappointment" -
 - Serena memory system enables persistent project knowledge
 - Use symbolic editing for precise, reference-safe modifications
 
+## Compatibility & Migration Policy (Out-with-the-old)
+
+**Default stance:** We do **not** preserve backward compatibility. When a change is requested, replace the old behavior with the new approach. Remove obsolete code, flags, and interfaces immediately unless the request explicitly says "keep legacy support."
+
+### Rules for Agents & Tools
+- **BREAK-FIRST mindset:** Prefer deletion and simplification over shims/adapters. No polyfills, toggles, or compatibility layers unless explicitly requested.
+- **Single source of truth:** The **latest** interface/spec supersedes all prior versions. Do not consult or retain deprecated variants.
+- **Migration over coexistence:** Write **forward-only** migrations. Do **not** add down-migrations unless explicitly requested.
+- **Delete deprecated code now:** No deprecation windows. Remove old functions, types, env vars, config keys, and documentation in the same change.
+- **Update all call sites:** Rename/replace and fix usages across the repo; do not leave aliases.
+- **Tests follow the new world:** Update or replace tests to encode the new behavior. Delete tests that only assert legacy behavior.
+
 ## Current Project Status
 
 ### Completed Stories ✅

@@ -7,7 +7,8 @@ from backend.metrics import (
     get_baytown_kpis,
     get_humble_kpis,
 )
-from backend.sheets_reader import SheetsReader
+
+from apps.backend.data_providers import build_sheets_provider
 
 
 def test_latest_entry_filter():
@@ -27,9 +28,8 @@ def test_latest_entry_filter():
     result = _get_latest_entry(test_data)
     if result is not None:
         print(f"✅ Latest date extracted: {result['Date'].iloc[0]}")
-        print(
-            f"✅ Production for latest date: ${result['Total Production Today'].iloc[0]:,.0f}"
-        )
+        production_value = result["Total Production Today"].iloc[0]
+        print(f"✅ Production for latest date: ${production_value:,.0f}")
         assert (
             result["Total Production Today"].iloc[0] == 6450
         ), "Expected production of 6450"
@@ -124,10 +124,10 @@ def test_column_mapping():
     print("\n5. Testing Column Mapping:")
     print("=" * 50)
 
-    reader = SheetsReader()
+    provider = build_sheets_provider()
 
-    # Test EOD sheet range includes column S for new patients
-    eod_data = reader.get_sheet_data("EOD - Baytown Billing!A:S")
+    # Test EOD sheet data for Baytown location
+    eod_data = provider.fetch("baytown_eod")
     if eod_data is not None and not eod_data.empty:
         columns = list(eod_data.columns)
         print(f"✅ EOD sheet has {len(columns)} columns (A through S)")

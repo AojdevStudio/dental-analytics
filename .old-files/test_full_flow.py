@@ -16,7 +16,9 @@ class TestFullIntegration:
     @pytest.mark.integration
     def test_complete_kpi_flow(self) -> None:
         """Test end-to-end KPI calculation."""
-        with patch("apps.backend.metrics.SheetsReader") as mock_reader:
+        with patch(
+            "apps.backend.metrics.build_sheets_provider"
+        ) as mock_provider_factory:
             mock_instance = Mock()
             mock_reader.return_value = mock_instance
 
