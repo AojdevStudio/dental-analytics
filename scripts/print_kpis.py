@@ -15,8 +15,8 @@ import argparse
 import json
 from collections.abc import Iterable
 
-from apps.backend.metrics import get_all_kpis, get_combined_kpis
 from apps.backend.data_providers import build_sheets_provider
+from apps.backend.metrics import get_all_kpis, get_combined_kpis
 
 # Location-specific ranges
 LOCATION_RANGES = {
@@ -66,7 +66,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--spreadsheet-id",
-        help=("Temporarily override spreadsheet ID for this run (not implemented with new provider)."),
+        help=(
+            "Temporarily override spreadsheet ID for this run (not implemented with new provider)."
+        ),
     )
     parser.add_argument(
         "--location",

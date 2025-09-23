@@ -2,10 +2,10 @@
 Test location switching functionality for multi-location dental analytics.
 
 Tests the ability to switch between Baytown and Humble locations
-and retrieve location-specific KPI data.
+and retrieve location-specific KPI data using the new SheetsProvider system.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
@@ -47,31 +47,58 @@ def get_simple_front_kpi_data() -> pd.DataFrame:
 
 
 class TestLocationSwitching:
-    """Test location switching functionality."""
+    """Test location switching functionality with new SheetsProvider system."""
 
-    @patch("apps.backend.metrics.SheetsReader")
-    def test_get_baytown_kpis(self, mock_sheets_reader: MagicMock) -> None:
+    @patch("apps.backend.metrics.build_sheets_provider")
+    def test_get_baytown_kpis(self, mock_build_provider: Mock) -> None:
         """Test retrieving KPIs for Baytown location."""
-        # Setup mock
-        mock_instance = mock_sheets_reader.return_value
-        mock_instance.get_eod_data.return_value = get_simple_eod_data()
-        mock_instance.get_front_kpi_data.return_value = get_simple_front_kpi_data()
+        # Setup mock provider
+        mock_provider = Mock()
+        mock_build_provider.return_value = mock_provider
+
+        # Configure alias mapping
+        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
+            f"{location}_{data_type}"
+        )
+
+        # Configure data fetching
+        def mock_fetch(alias: str) -> pd.DataFrame:
+            if "eod" in alias:
+                return get_simple_eod_data()
+            elif "front" in alias:
+                return get_simple_front_kpi_data()
+            return pd.DataFrame()
+
+        mock_provider.fetch.side_effect = mock_fetch
 
         # Test
         kpis = get_all_kpis("baytown")
 
-        # Verify
-        mock_instance.get_eod_data.assert_called_once_with("baytown")
-        mock_instance.get_front_kpi_data.assert_called_once_with("baytown")
+        # Verify provider interactions
+        mock_provider.get_location_aliases.assert_any_call("baytown", "eod")
+        mock_provider.get_location_aliases.assert_any_call("baytown", "front")
+        mock_provider.fetch.assert_any_call("baytown_eod")
+        mock_provider.fetch.assert_any_call("baytown_front")
+
+        # Verify calculations
         assert kpis["production_total"] == 1075.0  # 1000 + 50 + 25
         assert kpis["collection_rate"] == pytest.approx(
             97.67, rel=1e-2
         )  # 1050/1075*100
 
-    @patch("apps.backend.metrics.SheetsReader")
-    def test_get_humble_kpis(self, mock_sheets_reader: MagicMock) -> None:
+    @patch("apps.backend.metrics.build_sheets_provider")
+    def test_get_humble_kpis(self, mock_build_provider: Mock) -> None:
         """Test retrieving KPIs for Humble location."""
-        # Setup mock with different data for Humble
+        # Setup mock provider
+        mock_provider = Mock()
+        mock_build_provider.return_value = mock_provider
+
+        # Configure alias mapping
+        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
+            f"{location}_{data_type}"
+        )
+
+        # Setup different data for Humble
         humble_eod = pd.DataFrame(
             {
                 "Total Production Today": [1500],
@@ -84,23 +111,42 @@ class TestLocationSwitching:
             }
         )
 
-        mock_instance = mock_sheets_reader.return_value
-        mock_instance.get_eod_data.return_value = humble_eod
-        mock_instance.get_front_kpi_data.return_value = get_simple_front_kpi_data()
+        # Configure data fetching
+        def mock_fetch(alias: str) -> pd.DataFrame:
+            if "eod" in alias:
+                return humble_eod
+            elif "front" in alias:
+                return get_simple_front_kpi_data()
+            return pd.DataFrame()
+
+        mock_provider.fetch.side_effect = mock_fetch
 
         # Test
         kpis = get_all_kpis("humble")
 
-        # Verify
-        mock_instance.get_eod_data.assert_called_once_with("humble")
-        mock_instance.get_front_kpi_data.assert_called_once_with("humble")
+        # Verify provider interactions
+        mock_provider.get_location_aliases.assert_any_call("humble", "eod")
+        mock_provider.get_location_aliases.assert_any_call("humble", "front")
+        mock_provider.fetch.assert_any_call("humble_eod")
+        mock_provider.fetch.assert_any_call("humble_front")
+
+        # Verify calculations
         assert kpis["production_total"] == 1615.0  # 1500 + 75 + 40
         assert kpis["collection_rate"] == pytest.approx(96.0, rel=1e-2)  # 1550/1615*100
 
-    @patch("apps.backend.metrics.SheetsReader")
-    def test_get_combined_kpis(self, mock_sheets_reader: MagicMock) -> None:
+    @patch("apps.backend.metrics.build_sheets_provider")
+    def test_get_combined_kpis(self, mock_build_provider: Mock) -> None:
         """Test retrieving KPIs for both locations."""
-        # Setup mock with different data for each location
+        # Setup mock provider
+        mock_provider = Mock()
+        mock_build_provider.return_value = mock_provider
+
+        # Configure alias mapping
+        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
+            f"{location}_{data_type}"
+        )
+
+        # Setup different data for each location
         baytown_eod = get_simple_eod_data()
         humble_eod = pd.DataFrame(
             {
@@ -114,14 +160,17 @@ class TestLocationSwitching:
             }
         )
 
-        mock_instance = mock_sheets_reader.return_value
+        # Configure data fetching with location-specific data
+        def mock_fetch(alias: str) -> pd.DataFrame:
+            if alias == "baytown_eod":
+                return baytown_eod
+            elif alias == "humble_eod":
+                return humble_eod
+            elif "front" in alias:
+                return get_simple_front_kpi_data()
+            return pd.DataFrame()
 
-        # Mock the location-specific data returns
-        def mock_get_eod_data(location: str) -> pd.DataFrame:
-            return baytown_eod if location == "baytown" else humble_eod
-
-        mock_instance.get_eod_data.side_effect = mock_get_eod_data
-        mock_instance.get_front_kpi_data.return_value = get_simple_front_kpi_data()
+        mock_provider.fetch.side_effect = mock_fetch
 
         # Get KPIs for both locations
         combined_kpis = get_combined_kpis()
@@ -140,8 +189,10 @@ class TestLocationSwitching:
         assert humble_kpis["production_total"] == 1615.0
         assert humble_kpis["collection_rate"] == pytest.approx(96.0, rel=1e-2)
 
-        # Verify calls were made for both locations
-        assert mock_instance.get_eod_data.call_count == 2
+        # Verify provider was called for both locations
+        assert (
+            mock_provider.get_location_aliases.call_count >= 4
+        )  # 2 locations × 2 data types
 
     def test_calculate_production_with_location_data(self) -> None:
         """Test production calculation with location-specific column structure."""
@@ -189,33 +240,63 @@ class TestLocationSwitching:
         # Rate: 1050/1075 * 100 = 97.67%
         assert rate == pytest.approx(97.67, rel=1e-2)
 
-    @patch("apps.backend.metrics.SheetsReader")
-    def test_location_parameter_validation(self, mock_sheets_reader: MagicMock) -> None:
-        """Test that location parameter is properly passed to sheets reader."""
-        mock_instance = mock_sheets_reader.return_value
-        mock_instance.get_eod_data.return_value = get_simple_eod_data()
-        mock_instance.get_front_kpi_data.return_value = get_simple_front_kpi_data()
+    @patch("apps.backend.metrics.build_sheets_provider")
+    def test_location_parameter_validation(self, mock_build_provider: Mock) -> None:
+        """Test that location parameter is properly passed to provider."""
+        # Setup mock provider
+        mock_provider = Mock()
+        mock_build_provider.return_value = mock_provider
+
+        # Configure alias mapping
+        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
+            f"{location}_{data_type}"
+        )
+
+        # Configure data fetching
+        def mock_fetch(alias: str) -> pd.DataFrame:
+            if "eod" in alias:
+                return get_simple_eod_data()
+            elif "front" in alias:
+                return get_simple_front_kpi_data()
+            return pd.DataFrame()
+
+        mock_provider.fetch.side_effect = mock_fetch
 
         # Test with specific location
         get_all_kpis("humble")
 
-        # Verify the location was passed correctly
-        mock_instance.get_eod_data.assert_called_once_with("humble")
-        mock_instance.get_front_kpi_data.assert_called_once_with("humble")
+        # Verify the location was passed correctly to alias resolution
+        mock_provider.get_location_aliases.assert_any_call("humble", "eod")
+        mock_provider.get_location_aliases.assert_any_call("humble", "front")
 
-    @patch("apps.backend.metrics.SheetsReader")
-    def test_default_location_parameter(self, mock_sheets_reader: MagicMock) -> None:
+    @patch("apps.backend.metrics.build_sheets_provider")
+    def test_default_location_parameter(self, mock_build_provider: Mock) -> None:
         """Test that default location parameter works correctly."""
-        mock_instance = mock_sheets_reader.return_value
-        mock_instance.get_eod_data.return_value = get_simple_eod_data()
-        mock_instance.get_front_kpi_data.return_value = get_simple_front_kpi_data()
+        # Setup mock provider
+        mock_provider = Mock()
+        mock_build_provider.return_value = mock_provider
+
+        # Configure alias mapping
+        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
+            f"{location}_{data_type}"
+        )
+
+        # Configure data fetching
+        def mock_fetch(alias: str) -> pd.DataFrame:
+            if "eod" in alias:
+                return get_simple_eod_data()
+            elif "front" in alias:
+                return get_simple_front_kpi_data()
+            return pd.DataFrame()
+
+        mock_provider.fetch.side_effect = mock_fetch
 
         # Test without specifying location (should default to 'baytown')
         get_all_kpis()
 
         # Verify the default location was used
-        mock_instance.get_eod_data.assert_called_once_with("baytown")
-        mock_instance.get_front_kpi_data.assert_called_once_with("baytown")
+        mock_provider.get_location_aliases.assert_any_call("baytown", "eod")
+        mock_provider.get_location_aliases.assert_any_call("baytown", "front")
 
 
 @pytest.fixture

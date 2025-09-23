@@ -4,17 +4,15 @@ Tests the new alias-based SheetsProvider implementation that replaces
 the legacy SheetsReader with configurable multi-sheet support.
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import yaml
+from unittest.mock import Mock, patch
 
-import pandas as pd
+import pytest
+import yaml
 from googleapiclient.errors import HttpError
 
 from apps.backend.data_providers import (
-    SheetsProvider,
     ConfigurationError,
+    SheetsProvider,
     build_sheets_provider,
 )
 
@@ -88,7 +86,9 @@ class TestSheetsProviderConfiguration:
         with open(config_path, "w") as f:
             yaml.dump(config_content, f)
 
-        with pytest.raises(ConfigurationError, match="Missing required section: sheets"):
+        with pytest.raises(
+            ConfigurationError, match="Missing required section: sheets"
+        ):
             SheetsProvider(config_path)
 
     def test_missing_credentials_file(self, tmp_path):
@@ -143,7 +143,11 @@ class TestSheetsProviderFetch:
         # Mock Google Sheets API response
         mock_service = Mock()
         mock_response = {
-            "values": [["Column1", "Column2"], ["Value1", "Value2"], ["Value3", "Value4"]]
+            "values": [
+                ["Column1", "Column2"],
+                ["Value1", "Value2"],
+                ["Value3", "Value4"],
+            ]
         }
         mock_service.spreadsheets().values().get().execute.return_value = mock_response
 
@@ -305,7 +309,9 @@ class TestLocationAliasMapping:
                 provider = SheetsProvider(config_path)
 
                 assert provider.get_location_aliases("baytown", "eod") == "baytown_eod"
-                assert provider.get_location_aliases("humble", "front") == "humble_front"
+                assert (
+                    provider.get_location_aliases("humble", "front") == "humble_front"
+                )
                 assert provider.get_location_aliases("invalid", "eod") is None
                 assert provider.get_location_aliases("baytown", "invalid") is None
 
