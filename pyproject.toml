@@ -24,6 +24,7 @@ dependencies = [
     "streamlit>=1.30",
     "watchdog>=6.0.0",
     "structlog>=25.4.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -146,6 +147,7 @@ module = [
     "google.oauth2.*",
     "pandas.*",
     "streamlit.*",
-    "structlog.*"
+    "structlog.*",
+    "yaml.*"
 ]
 ignore_missing_imports = true

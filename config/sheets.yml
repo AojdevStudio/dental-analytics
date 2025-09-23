@@ -1,0 +1,48 @@
+# Multi-sheet configuration for dental analytics
+provider_type: "sheets"  # Prepare for 'sqlite' option
+
+# Core spreadsheet definitions
+sheets:
+  baytown_eod:
+    spreadsheet_id: "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
+    range: "EOD - Baytown Billing!A:N"
+    description: "Baytown end-of-day billing data"
+
+  humble_eod:
+    spreadsheet_id: "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
+    range: "EOD - Humble Billing!A:AG"
+    description: "Humble end-of-day billing data"
+
+  baytown_front:
+    spreadsheet_id: "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
+    range: "Baytown Front KPIs Form responses!A:Z"
+    description: "Baytown front office KPI data"
+
+  humble_front:
+    spreadsheet_id: "1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8"
+    range: "Humble Front KPIs Form responses!A:Z"
+    description: "Humble front office KPI data"
+
+# Location-to-alias mapping for backward compatibility
+locations:
+  baytown:
+    eod: "baytown_eod"
+    front: "baytown_front"
+  humble:
+    eod: "humble_eod"
+    front: "humble_front"
+
+# Provider configuration
+provider_config:
+  credentials_path: "config/credentials.json"
+  scopes:
+    - "https://www.googleapis.com/auth/spreadsheets.readonly"
+  timeout_seconds: 30
+  retry_attempts: 3
+  cache_duration_minutes: 5
+
+# Future SQLite preparation
+# sqlite:
+#   database_path: "data/dental_analytics.db"
+#   connection_pool_size: 5
+#   query_timeout_seconds: 10

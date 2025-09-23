@@ -20,8 +20,6 @@ from datetime import datetime, timedelta
 import pandas as pd
 import structlog
 
-from .sheets_reader import SheetsReader
-
 # Configure structured logging
 structlog.configure(
     processors=[
@@ -48,7 +46,9 @@ class HistoricalDataManager:
 
     def __init__(self) -> None:
         """Initialize the historical data manager."""
-        self.sheets_reader = SheetsReader()
+        from .data_providers import build_sheets_provider
+
+        self.provider = build_sheets_provider()
         log.info("historical_data.manager_initialized")
 
     def get_latest_operational_date(self) -> datetime:
@@ -131,23 +131,28 @@ class HistoricalDataManager:
             )
             return None
 
-    def get_recent_eod_data(self, days: int = 30) -> pd.DataFrame | None:
+    def get_recent_eod_data(
+        self, days: int = 30, location: str = "baytown"
+    ) -> pd.DataFrame | None:
         """
         Get EOD billing data for the last N days.
 
         Args:
             days: Number of days to retrieve (default: 30)
+            location: Location name ('baytown' or 'humble')
 
         Returns:
             DataFrame with EOD data or None if retrieval fails
         """
-        log.info("historical_data.eod_data_start", days=days)
+        log.info("historical_data.eod_data_start", days=days, location=location)
 
         try:
-            # Get full EOD dataset
-            eod_df = self.sheets_reader.get_eod_data()
+            # Get EOD data using new provider pattern
+            eod_alias = self.provider.get_location_aliases(location, "eod")
+            eod_df = self.provider.fetch(eod_alias) if eod_alias else None
+
             if eod_df is None or eod_df.empty:
-                log.warning("historical_data.eod_data_empty")
+                log.warning("historical_data.eod_data_empty", location=location)
                 return None
 
             # Filter to date range if date column exists
@@ -162,36 +167,45 @@ class HistoricalDataManager:
                         len(filtered_data) if filtered_data is not None else 0
                     ),
                     days=days,
+                    location=location,
                 )
                 return filtered_data
             else:
                 log.warning(
                     "historical_data.eod_no_date_column",
                     available_columns=list(eod_df.columns),
+                    location=location,
                 )
                 return eod_df
 
         except Exception as e:
-            log.error("historical_data.eod_data_failed", error=str(e))
+            log.error(
+                "historical_data.eod_data_failed", error=str(e), location=location
+            )
             return None
 
-    def get_historical_front_kpi_data(self, days: int = 30) -> pd.DataFrame | None:
+    def get_historical_front_kpi_data(
+        self, days: int = 30, location: str = "baytown"
+    ) -> pd.DataFrame | None:
         """
         Get Front KPI data for the last N days.
 
         Args:
             days: Number of days to retrieve (default: 30)
+            location: Location name ('baytown' or 'humble')
 
         Returns:
             DataFrame with Front KPI data or None if retrieval fails
         """
-        log.info("historical_data.front_kpi_data_start", days=days)
+        log.info("historical_data.front_kpi_data_start", days=days, location=location)
 
         try:
-            # Get full Front KPI dataset
-            front_kpi_df = self.sheets_reader.get_front_kpi_data()
+            # Get Front KPI data using new provider pattern
+            front_alias = self.provider.get_location_aliases(location, "front")
+            front_kpi_df = self.provider.fetch(front_alias) if front_alias else None
+
             if front_kpi_df is None or front_kpi_df.empty:
-                log.warning("historical_data.front_kpi_data_empty")
+                log.warning("historical_data.front_kpi_data_empty", location=location)
                 return None
 
             # Filter to date range if date column exists
@@ -206,31 +220,40 @@ class HistoricalDataManager:
                         len(filtered_data) if filtered_data is not None else 0
                     ),
                     days=days,
+                    location=location,
                 )
                 return filtered_data
             else:
                 log.warning(
                     "historical_data.front_kpi_no_date_column",
                     available_columns=list(front_kpi_df.columns),
+                    location=location,
                 )
                 return front_kpi_df
 
         except Exception as e:
-            log.error("historical_data.front_kpi_data_failed", error=str(e))
+            log.error(
+                "historical_data.front_kpi_data_failed", error=str(e), location=location
+            )
             return None
 
-    def get_latest_available_data(self) -> dict[str, pd.DataFrame | None]:
+    def get_latest_available_data(
+        self, location: str = "baytown"
+    ) -> dict[str, pd.DataFrame | None]:
         """
         Get the most recent available data for all data sources.
 
         Returns data from the latest operational day (Monday-Saturday),
         automatically falling back from Sundays to Saturday data.
 
+        Args:
+            location: Location name ('baytown' or 'humble')
+
         Returns:
             Dictionary with 'eod' and 'front_kpi' DataFrames from latest
             operational day, plus 'data_date' with the target date
         """
-        log.info("historical_data.get_latest_start")
+        log.info("historical_data.get_latest_start", location=location)
 
         latest_date = self.get_latest_operational_date()
 
@@ -241,7 +264,9 @@ class HistoricalDataManager:
 
         try:
             # Get EOD data and filter to latest operational day
-            eod_df = self.sheets_reader.get_eod_data()
+            eod_alias = self.provider.get_location_aliases(location, "eod")
+            eod_df = self.provider.fetch(eod_alias) if eod_alias else None
+
             if (
                 eod_df is not None
                 and not eod_df.empty
@@ -252,7 +277,9 @@ class HistoricalDataManager:
                 )
 
             # Get Front KPI data and filter to latest operational day
-            front_kpi_df = self.sheets_reader.get_front_kpi_data()
+            front_alias = self.provider.get_location_aliases(location, "front")
+            front_kpi_df = self.provider.fetch(front_alias) if front_alias else None
+
             if (
                 front_kpi_df is not None
                 and not front_kpi_df.empty
@@ -267,6 +294,7 @@ class HistoricalDataManager:
             log.info(
                 "historical_data.get_latest_success",
                 data_date=latest_date.isoformat(),
+                location=location,
                 eod_rows=(
                     len(eod_df_result) if isinstance(eod_df_result, pd.DataFrame) else 0
                 ),
@@ -278,7 +306,9 @@ class HistoricalDataManager:
             )
 
         except Exception as e:
-            log.error("historical_data.get_latest_failed", error=str(e))
+            log.error(
+                "historical_data.get_latest_failed", error=str(e), location=location
+            )
 
         return result
 

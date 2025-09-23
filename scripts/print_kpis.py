@@ -16,19 +16,6 @@ import json
 from collections.abc import Iterable
 
 from apps.backend.metrics import get_all_kpis, get_combined_kpis
-from apps.backend.sheets_reader import SheetsReader
-
-# Location-specific ranges
-LOCATION_RANGES = {
-    "baytown": {
-        "eod": "EOD - Baytown Billing!A:AG",
-        "front": "Baytown Front KPIs Form responses!A:Z",
-    },
-    "humble": {
-        "eod": "EOD - Humble Billing!A:AG",
-        "front": "Humble Front KPIs Form responses!A:Z",
-    },
-}
 
 
 def parse_args() -> argparse.Namespace:
@@ -65,10 +52,6 @@ def parse_args() -> argparse.Namespace:
         help="Also print first rows of raw data for the selected sheet(s).",
     )
     parser.add_argument(
-        "--spreadsheet-id",
-        help=("Temporarily override SheetsReader.SPREADSHEET_ID for this run only."),
-    )
-    parser.add_argument(
         "--location",
         choices=["baytown", "humble", "both"],
         default="baytown",
@@ -77,7 +60,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def filter_metrics(all_kpis: dict[str, float | None], names: Iterable[str] | None):
+def filter_metrics(
+    all_kpis: dict[str, float | None], names: Iterable[str] | None
+) -> dict[str, float | None]:
     if not names:
         return all_kpis
     return {k: all_kpis.get(k) for k in names}
@@ -91,24 +76,25 @@ def print_pretty(kpis: dict[str, float | None]) -> None:
 def print_raw(show_raw: list[str] | None, location: str = "baytown") -> None:
     if not show_raw:
         return
-    reader = SheetsReader()
-    ranges = LOCATION_RANGES[location]
+
+    from apps.backend.data_providers import build_sheets_provider
+
+    provider = build_sheets_provider()
 
     if "eod" in show_raw:
-        df = reader.get_sheet_data(ranges["eod"])
+        eod_alias = provider.get_location_aliases(location, "eod")
+        df = provider.fetch(eod_alias) if eod_alias else None
         print(f"\n# Raw: EOD {location.title()} - first rows")
         print(df.head() if df is not None else "<no data>")
     if "front" in show_raw:
-        df = reader.get_sheet_data(ranges["front"])
+        front_alias = provider.get_location_aliases(location, "front")
+        df = provider.fetch(front_alias) if front_alias else None
         print(f"\n# Raw: Front KPIs {location.title()} - first rows")
         print(df.head() if df is not None else "<no data>")
 
 
 def main() -> None:
     args = parse_args()
-
-    if args.spreadsheet_id:
-        SheetsReader.SPREADSHEET_ID = args.spreadsheet_id  # type: ignore[attr-defined]
 
     if args.location == "both":
         # Get KPIs for both locations

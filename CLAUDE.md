@@ -5,127 +5,149 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 **COMPLETED**: Full-stack dental analytics dashboard that reads KPI data from Google Sheets, processes it with pandas, and displays metrics in a Streamlit web interface. Built for KamDental practice to automate daily production, collection rate, new patient count, treatment acceptance, and hygiene reappointment tracking.
 
-**Status**: ✅ **Stories 1.1-1.5 Complete** - All 5 KPIs implemented with Streamlit dashboard
-**Current Line Count**: 249 lines (Backend: 169 + Frontend: 80)
-**Goal Achieved**: 5 KPI dashboard operational with brand styling
+**Status**: ✅ **Story 2.1 In Progress** - Multi-location support infrastructure implemented
+**Current Architecture**: Provider abstraction with alias-based configuration
+**Multi-Location**: Baytown and Humble locations with unified data access
+**Historical Data**: Time-series KPI analysis with operational date logic
 
 ## Development Commands
 
-### Environment Management
+### Serena-First Development Approach
+- **Before debugging**: Use Serena MCP Workflow Guidelines to explore code structure
+- **Before testing**: Use Symbol-Based Code Navigation to understand test targets
+- **Before modifying**: Use Efficient Code Modification patterns
+- **Always**: Store insights with Memory Management tools
+
+### Core Commands
 ```bash
-# Create and activate environment
-uv sync
+# Environment & App
+uv sync && uv run streamlit run apps/frontend/app.py  # http://localhost:8501
 
-# Run application
-uv run streamlit run apps/frontend/app.py
-
-# Access dashboard
-# Local URL: http://localhost:8501
-```
-
-### Package Management
-```bash
-# Add new dependency
-uv add package-name
-
-# Add development dependency
-uv add --dev package-name
-
-# Update all packages
-uv sync --upgrade
-
-# Show installed packages
-uv pip list
-```
-
-### Testing Commands
-```bash
-# Run all tests
-uv run pytest
-
-# Run with coverage
+# Quality & Testing
+./scripts/quality-check.sh    # Comprehensive checks
+./scripts/quick-test.sh       # Fast verification
 uv run pytest --cov=apps.backend --cov=apps.frontend
 
-# Run specific test file
-uv run pytest tests/test_metrics.py
-
-# Run tests in watch mode
-uv run pytest-watch
+# Development
+uv add package-name          # Dependencies
+uv run python               # Interactive shell
 ```
 
-### Code Quality Commands
+### Serena MCP Workflow Guidelines
 
-**Quick Scripts (Recommended):**
+#### Initial Codebase Exploration
 ```bash
-# Run comprehensive quality checks (Black, Ruff, MyPy, pytest, coverage)
-./scripts/quality-check.sh
+# 1. Check onboarding status first
+mcp__serena__check_onboarding_performed
 
-# Quick test run (pytest + manual calculations, no coverage)
-./scripts/quick-test.sh
+# 2. Get project overview without reading full files
+mcp__serena__list_dir --relative_path="apps" --recursive=true
+mcp__serena__find_file --file_mask="*.py" --relative_path="apps"
 
-# Auto-format code (Black + Ruff fixes)
-./scripts/format-code.sh
+# 3. Explore key files with symbol overview (NOT full reads)
+mcp__serena__get_symbols_overview --relative_path="apps/backend/metrics.py"
+mcp__serena__get_symbols_overview --relative_path="apps/frontend/app.py"
+
+# 4. Find specific functions/classes when needed
+mcp__serena__find_symbol --name_path="calculate_production_total" --relative_path="apps/backend"
 ```
 
-**Individual Tools:**
+#### Symbol-Based Code Navigation
 ```bash
-# Format code with Black
-uv run black apps/backend/ apps/frontend/ tests/ test_calculations.py
+# Find symbols by pattern (avoid full file reads)
+mcp__serena__find_symbol --name_path="calculate_*" --substring_matching=true --relative_path="apps/backend/metrics.py"
 
-# Lint with Ruff
-uv run ruff check apps/backend/ apps/frontend/ tests/ test_calculations.py
+# Read symbol bodies ONLY when editing needed
+mcp__serena__find_symbol --name_path="get_all_kpis" --include_body=true --relative_path="apps/backend/metrics.py"
 
-# Type checking with MyPy
-uv run mypy backend/ test_calculations.py
+# Find references before making changes
+mcp__serena__find_referencing_symbols --name_path="calculate_production_total" --relative_path="apps/backend/metrics.py"
 
-# Run pre-commit hooks
-uv run pre-commit run --all-files
-
-# Install/update pre-commit hooks
-uv run pre-commit install
+# Search for patterns across codebase
+mcp__serena__search_for_pattern --substring_pattern="pd\.to_numeric" --restrict_search_to_code_files=true
 ```
 
-**Coverage Analysis:**
+#### Efficient Code Modification
 ```bash
-# Run tests with detailed coverage report
-uv run pytest --cov=backend --cov-report=html
+# Replace entire functions/classes
+mcp__serena__replace_symbol_body --name_path="calculate_production_total" --relative_path="apps/backend/metrics.py"
 
-# View coverage report in browser
-open htmlcov/index.html
+# Add new functions after existing ones
+mcp__serena__insert_after_symbol --name_path="get_all_kpis" --relative_path="apps/backend/metrics.py"
+
+# Add imports at file beginning
+mcp__serena__insert_before_symbol --name_path="get_production_data" --relative_path="apps/backend/metrics.py"
 ```
 
-### Development Tools
+#### Memory Management
 ```bash
-# Interactive Python shell with project context
-uv run python
+# Store project insights for future sessions
+mcp__serena__write_memory --memory_name="kpi-calculation-patterns" --content="KPI functions use pd.to_numeric with errors='coerce'"
 
-# Jupyter notebook for data exploration
-uv run jupyter notebook
+# Read relevant memories before starting work
+mcp__serena__list_memories
+mcp__serena__read_memory --memory_file_name="dental-analytics-architecture"
 
-# Test Google Sheets connection and KPI data
-uv run python -c "from apps.backend.metrics import get_all_kpis; print(get_all_kpis())"
+# Think about collected information before proceeding
+mcp__serena__think_about_collected_information
+mcp__serena__think_about_task_adherence
 ```
-### Dashboard Testing Procedures
+
+#### Quality Verification Workflows
 ```bash
-# Start dashboard server
-uv run streamlit run apps/frontend/app.py
+# Verify changes don't break references
+mcp__serena__find_referencing_symbols --name_path="modified_function" --relative_path="file.py"
 
-# Access dashboard locally
-# URL: http://localhost:8501
+# Check task completion
+mcp__serena__think_about_whether_you_are_done
 
-# Test complete data flow
-uv run python test_calculations.py
-
-# Verify KPI calculations manually
-uv run python -c "from apps.backend.metrics import get_all_kpis; print(get_all_kpis())"
+# NEVER read entire files unless absolutely necessary
+# Use symbolic tools to read only what you need
 ```
 
-### Memory & Knowledge System
+## Story 2.1 Multi-Location Architecture
 
-- **Markdown-based storage** in `.serena/memories/` directories
-- **Project-specific knowledge** persistence across sessions
-- **Contextual retrieval** based on relevance
-- **Onboarding support** for new projects
+### Data Provider Pattern ✅ Implemented
+- **DataProvider Protocol**: Clean interface for data access with `fetch()`, `list_available_aliases()`, `validate_alias()`
+- **SheetsProvider Class**: Replaces legacy SheetsReader with alias-based configuration
+- **Configuration-Driven**: YAML-based multi-sheet setup in `config/sheets.yml`
+- **Location Support**: Baytown and Humble with clean separation
+
+### Historical Data Management ✅ Implemented
+- **HistoricalDataManager**: Sophisticated date filtering and operational logic
+- **Smart Date Handling**: Monday-Saturday operational dates with Sunday fallback
+- **Time-Series KPIs**: Historical versions of all KPI calculations
+- **Data Aggregation**: total_sum, daily_average, latest_value, data_points
+
+### Key Symbol Navigation for Story 2.1
+```bash
+# Explore new data provider architecture
+mcp__serena__get_symbols_overview --relative_path="apps/backend/data_providers.py"
+mcp__serena__find_symbol --name_path="SheetsProvider" --include_body=true
+
+# Examine historical data capabilities
+mcp__serena__get_symbols_overview --relative_path="apps/backend/historical_data.py"
+mcp__serena__find_symbol --name_path="HistoricalDataManager" --include_body=true
+
+# Review enhanced metrics with historical functions
+mcp__serena__find_symbol --name_path="calculate_historical_*" --substring_matching=true --relative_path="apps/backend/metrics.py"
+mcp__serena__find_symbol --name_path="get_combined_kpis" --include_body=true
+```
+
+### Configuration Architecture
+```yaml
+# config/sheets.yml - Multi-location sheet aliases
+sheets:
+  baytown_eod: { spreadsheet_id: "...", range: "EOD - Baytown Billing!A:N" }
+  humble_eod: { spreadsheet_id: "...", range: "EOD - Humble Billing!A:AG" }
+  baytown_front: { spreadsheet_id: "...", range: "Baytown Front KPIs Form responses!A:Z" }
+  humble_front: { spreadsheet_id: "...", range: "Humble Front KPIs Form responses!A:Z" }
+
+# Location mapping for backward compatibility
+locations:
+  baytown: { eod: "baytown_eod", front: "baytown_front" }
+  humble: { eod: "humble_eod", front: "humble_front" }
+```
 
 ## Technology Stack
 
@@ -160,33 +182,38 @@ uv run python -c "from apps.backend.metrics import get_all_kpis; print(get_all_k
 - **ruff**: Modern linting (replaced flake8)
 - **mypy**: Type checking with modern Python 3.10+ syntax
 
-## Project Structure Guidelines
+## Serena-Based Project Navigation
 
-### File Organization
+### Dynamic Structure Exploration
+```bash
+# Don't memorize static file trees - explore dynamically
+mcp__serena__list_dir --relative_path="." --recursive=false  # Top level
+mcp__serena__list_dir --relative_path="apps" --recursive=true  # Code structure
+mcp__serena__find_file --file_mask="*.py" --relative_path="."  # All Python files
+
+# Key file symbol overviews (avoid full reads)
+mcp__serena__get_symbols_overview --relative_path="apps/backend/metrics.py"          # KPI logic & historical functions
+mcp__serena__get_symbols_overview --relative_path="apps/frontend/app.py"             # Dashboard UI
+mcp__serena__get_symbols_overview --relative_path="apps/backend/data_providers.py"   # Multi-location data access
+mcp__serena__get_symbols_overview --relative_path="apps/backend/historical_data.py"  # Historical data management
+
+# Find symbols across project
+mcp__serena__search_for_pattern --substring_pattern="def calculate_" --restrict_search_to_code_files=true
 ```
-dental-analytics/
-├── apps/
-│   ├── frontend/
-│   │   ├── app.py                    # Streamlit dashboard (80 lines) ✅
-│   │   └── .streamlit/
-│   │       └── config.toml           # Brand theme config ✅
-│   └── backend/
-│       ├── __init__.py
-│       ├── sheets_reader.py          # Google Sheets API (77 lines) ✅
-│       └── metrics.py                # KPI calculations (92 lines) ✅
-├── config/
-│   └── credentials.json          # Google API credentials
-├── tests/                        # Manual test suite (Story 1.6 pending)
-│   └── test_calculations.py      # Current manual tests
-├── docs/stories/                 # Story documentation
-│   ├── story-1.1.md             # Project setup ✅
-│   ├── story-1.2.md             # Production & collection ✅
-│   ├── story-1.3.md             # New patients & treatment ✅
-│   ├── story-1.4.md             # Hygiene reappointment ✅
-│   ├── story-1.5.md             # Streamlit dashboard ✅
-│   └── story-1.6.md             # Testing framework (pending)
-├── pyproject.toml               # Project configuration
-└── uv.lock                      # Dependency lockfile
+
+### Architecture Discovery Workflow
+```bash
+# 1. Start with symbol overview, not file reading
+mcp__serena__get_symbols_overview --relative_path="apps/backend/metrics.py"
+
+# 2. Find specific functions when needed
+mcp__serena__find_symbol --name_path="get_all_kpis" --include_body=false
+
+# 3. Understand dependencies through references
+mcp__serena__find_referencing_symbols --name_path="get_all_kpis" --relative_path="apps/backend/metrics.py"
+
+# 4. Only read function bodies when editing
+mcp__serena__find_symbol --name_path="calculate_production_total" --include_body=true
 ```
 
 ### Naming Conventions
@@ -328,13 +355,33 @@ exclude_lines = [
     "raise NotImplementedError"
 ]
 ```
-## Working with the Codebase
+## Serena MCP Best Practices
 
-- Project uses Python 3.11 with `uv` for dependency management
+### Core Principles
+- **NEVER read entire files** - Use `get_symbols_overview` first, then targeted `find_symbol`
+- **Symbol-first approach** - Navigate by functions/classes, not file browsing
+- **Memory-driven** - Store insights across sessions for faster future work
+- **Think before acting** - Use reflection tools before major changes
+
+### Dental Analytics Specific Workflows
+```bash
+# Exploring KPI calculations efficiently
+mcp__serena__get_symbols_overview --relative_path="apps/backend/metrics.py"
+mcp__serena__find_symbol --name_path="calculate_*" --substring_matching=true
+
+# Modifying Streamlit dashboard components
+mcp__serena__find_symbol --name_path="main" --include_body=true --relative_path="apps/frontend/app.py"
+mcp__serena__find_referencing_symbols --name_path="get_all_kpis" --relative_path="apps/frontend/app.py"
+
+# Adding new KPI calculations
+mcp__serena__insert_after_symbol --name_path="calculate_hygiene_reappointment" --relative_path="apps/backend/metrics.py"
+```
+
+### Project Context
+- Python 3.11 with `uv` dependency management
 - Strict typing with mypy, formatted with black + ruff
-- Language servers run as separate processes with LSP communication
-- Memory system enables persistent project knowledge
-- Context/mode system allows workflow customization
+- Serena memory system enables persistent project knowledge
+- Use symbolic editing for precise, reference-safe modifications
 
 ## Current Project Status
 
@@ -345,9 +392,17 @@ exclude_lines = [
 - **Story 1.4**: Hygiene reappointment rate monitoring
 - **Story 1.5**: Streamlit dashboard with brand styling
 
+### Story 2.1 Multi-Location Infrastructure ✅ Implemented
+- **Data Provider Pattern**: `DataProvider` protocol with `SheetsProvider` implementation
+- **Configuration System**: YAML-based multi-sheet configuration with location aliases
+- **Historical Data Manager**: Smart date filtering with operational business logic
+- **Enhanced Metrics**: Historical KPI functions with time-series analysis
+- **Multi-Location Support**: Baytown and Humble unified data access
+
 ### Next Steps
+- **Story 2.1 Frontend**: Multi-location dashboard UI implementation
 - **Story 1.6**: Pytest testing framework implementation
-- **Future**: Real-time data refresh, historical trends
+- **Future**: Real-time data refresh, advanced historical analytics
 
 ### Dashboard Access
 - **Local URL**: http://localhost:8501
@@ -385,10 +440,13 @@ def calculate_hygiene_reappointment(df: pd.DataFrame) -> float | None:
     return float(((total_hygiene - not_reappointed) / total_hygiene) * 100)
 ```
 
-### Data Sources ✅ Configured
-- **EOD Sheets**: "EOD - Baytown Billing!A:N" (Production, Collections, New Patients)
-- **Front KPI Sheets**: "Baytown Front KPIs Form responses!A:N" (Treatment Acceptance, Hygiene Reappointment)
+### Data Sources ✅ Multi-Location Configured
+- **Baytown EOD**: "EOD - Baytown Billing!A:N" (Production, Collections, New Patients)
+- **Humble EOD**: "EOD - Humble Billing!A:AG" (Production, Collections, New Patients)
+- **Baytown Front**: "Baytown Front KPIs Form responses!A:Z" (Treatment Acceptance, Hygiene Reappointment)
+- **Humble Front**: "Humble Front KPIs Form responses!A:Z" (Treatment Acceptance, Hygiene Reappointment)
 - **Spreadsheet ID**: 1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8
+- **Configuration**: Alias-based access via `config/sheets.yml`
 
 ### Dashboard Brand Implementation ✅
 - **Primary Navy**: #142D54 (headers, text)
