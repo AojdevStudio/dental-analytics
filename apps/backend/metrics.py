@@ -186,9 +186,13 @@ def calculate_collection_rate(df: pd.DataFrame | None) -> float | None:
         Collection rate as percentage (0-100) or None if calculation fails
 
     Formula:
-        Collection Rate = (Total Collections / Total Production) × 100
-        Total Production = Production + Adjustments + Write-offs
+        Collection Rate = (Total Collections / Adjusted Production) × 100
+        Adjusted Production = Gross Production - |Adjustments| - |Write-offs|
         Total Collections = Patient Income + Unearned Income + Insurance Income
+
+    Note:
+        Uses ADJUSTED production (net) not gross production as denominator.
+        Industry standard collection rate should be 98-100%.
     """
     if df is None or df.empty:
         return None
@@ -230,11 +234,21 @@ def calculate_collection_rate(df: pd.DataFrame | None) -> float | None:
             )
             return None
     else:
-        # Calculate total production (Story 2.1 validated formula)
+        # Calculate ADJUSTED production (corrected formula)
+        # Adjusted Production = Gross Production - |Adjustments| - |Write-offs|
         production_base = safe_numeric_conversion(df, production_col)
         adjustments = safe_numeric_conversion(df, adjustments_col)
         writeoffs = safe_numeric_conversion(df, writeoffs_col)
-        production = production_base + adjustments + writeoffs
+
+        # Use absolute values since adjustments and writeoffs reduce production
+        adjusted_production = production_base - abs(adjustments) - abs(writeoffs)
+        production = adjusted_production  # Use adjusted production for collection rate
+
+        logger.info(
+            f"Adjusted Production: Gross={production_base}, "
+            f"Adjustments={adjustments}, Write-offs={writeoffs}, "
+            f"Adjusted={adjusted_production}"
+        )
 
         # Calculate total collections from three components (Story 2.1 validated)
         patient_income = safe_numeric_conversion(df, patient_income_col)
@@ -293,19 +307,19 @@ def calculate_new_patients(df: pd.DataFrame | None) -> int | None:
     return int(new_patients)
 
 
-def calculate_treatment_acceptance(df: pd.DataFrame | None) -> float | None:
+def calculate_case_acceptance(df: pd.DataFrame | None) -> float | None:
     """
-    Calculate treatment acceptance percentage.
+    Calculate case acceptance percentage.
 
     Args:
         df: DataFrame with treatment data (Front KPI sheet format)
 
     Returns:
-        Treatment acceptance rate as percentage (0-100) or None if calculation fails
+        Case acceptance rate as percentage or None if calculation fails
 
     Formula:
-        Treatment Acceptance = ((Treatments Scheduled + $ Same Day Treatment)
-                               / Treatments Presented) × 100
+        Case Acceptance = ((Treatments Scheduled $ + Same Day Treatment $)
+                          / Treatments Presented $) × 100
     """
     if df is None or df.empty:
         return None
@@ -318,22 +332,26 @@ def calculate_treatment_acceptance(df: pd.DataFrame | None) -> float | None:
     required_cols = [presented_col, scheduled_col, same_day_col]
     if not all(col in df.columns for col in required_cols):
         logger.warning(
-            "Required columns for treatment acceptance not found. Missing: %s",
+            "Required columns for case acceptance not found. Missing: %s",
             [c for c in required_cols if c not in df.columns],
         )
         return None
 
-    # Column K: Treatments Presented; Column L: Treatments Scheduled
+    # Column L: Presented $; Column M: Scheduled $; Column N: Same Day $
     presented = safe_numeric_conversion(df, presented_col)
     scheduled = safe_numeric_conversion(df, scheduled_col)
     same_day = safe_numeric_conversion(df, same_day_col)
 
     # Avoid division by zero
     if presented == 0:
-        logger.warning("Treatments presented is zero, cannot calculate acceptance rate")
+        logger.warning(
+            "Treatments presented $ is zero, cannot calculate acceptance rate"
+        )
         return None
 
+    # Calculate acceptance rate INCLUDING Same Day Treatment
     acceptance_rate = ((scheduled + same_day) / presented) * 100
+
     return float(acceptance_rate)
 
 
@@ -407,7 +425,7 @@ def get_all_kpis(location: str = "baytown") -> dict[str, float | int | None]:
         - production_total: float or None
         - collection_rate: float or None
         - new_patients: int or None
-        - treatment_acceptance: float or None
+        - case_acceptance: float or None
         - hygiene_reappointment: float or None
     """
     try:
@@ -426,7 +444,7 @@ def get_all_kpis(location: str = "baytown") -> dict[str, float | int | None]:
             "production_total": calculate_production_total(eod_data),
             "collection_rate": calculate_collection_rate(eod_data),
             "new_patients": calculate_new_patients(eod_data),
-            "treatment_acceptance": calculate_treatment_acceptance(front_kpi_data),
+            "case_acceptance": calculate_case_acceptance(front_kpi_data),
             "hygiene_reappointment": calculate_hygiene_reappointment(front_kpi_data),
         }
 
@@ -439,7 +457,7 @@ def get_all_kpis(location: str = "baytown") -> dict[str, float | int | None]:
             "production_total": None,
             "collection_rate": None,
             "new_patients": None,
-            "treatment_acceptance": None,
+            "case_acceptance": None,
             "hygiene_reappointment": None,
         }
 
@@ -677,13 +695,43 @@ def calculate_historical_collection_rate(
         if production_col in df_copy.columns and all(
             col in df_copy.columns for col in income_columns
         ):
+            # Get adjustments and writeoffs columns for adjusted production
+            adjustments_col = EOD_MAPPING.get("adjustments", "Adjustments Today")
+            writeoffs_col = EOD_MAPPING.get("writeoffs", "Write-offs Today")
+
             # Clean currency formatting before conversion
             df_copy[production_col] = df_copy[production_col].apply(
                 clean_currency_string
             )
             df_copy[production_col] = pd.to_numeric(
                 df_copy[production_col], errors="coerce"
-            )
+            ).fillna(0.0)
+
+            # Calculate adjusted production
+            if adjustments_col in df_copy.columns and writeoffs_col in df_copy.columns:
+                df_copy[adjustments_col] = df_copy[adjustments_col].apply(
+                    clean_currency_string
+                )
+                df_copy[writeoffs_col] = df_copy[writeoffs_col].apply(
+                    clean_currency_string
+                )
+                df_copy[adjustments_col] = pd.to_numeric(
+                    df_copy[adjustments_col], errors="coerce"
+                ).fillna(0.0)
+                df_copy[writeoffs_col] = pd.to_numeric(
+                    df_copy[writeoffs_col], errors="coerce"
+                ).fillna(0.0)
+
+                # Adjusted Production = Gross - |Adjustments| - |Write-offs|
+                df_copy["_adjusted_production"] = (
+                    df_copy[production_col]
+                    - df_copy[adjustments_col].abs()
+                    - df_copy[writeoffs_col].abs()
+                )
+            else:
+                # If no adjustments/writeoffs columns, use gross production (fallback)
+                df_copy["_adjusted_production"] = df_copy[production_col]
+
             total_collections = pd.Series([0.0] * len(df_copy), index=df_copy.index)
             for col in income_columns:
                 # Clean currency formatting before conversion
@@ -692,9 +740,10 @@ def calculate_historical_collection_rate(
                 total_collections = total_collections + df_copy[col]
 
             df_copy["_total_collections"] = total_collections
+            # Use adjusted production for collection rate calculation
             df_copy["collection_rate"] = (
-                df_copy["_total_collections"] / df_copy[production_col] * 100
-            ).where(df_copy[production_col] > 0)
+                df_copy["_total_collections"] / df_copy["_adjusted_production"] * 100
+            ).where(df_copy["_adjusted_production"] > 0)
 
         elif (
             fallback_production in df_copy.columns
@@ -861,86 +910,130 @@ def calculate_historical_new_patients(
     return result
 
 
-def calculate_historical_treatment_acceptance(
-    df: pd.DataFrame | None, days: int = 30
+def calculate_historical_case_acceptance(
+    df: pd.DataFrame | None,
+    days: int = 30,
 ) -> dict[str, Any]:
     """
-    Calculate historical treatment acceptance rate with time-series data.
+    Calculate historical case acceptance rate with time-series data.
     """
-    log.info("metrics.historical_treatment_acceptance_start", days=days)
+    log.info("metrics.historical_case_acceptance_start", days=days)
+
     if df is None or df.empty:
         return {
             "time_series": [],
-            "average_rate": 0.0,
+            "total_sum": 0.0,
+            "daily_average": 0.0,
+            "latest_value": None,
+            "data_points": 0,
+        }
+
+    # Identify date column
+    date_cols = ["Submission Date", "submission_date", "Date", "date"]
+    date_col = None
+    for col in date_cols:
+        if col in df.columns:
+            date_col = col
+            break
+
+    if not date_col:
+        return {
+            "time_series": [],
+            "total_sum": 0.0,
+            "daily_average": 0.0,
+            "latest_value": None,
+            "data_points": 0,
+        }
+
+    # Get column names from mapping or use defaults
+    presented_col = FRONT_MAPPING.get("treatments_presented", "treatments_presented")
+    scheduled_col = FRONT_MAPPING.get("treatments_scheduled", "treatments_scheduled")
+    same_day_col = FRONT_MAPPING.get("same_day_treatment", "$ Same Day Treatment")
+
+    # Check required columns exist
+    required_cols = [presented_col, scheduled_col, same_day_col]
+    if not all(col in df.columns for col in required_cols):
+        log.warning(
+            "metrics.historical_case_acceptance_missing_columns",
+            missing=[c for c in required_cols if c not in df.columns],
+        )
+        return {
+            "time_series": [],
+            "total_sum": 0.0,
+            "daily_average": 0.0,
             "latest_value": None,
             "data_points": 0,
         }
 
     try:
         df_copy = df.copy()
-        date_col = FRONT_MAPPING.get("date", "Submission Date")
-        presented_col = FRONT_MAPPING.get(
-            "treatments_presented", "treatments_presented"
-        )
-        scheduled_col = FRONT_MAPPING.get(
-            "treatments_scheduled", "treatments_scheduled"
-        )
-        same_day_col = FRONT_MAPPING.get("same_day_treatment", "$ Same Day Treatment")
+        df_copy[date_col] = pd.to_datetime(df_copy[date_col], errors="coerce")
+        df_copy = df_copy.dropna(subset=[date_col])
 
-        required_cols = [presented_col, scheduled_col, same_day_col]
-        if not all(col in df_copy.columns for col in required_cols):
-            log.warning(
-                "metrics.historical_treatment_acceptance_missing_columns",
-                missing=[c for c in required_cols if c not in df_copy.columns],
+        # Calculate case acceptance per row INCLUDING Same Day Treatment
+        df_copy["_case_acceptance_rate"] = (
+            (
+                pd.to_numeric(df_copy[scheduled_col], errors="coerce")
+                + pd.to_numeric(df_copy[same_day_col], errors="coerce")
             )
-            return {
-                "time_series": [],
-                "average_rate": 0.0,
-                "latest_value": None,
-                "data_points": 0,
-            }
+            / pd.to_numeric(df_copy[presented_col], errors="coerce")
+        ) * 100
 
-        for col in required_cols:
-            df_copy[col] = df_copy[col].apply(clean_currency_string)
-            df_copy[col] = pd.to_numeric(df_copy[col], errors="coerce").fillna(0.0)
+        # Filter to recent days
+        if days > 0:
+            cutoff_date = pd.Timestamp.now() - pd.Timedelta(days=days)
+            df_copy = df_copy[df_copy[date_col] >= cutoff_date]
 
-        df_copy["_treatment_acceptance_rate"] = (
-            (df_copy[scheduled_col] + df_copy[same_day_col])
-            / df_copy[presented_col]
-            * 100
-        ).where(df_copy[presented_col] > 0)
+        # Sort by date
+        df_copy = df_copy.sort_values(date_col)
 
-        time_series = safe_time_series_conversion(
-            df_copy, "_treatment_acceptance_rate", date_col
+        # Create time series
+        time_series = []
+        for _, row in df_copy.iterrows():
+            if pd.notna(row["_case_acceptance_rate"]):
+                time_series.append(
+                    {
+                        "date": row[date_col].strftime("%Y-%m-%d"),
+                        "value": float(row["_case_acceptance_rate"]),
+                    }
+                )
+
+        # Calculate aggregates
+        total_presented = pd.to_numeric(df_copy[presented_col], errors="coerce").sum()
+        total_scheduled = pd.to_numeric(df_copy[scheduled_col], errors="coerce").sum()
+        total_same_day = pd.to_numeric(df_copy[same_day_col], errors="coerce").sum()
+
+        overall_rate = 0.0
+        if total_presented > 0:
+            overall_rate = ((total_scheduled + total_same_day) / total_presented) * 100
+
+        daily_average = (
+            df_copy["_case_acceptance_rate"].mean()
+            if not df_copy["_case_acceptance_rate"].isna().all()
+            else 0.0
         )
-        if not time_series:
-            return {
-                "time_series": [],
-                "average_rate": 0.0,
-                "latest_value": None,
-                "data_points": 0,
-            }
-
-        rates = [rate for _, rate in time_series if rate is not None]
-        average_rate = sum(rates) / len(rates) if rates else 0.0
-        latest_value = rates[-1] if rates else None
+        latest_value = time_series[-1]["value"] if time_series else None
 
         result = {
             "time_series": time_series,
-            "average_rate": float(average_rate),
-            "latest_value": float(latest_value) if latest_value is not None else None,
+            "total_sum": float(overall_rate),
+            "daily_average": float(daily_average) if pd.notna(daily_average) else 0.0,
+            "latest_value": latest_value,
             "data_points": len(time_series),
         }
+
         log.info(
-            "metrics.historical_treatment_acceptance_success",
-            **{k: v for k, v in result.items() if k != "time_series"},
+            "metrics.historical_case_acceptance_success",
+            data_points=result["data_points"],
         )
         return result
+
     except Exception as e:
-        log.error("metrics.historical_treatment_acceptance_failed", error=str(e))
+        log.error("metrics.historical_case_acceptance_failed", error=str(e))
         return {
             "time_series": [],
-            "average_rate": 0.0,
+            "total_sum": 0.0,
+            "daily_average": 0.0,
             "latest_value": None,
             "data_points": 0,
         }
@@ -1061,7 +1154,7 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
             "production_total": calculate_historical_production_total(eod_data, days),
             "collection_rate": calculate_historical_collection_rate(eod_data, days),
             "new_patients": calculate_historical_new_patients(eod_data, days),
-            "treatment_acceptance": calculate_historical_treatment_acceptance(
+            "case_acceptance": calculate_historical_case_acceptance(
                 front_kpi_data, days
             ),
             "hygiene_reappointment": calculate_historical_hygiene_reappointment(
@@ -1083,7 +1176,7 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
             "production_total": calculate_production_total(eod_data_df),
             "collection_rate": calculate_collection_rate(eod_data_df),
             "new_patients": calculate_new_patients(eod_data_df),
-            "treatment_acceptance": calculate_treatment_acceptance(front_kpi_data_df),
+            "case_acceptance": calculate_case_acceptance(front_kpi_data_df),
             "hygiene_reappointment": calculate_hygiene_reappointment(front_kpi_data_df),
         }
 
@@ -1105,7 +1198,7 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
                 "production_total": None,
                 "collection_rate": None,
                 "new_patients": None,
-                "treatment_acceptance": None,
+                "case_acceptance": None,
                 "hygiene_reappointment": None,
             },
             "period_days": days,

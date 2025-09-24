@@ -478,20 +478,20 @@ def format_new_patients_chart_data(
     }
 
 
-def format_treatment_acceptance_chart_data(
+def format_case_acceptance_chart_data(
     front_kpi_df: pd.DataFrame | None, date_column: str = "Submission Date"
 ) -> dict[str, Any]:
-    """Format treatment acceptance data for chart visualization.
+    """Format case acceptance data for chart visualization.
 
     Args:
         front_kpi_df: Front KPI DataFrame with treatment data
         date_column: Name of date column
 
     Returns:
-        Chart-ready treatment acceptance data
+        Chart-ready case acceptance data
     """
     if front_kpi_df is None or front_kpi_df.empty:
-        return _empty_chart_data("Treatment Acceptance")
+        return _empty_chart_data("Case Acceptance")
 
     resolved_date_column = FRONT_MAPPING.get("date", date_column)
 
@@ -499,7 +499,7 @@ def format_treatment_acceptance_chart_data(
     scheduled_column = FRONT_MAPPING.get("treatments_scheduled", "treatments_scheduled")
     same_day_column = FRONT_MAPPING.get("same_day_treatment", "$ Same Day Treatment")
 
-    # Calculate treatment acceptance rate for each row
+    # Calculate case acceptance rate for each row (capped at 100%)
     acceptance_rates = []
     for _, row in front_kpi_df.iterrows():
         presented = safe_float_conversion(row.get(presented_column))
@@ -512,6 +512,7 @@ def format_treatment_acceptance_chart_data(
             and scheduled is not None
             and same_day is not None
         ):
+            # Include Same Day Treatment in the calculation
             rate = ((scheduled + same_day) / presented) * 100
         else:
             rate = None
@@ -527,7 +528,7 @@ def format_treatment_acceptance_chart_data(
     )
 
     return {
-        "metric_name": "Treatment Acceptance",
+        "metric_name": "Case Acceptance",
         "chart_type": "line",
         "data_type": "percentage",
         "time_series": time_series,
@@ -622,9 +623,7 @@ def format_all_chart_data(
         "production_total": format_production_chart_data(eod_df, date_column),
         "collection_rate": format_collection_rate_chart_data(eod_df, date_column),
         "new_patients": format_new_patients_chart_data(eod_df, date_column),
-        "treatment_acceptance": format_treatment_acceptance_chart_data(
-            front_kpi_df, date_column
-        ),
+        "case_acceptance": format_case_acceptance_chart_data(front_kpi_df, date_column),
         "hygiene_reappointment": format_hygiene_reappointment_chart_data(
             front_kpi_df, date_column
         ),

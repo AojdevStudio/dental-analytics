@@ -15,7 +15,10 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+from apps.backend.chart_data import format_all_chart_data  # noqa: E402
+from apps.backend.data_providers import SheetsProvider  # noqa: E402
 from apps.backend.metrics import get_all_kpis  # noqa: E402
+from apps.frontend.chart_components import create_chart_from_data  # noqa: E402
 
 # Configure Streamlit page settings
 st.set_page_config(
@@ -105,14 +108,32 @@ st.markdown(
 st.markdown(f"**Daily KPI Report** • {datetime.now().strftime('%B %d, %Y')}")
 st.markdown("---")
 
-# Load KPI data (Task 3: Location-aware data calls)
+# Load KPI data and chart data (Task 3: Location-aware data calls)
 with st.spinner(f"Loading {location.title()} KPI data from Google Sheets..."):
     try:
         kpis = get_all_kpis(location=location)
+
+        # Load chart data for interactive visualizations
+        provider = SheetsProvider()
+        eod_alias = f"{location}_eod"
+        front_alias = f"{location}_front"
+
+        eod_df = (
+            provider.fetch(eod_alias) if provider.validate_alias(eod_alias) else None
+        )
+        front_df = (
+            provider.fetch(front_alias)
+            if provider.validate_alias(front_alias)
+            else None
+        )
+
+        chart_data = format_all_chart_data(eod_df, front_df)
+
         st.success(f"✅ {location.title()} data loaded successfully")
     except Exception as e:
         st.error(f"❌ Failed to load {location.title()} data: {str(e)}")
         kpis = {}
+        chart_data = {}
 
 # Primary metrics row (2 columns)
 col1, col2 = st.columns(2)
@@ -159,20 +180,20 @@ with col3:
         st.metric(label="👥 NEW PATIENTS", value="Data Unavailable")
 
 with col4:
-    if kpis.get("treatment_acceptance") is not None:
-        acceptance = kpis["treatment_acceptance"]
+    if kpis.get("case_acceptance") is not None:
+        acceptance = kpis["case_acceptance"]
         acceptance_delta_color: Literal["normal", "inverse"] = (
             "normal" if acceptance is not None and acceptance >= 85 else "inverse"
         )
         st.metric(
-            label="✅ TREATMENT ACCEPTANCE",
+            label="✅ CASE ACCEPTANCE",
             value=f"{acceptance:.1f}%",
             delta="Target: 85%",
             delta_color=acceptance_delta_color,
-            help="(Treatments Scheduled ÷ Treatments Presented) × 100",
+            help="((Scheduled $ + Same Day $) ÷ Presented $) × 100",
         )
     else:
-        st.metric(label="✅ TREATMENT ACCEPTANCE", value="Data Unavailable")
+        st.metric(label="✅ CASE ACCEPTANCE", value="Data Unavailable")
 
 with col5:
     if kpis.get("hygiene_reappointment") is not None:
@@ -189,6 +210,57 @@ with col5:
         )
     else:
         st.metric(label="🔄 HYGIENE REAPPOINTMENT", value="Data Unavailable")
+
+# Interactive Charts Section (Story 2.2: Plotly Charts)
+st.markdown("---")
+st.markdown("## 📊 **Interactive KPI Charts**")
+st.markdown("Explore your data with interactive charts featuring zoom, hover, and pan.")
+
+# Chart display with tabs for organized viewing
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    [
+        "💰 Production",
+        "📊 Collection Rate",
+        "👥 New Patients",
+        "✅ Case Acceptance",
+        "🔄 Hygiene Reappointment",
+    ]
+)
+
+with tab1:
+    if chart_data and "production_total" in chart_data:
+        production_chart = create_chart_from_data(chart_data["production_total"])
+        st.plotly_chart(production_chart, use_container_width=True)
+    else:
+        st.info("📈 Production chart data unavailable for selected location")
+
+with tab2:
+    if chart_data and "collection_rate" in chart_data:
+        collection_chart = create_chart_from_data(chart_data["collection_rate"])
+        st.plotly_chart(collection_chart, use_container_width=True)
+    else:
+        st.info("📈 Collection rate chart data unavailable for selected location")
+
+with tab3:
+    if chart_data and "new_patients" in chart_data:
+        new_patients_chart = create_chart_from_data(chart_data["new_patients"])
+        st.plotly_chart(new_patients_chart, use_container_width=True)
+    else:
+        st.info("📈 New patients chart data unavailable for selected location")
+
+with tab4:
+    if chart_data and "case_acceptance" in chart_data:
+        treatment_chart = create_chart_from_data(chart_data["case_acceptance"])
+        st.plotly_chart(treatment_chart, use_container_width=True)
+    else:
+        st.info("📈 Treatment acceptance chart data unavailable for selected location")
+
+with tab5:
+    if chart_data and "hygiene_reappointment" in chart_data:
+        hygiene_chart = create_chart_from_data(chart_data["hygiene_reappointment"])
+        st.plotly_chart(hygiene_chart, use_container_width=True)
+    else:
+        st.info("📈 Hygiene reappointment chart data unavailable for selected location")
 
 # Footer (Task 5: Location-specific footer)
 st.markdown("---")

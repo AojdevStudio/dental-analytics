@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
             "production_total",
             "collection_rate",
             "new_patients",
-            "treatment_acceptance",
+            "case_acceptance",
             "hygiene_reappointment",
         ],
         help="Limit output to specific metrics (space-separated).",
