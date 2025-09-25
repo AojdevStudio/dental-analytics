@@ -38,7 +38,7 @@ production_total = sum(provider_productions)
 collection_rate = (collections / production) * 100
 new_patient_count = count(new_patients)
 hygiene_reappointment = ((total_hygiene - not_reappointed) / total_hygiene) * 100
-treatment_acceptance = (scheduled / presented) * 100
+case_acceptance = (scheduled / presented) * 100
 ```
 
 ### Data Pipeline

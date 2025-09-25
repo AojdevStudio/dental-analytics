@@ -87,7 +87,7 @@ class TestHistoricalDataIntegrationFlow:
         assert len(chart_data["new_patients"]["time_series"]) > 0
 
         # Front KPI metrics should show graceful degradation
-        assert "error" in chart_data["treatment_acceptance"]
+        assert "error" in chart_data["case_acceptance"]
         assert "error" in chart_data["hygiene_reappointment"]
 
         # Metadata should reflect partial availability
@@ -234,7 +234,7 @@ class TestHistoricalDataIntegrationFlow:
             "production_total",
             "collection_rate",
             "new_patients",
-            "treatment_acceptance",
+            "case_acceptance",
             "hygiene_reappointment",
         ]:
             metric_data = chart_data[metric_name]

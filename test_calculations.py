@@ -2,11 +2,11 @@
 import pandas as pd
 
 from apps.backend.metrics import (
+    calculate_case_acceptance,
     calculate_collection_rate,
     calculate_hygiene_reappointment,
     calculate_new_patients,
     calculate_production_total,
-    calculate_treatment_acceptance,
     get_all_kpis,
 )
 
@@ -45,7 +45,7 @@ def test_new_patients_calculation() -> None:
     print(f"✅ New patients calculation test passed: {result}")
 
 
-def test_treatment_acceptance_calculation() -> None:
+def test_case_acceptance_calculation() -> None:
     """Test treatment acceptance rate calculation with known data."""
     print("🧪 Testing treatment acceptance calculation...")
     test_data = pd.DataFrame(
@@ -54,7 +54,7 @@ def test_treatment_acceptance_calculation() -> None:
             "treatments_scheduled": [18, 12, 8],  # Column M
         }
     )
-    result = calculate_treatment_acceptance(test_data)
+    result = calculate_case_acceptance(test_data)
     expected = 84.44444444444444  # (38/45) * 100
     assert (
         result is not None and abs(result - expected) < 0.01
@@ -119,7 +119,7 @@ def test_get_all_kpis_structure() -> None:
             "production_total",
             "collection_rate",
             "new_patients",
-            "treatment_acceptance",
+            "case_acceptance",
             "hygiene_reappointment",
         ]
         assert all(
@@ -140,7 +140,7 @@ def test_error_conditions() -> None:
     assert calculate_production_total(empty_df) is None
     assert calculate_collection_rate(empty_df) is None
     assert calculate_new_patients(empty_df) is None
-    assert calculate_treatment_acceptance(empty_df) is None
+    assert calculate_case_acceptance(empty_df) is None
     assert calculate_hygiene_reappointment(empty_df) is None
     print("✅ Empty DataFrame handling works")
 
@@ -148,7 +148,7 @@ def test_error_conditions() -> None:
     assert calculate_production_total(None) is None
     assert calculate_collection_rate(None) is None
     assert calculate_new_patients(None) is None
-    assert calculate_treatment_acceptance(None) is None
+    assert calculate_case_acceptance(None) is None
     assert calculate_hygiene_reappointment(None) is None
     print("✅ None DataFrame handling works")
 
@@ -157,7 +157,7 @@ def test_error_conditions() -> None:
     assert calculate_production_total(incomplete_df) is None
     assert calculate_collection_rate(incomplete_df) is None
     assert calculate_new_patients(incomplete_df) is None
-    assert calculate_treatment_acceptance(incomplete_df) is None
+    assert calculate_case_acceptance(incomplete_df) is None
     assert calculate_hygiene_reappointment(incomplete_df) is None
     print("✅ Missing columns handling works")
 
@@ -172,7 +172,7 @@ def test_error_conditions() -> None:
     zero_presented_df = pd.DataFrame(
         {"treatments_presented": [0, 0, 0], "treatments_scheduled": [5, 3, 2]}
     )
-    assert calculate_treatment_acceptance(zero_presented_df) is None
+    assert calculate_case_acceptance(zero_presented_df) is None
     print("✅ Treatment acceptance division by zero handling works")
 
     # Test division by zero for hygiene reappointment
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     test_new_patients_calculation()
     print()
 
-    test_treatment_acceptance_calculation()
+    test_case_acceptance_calculation()
     print()
 
     test_hygiene_reappointment_calculation()

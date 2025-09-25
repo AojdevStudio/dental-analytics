@@ -115,7 +115,7 @@ apps/backend/
 - `calculate_production_total()` - Sum of total_production column
 - `calculate_collection_rate()` - (collections / production) × 100 with zero division handling
 - `calculate_new_patients()` - Sum of new_patients column with null handling
-- `calculate_treatment_acceptance()` - (scheduled / presented) × 100 with zero division handling
+- `calculate_case_acceptance()` - (scheduled / presented) × 100 with zero division handling
 - `calculate_hygiene_reappointment()` - ((total - not_reappointed) / total) × 100 with zero division handling
 
 #### Historical Data Configuration Requirements
@@ -150,7 +150,7 @@ HistoricalMetrics = {
         'production_total': List[Tuple[datetime, float]],
         'collection_rate': List[Tuple[datetime, float]],
         'new_patients': List[Tuple[datetime, int]],
-        'treatment_acceptance': List[Tuple[datetime, float]],
+        'case_acceptance': List[Tuple[datetime, float]],
         'hygiene_reappointment': List[Tuple[datetime, float]]
     },
     'latest_values': {
@@ -158,7 +158,7 @@ HistoricalMetrics = {
         'production_total': float,
         'collection_rate': float,
         'new_patients': int,
-        'treatment_acceptance': float,
+        'case_acceptance': float,
         'hygiene_reappointment': float,
         'data_date': datetime
     }

@@ -59,7 +59,7 @@ A complete, production-ready architecture for a dental analytics dashboard that 
 │  │  • calculate_production_total()                     │  │
 │  │  • calculate_collection_rate()                      │  │
 │  │  • calculate_new_patients()                         │  │
-│  │  • calculate_treatment_acceptance()                 │  │
+│  │  • calculate_case_acceptance()                 │  │
 │  │  • calculate_hygiene_reappointment()                │  │
 │  │  • get_all_kpis() orchestrator                      │  │
 │  └──────────────────┬──────────────────────────────────┘  │

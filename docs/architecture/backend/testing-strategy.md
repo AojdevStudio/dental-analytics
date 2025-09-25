@@ -23,7 +23,7 @@
    kpis = get_all_kpis()
    assert all(key in kpis for key in [
        'production_total', 'collection_rate',
-       'new_patients', 'treatment_acceptance',
+       'new_patients', 'case_acceptance',
        'hygiene_reappointment'
    ])
    ```

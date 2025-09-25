@@ -12,7 +12,7 @@ Done
 ## Acceptance Criteria
 
 1. calculate_new_patients() function extracts count from Column J in EOD sheets
-2. calculate_treatment_acceptance() function implements formula: (Column M / Column L) × 100 from Front KPI sheets
+2. calculate_case_acceptance() function implements formula: (Column M / Column L) × 100 from Front KPI sheets
 3. Functions handle sheet name differences correctly (EOD vs Front KPI sheets)
 4. Treatment acceptance calculation handles division by zero cases gracefully
 5. Both functions integrated into existing MetricsCalculator class in metrics.py module
@@ -30,7 +30,7 @@ Done
   - [x] Handle missing Column J with try/except KeyError pattern
 
 - [x] **Task 2: Implement Treatment Acceptance Rate Calculation** (AC: 2, 3, 4, 5)
-  - [x] Add calculate_treatment_acceptance() static method to MetricsCalculator class
+  - [x] Add calculate_case_acceptance() static method to MetricsCalculator class
   - [x] Extract Column L (treatments_presented) and Column M (treatments_scheduled) from Front KPI sheets
   - [x] Convert both columns to numeric using pd.to_numeric() with error handling
   - [x] Apply formula: (treatments_scheduled_sum / treatments_presented_sum) × 100
@@ -42,7 +42,7 @@ Done
   - [x] Add calls to both new calculation functions
   - [x] Integrate new patient count with EOD sheet data
   - [x] Integrate treatment acceptance with Front KPI sheet data
-  - [x] Return updated dictionary with all 4 KPIs (production, collection_rate, new_patients, treatment_acceptance)
+  - [x] Return updated dictionary with all 4 KPIs (production, collection_rate, new_patients, case_acceptance)
   - [x] Ensure backward compatibility with existing KPI structure
 
 - [x] **Task 4: Add Comprehensive Error Handling** (AC: 3, 4)
@@ -56,7 +56,7 @@ Done
   - [x] Update test_calculations.py with new patient and treatment acceptance tests
   - [x] Use sample data with known expected results for both calculations
   - [x] Test calculate_new_patients() with sample EOD data (Column J)
-  - [x] Test calculate_treatment_acceptance() with sample Front KPI data (Columns L, M)
+  - [x] Test calculate_case_acceptance() with sample Front KPI data (Columns L, M)
   - [x] Verify calculations match manual Excel/calculator results
   - [x] Test error conditions (empty data, missing columns, zero treatments_presented)
 
@@ -100,7 +100,7 @@ class MetricsCalculator:
             return None
 
     @staticmethod
-    def calculate_treatment_acceptance(df: pd.DataFrame) -> Optional[float]:
+    def calculate_case_acceptance(df: pd.DataFrame) -> Optional[float]:
         """Calculate treatment acceptance rate percentage from Front KPI sheets."""
         if df is None or df.empty:
             return None
@@ -131,7 +131,7 @@ class MetricsCalculator:
             'production_total': cls.calculate_production_total(eod_data),
             'collection_rate': cls.calculate_collection_rate(eod_data),
             'new_patients': cls.calculate_new_patients(eod_data),
-            'treatment_acceptance': cls.calculate_treatment_acceptance(front_kpi_data)
+            'case_acceptance': cls.calculate_case_acceptance(front_kpi_data)
         }
 ```
 
@@ -216,13 +216,13 @@ def test_new_patients_calculation():
     assert result == 17, f"Expected 17, got {result}"
     print("✅ New patients calculation test passed")
 
-def test_treatment_acceptance_calculation():
+def test_case_acceptance_calculation():
     """Test treatment acceptance rate calculation with known data."""
     test_data = pd.DataFrame({
         'treatments_presented': [20, 15, 10],  # Column L
         'treatments_scheduled': [18, 12, 8]   # Column M
     })
-    result = MetricsCalculator.calculate_treatment_acceptance(test_data)
+    result = MetricsCalculator.calculate_case_acceptance(test_data)
     expected = 84.44  # (38/45) * 100
     assert abs(result - expected) < 0.01, f"Expected {expected}, got {result}"
     print("✅ Treatment acceptance calculation test passed")
@@ -231,7 +231,7 @@ def test_get_all_kpis_structure():
     """Test that get_all_kpis returns all 4 expected KPIs."""
     # Mock the data calls for testing
     kpis = MetricsCalculator.get_all_kpis()
-    expected_keys = ['production_total', 'collection_rate', 'new_patients', 'treatment_acceptance']
+    expected_keys = ['production_total', 'collection_rate', 'new_patients', 'case_acceptance']
     assert all(key in kpis for key in expected_keys), "Missing expected KPI keys"
     print("✅ All KPIs structure test passed")
 ```
@@ -262,7 +262,7 @@ Claude Opus 4.1 (claude-opus-4-1-20250805) via BMAD dev agent framework
 
 ### File List
 **Modified Files:**
-- `backend/metrics.py` (67 lines) - Extended MetricsCalculator class with calculate_new_patients(), calculate_treatment_acceptance(), and get_all_kpis() methods
+- `backend/metrics.py` (67 lines) - Extended MetricsCalculator class with calculate_new_patients(), calculate_case_acceptance(), and get_all_kpis() methods
 - `test_calculations.py` (132 lines) - Added comprehensive manual verification tests for new patient count, treatment acceptance rate, and KPI integration
 
 **New Files Created:**

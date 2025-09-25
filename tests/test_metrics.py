@@ -4,11 +4,11 @@ import pandas as pd
 import pytest
 
 from apps.backend.metrics import (
+    calculate_case_acceptance,
     calculate_collection_rate,
     calculate_hygiene_reappointment,
     calculate_new_patients,
     calculate_production_total,
-    calculate_treatment_acceptance,
 )
 
 
@@ -102,7 +102,7 @@ class TestKPICalculations:
         assert result is None
 
     @pytest.mark.unit
-    def test_calculate_treatment_acceptance_success(self) -> None:
+    def test_calculate_case_acceptance_success(self) -> None:
         """Test treatment acceptance rate calculation for single day (MVP)."""
         # MVP: Single day snapshot
         test_data = pd.DataFrame(
@@ -112,12 +112,12 @@ class TestKPICalculations:
                 "$ Same Day Treatment": [100],
             }
         )
-        result = calculate_treatment_acceptance(test_data)
+        result = calculate_case_acceptance(test_data)
         # ((500 + 100) / 1000) * 100 = 60%
         assert result is not None and result == 60.0
 
     @pytest.mark.unit
-    def test_calculate_treatment_acceptance_zero_presented(self) -> None:
+    def test_calculate_case_acceptance_zero_presented(self) -> None:
         """Test treatment acceptance with zero presented for single day (MVP)."""
         # MVP: Single day with zero presented
         test_data = pd.DataFrame(
@@ -127,7 +127,7 @@ class TestKPICalculations:
                 "$ Same Day Treatment": [0],
             }
         )
-        result = calculate_treatment_acceptance(test_data)
+        result = calculate_case_acceptance(test_data)
         assert result is None
 
     @pytest.mark.unit
@@ -220,7 +220,7 @@ class TestKPICalculations:
         assert result is None
 
     @pytest.mark.unit
-    def test_treatment_acceptance_missing_columns(self) -> None:
+    def test_case_acceptance_missing_columns(self) -> None:
         """Test treatment acceptance with missing required columns."""
         test_data = pd.DataFrame(
             {
@@ -231,7 +231,7 @@ class TestKPICalculations:
             }
         )
 
-        result = calculate_treatment_acceptance(test_data)
+        result = calculate_case_acceptance(test_data)
         assert result is None
 
     @pytest.mark.unit

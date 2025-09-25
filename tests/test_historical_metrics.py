@@ -443,7 +443,7 @@ class TestGetAllHistoricalKPIs:
             assert "production_total" in current
             assert "collection_rate" in current
             assert "new_patients" in current
-            assert "treatment_acceptance" in current
+            assert "case_acceptance" in current
             assert "hygiene_reappointment" in current
 
             # Check metadata
@@ -506,7 +506,7 @@ class TestGetAllHistoricalKPIs:
             # Should handle gracefully with None values for failed data
             assert result["current"]["production_total"] is None  # EOD data failed
             assert (
-                result["current"]["treatment_acceptance"] is not None
+                result["current"]["case_acceptance"] is not None
             )  # Front KPI succeeded
 
 

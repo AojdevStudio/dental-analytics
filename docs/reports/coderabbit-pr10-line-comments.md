@@ -9,7 +9,7 @@
 ### Lines 20-26: Backend KPI Math Error
 **Issue:** Backend KPI functions likely compute only the first row, not column sums, causing CI failures. Tests expect column-wise sums (e.g., collection rate = sum(Collections)/sum(Production) * 100).
 
-**Suggestion:** Per failures, calculate_production_total/new_patients/treatment_acceptance/hygiene_reappointment return values consistent with the first record rather than sums over the DataFrame.
+**Suggestion:** Per failures, calculate_production_total/new_patients/case_acceptance/hygiene_reappointment return values consistent with the first record rather than sums over the DataFrame.
 
 Proposed backend fixes (backend/metrics.py):
 

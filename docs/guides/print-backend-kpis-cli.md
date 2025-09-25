@@ -84,7 +84,7 @@ uv run python -c 'from backend.sheets_reader import SheetsReader; from backend.m
 Treatment Acceptance % (Front KPI sheet):
 
 ```bash
-uv run python -c 'from backend.sheets_reader import SheetsReader; from backend.metrics import calculate_treatment_acceptance as f; r=SheetsReader(); df=r.get_sheet_data("Baytown Front KPIs Form responses!A:N"); print(f(df))'
+uv run python -c 'from backend.sheets_reader import SheetsReader; from backend.metrics import calculate_case_acceptance as f; r=SheetsReader(); df=r.get_sheet_data("Baytown Front KPIs Form responses!A:N"); print(f(df))'
 ```
 
 Hygiene Reappointment % (Front KPI sheet):

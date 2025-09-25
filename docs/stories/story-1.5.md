@@ -137,7 +137,7 @@ kpis = get_all_kpis()  # Returns Dict[str, Optional[float]]
 #   'production_total': 28450.0 or None,
 #   'collection_rate': 92.3 or None,
 #   'new_patients': 12 or None,
-#   'treatment_acceptance': 78.5 or None,
+#   'case_acceptance': 78.5 or None,
 #   'hygiene_reappointment': 94.2 or None
 # }
 

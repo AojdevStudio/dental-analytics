@@ -1,6 +1,7 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# IMPORTANT: DO NOT HIDE YOUR DISAGREEMENTS WITH THE USER, ALWAYS EXPRESS THEM, BE CRITICAL AND CONSTRUCTIVE, AND ALWAYS BE POLITE AND PROFESSIONAL.
 
 ## Project Overview
 **COMPLETED**: Full-stack dental analytics dashboard that reads KPI data from Google Sheets, processes it with pandas, and displays metrics in a Streamlit web interface. Built for KamDental practice to automate daily production, collection rate, new patient count, treatment acceptance, and hygiene reappointment tracking.
@@ -439,8 +440,8 @@ def calculate_collection_rate(df: pd.DataFrame) -> float | None:
 def calculate_new_patients(df: pd.DataFrame) -> int | None:
     return int(pd.to_numeric(df["new_patients"], errors="coerce").sum())
 
-# Treatment Acceptance: (Scheduled / Presented) × 100
-def calculate_treatment_acceptance(df: pd.DataFrame) -> float | None:
+# Case Acceptance: (Scheduled / Presented) × 100
+def calculate_case_acceptance(df: pd.DataFrame) -> float | None:
     scheduled = pd.to_numeric(df["treatments_scheduled"], errors="coerce").sum()
     presented = pd.to_numeric(df["treatments_presented"], errors="coerce").sum()
     return float((scheduled / presented) * 100)
@@ -455,8 +456,8 @@ def calculate_hygiene_reappointment(df: pd.DataFrame) -> float | None:
 ### Data Sources ✅ Multi-Location Configured
 - **Baytown EOD**: "EOD - Baytown Billing!A:N" (Production, Collections, New Patients)
 - **Humble EOD**: "EOD - Humble Billing!A:AG" (Production, Collections, New Patients)
-- **Baytown Front**: "Baytown Front KPIs Form responses!A:Z" (Treatment Acceptance, Hygiene Reappointment)
-- **Humble Front**: "Humble Front KPIs Form responses!A:Z" (Treatment Acceptance, Hygiene Reappointment)
+- **Baytown Front**: "Baytown Front KPIs Form responses!A:Z" (Case Acceptance, Hygiene Reappointment)
+- **Humble Front**: "Humble Front KPIs Form responses!A:Z" (Case Acceptance, Hygiene Reappointment)
 - **Spreadsheet ID**: 1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8
 - **Configuration**: Alias-based access via `config/sheets.yml`
 

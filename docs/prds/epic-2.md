@@ -223,14 +223,14 @@ HistoricalMetrics = {
         'production_total': List[Tuple[datetime, float]],
         'collection_rate': List[Tuple[datetime, float]],
         'new_patients': List[Tuple[datetime, int]],
-        'treatment_acceptance': List[Tuple[datetime, float]],
+        'case_acceptance': List[Tuple[datetime, float]],
         'hygiene_reappointment': List[Tuple[datetime, float]]
     },
     'latest_values': {
         'production_total': float,
         'collection_rate': float,
         'new_patients': int,
-        'treatment_acceptance': float,
+        'case_acceptance': float,
         'hygiene_reappointment': float,
         'data_date': datetime  # Date of latest available data
     },

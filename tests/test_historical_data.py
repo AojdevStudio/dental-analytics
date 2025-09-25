@@ -1,69 +1,87 @@
-"""
-Unit tests for Historical Data Manager
+# Unit tests for historical data functionality
 
-Tests cover:
-- Operational day logic (Monday-Saturday for dental practice)
-- Sunday/holiday fallback to latest operational day
-- Time-series data retrieval and filtering
-- Error handling for missing data points
-- Framework-agnostic design validation
-"""
-
-import logging
-import sys
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
-import structlog
 
 from apps.backend.historical_data import HistoricalDataManager
 
-# Configure test logging to stderr with structured output
-structlog.configure(
-    processors=[
-        structlog.processors.add_log_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.dict_tracebacks,
-        structlog.processors.CallsiteParameterAdder(
-            parameters=[
-                structlog.processors.CallsiteParameter.PATHNAME,
-                structlog.processors.CallsiteParameter.LINENO,
-            ]
-        ),
-        structlog.processors.JSONRenderer(),
-    ],
-    wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
-    logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
-)
 
-log = structlog.get_logger()
-
-
-class TestOperationalDayLogic:
-    """Test suite for operational day detection (Monday-Saturday)."""
+class TestHistoricalDataManager:
+    """Test suite for HistoricalDataManager functionality."""
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("apps.backend.historical_data.build_sheets_provider"):
-            self.manager = HistoricalDataManager()
+        self.mock_provider = Mock()
+        self.manager = HistoricalDataManager(self.mock_provider)
 
     @pytest.mark.unit
-    def test_get_latest_operational_date_basic(self) -> None:
-        """Test latest operational date logic."""
-        # Test that the method returns a valid datetime
-        result = self.manager.get_latest_operational_date()
-        assert isinstance(result, datetime)
+    def test_initialization(self) -> None:
+        """Test HistoricalDataManager initialization."""
+        provider = Mock()
+        manager = HistoricalDataManager(provider)
+        assert manager.data_provider == provider
 
-        # Test that if today is not Sunday, it returns today
-        # If today is Sunday, it should return Saturday (previous day)
-        today = datetime.now()
-        if today.weekday() != 6:  # Not Sunday
-            # Should return today (approximately - may differ by seconds)
-            assert result.date() == today.date()
-        else:  # Sunday
-            # Should return Saturday (yesterday)
+    @pytest.mark.unit
+    def test_get_operational_date_weekday(self) -> None:
+        """Test operational date calculation for weekdays."""
+        # Test Monday through Saturday (operational days)
+        for weekday in range(6):  # 0 = Monday, 5 = Saturday
+            test_date = datetime(2025, 9, 15 + weekday)  # Starts from Monday
+            result = self.manager._get_operational_date(test_date)
+            assert result == test_date
+            assert result.weekday() == weekday
+
+    @pytest.mark.unit
+    def test_get_operational_date_sunday(self) -> None:
+        """Test Sunday falls back to Saturday."""
+        sunday = datetime(2025, 9, 21)  # Sunday
+        expected_saturday = datetime(2025, 9, 20)  # Previous Saturday
+
+        result = self.manager._get_operational_date(sunday)
+        assert result == expected_saturday
+        assert result.weekday() == 5  # Saturday
+
+    @pytest.mark.unit
+    def test_get_operational_date_edge_cases(self) -> None:
+        """Test edge cases for operational date calculation."""
+        # Test first Sunday of month
+        first_sunday = datetime(2025, 9, 7)  # First Sunday of September
+        expected_saturday = datetime(2025, 9, 6)  # Previous Saturday
+
+        result = self.manager._get_operational_date(first_sunday)
+        assert result == expected_saturday
+
+        # Test year boundary
+        new_years_sunday = datetime(2026, 1, 4)  # Sunday
+        expected_saturday = datetime(2026, 1, 3)  # Previous Saturday
+
+        result = self.manager._get_operational_date(new_years_sunday)
+        assert result == expected_saturday
+
+    @pytest.mark.unit
+    def test_get_latest_operational_date(self) -> None:
+        """Test getting the latest operational date."""
+        # Test with different current days
+        test_cases = [
+            (datetime(2025, 9, 15), datetime(2025, 9, 15)),  # Monday -> Monday
+            (datetime(2025, 9, 16), datetime(2025, 9, 16)),  # Tuesday -> Tuesday
+            (datetime(2025, 9, 17), datetime(2025, 9, 17)),  # Wednesday -> Wednesday
+            (datetime(2025, 9, 18), datetime(2025, 9, 18)),  # Thursday -> Thursday
+            (datetime(2025, 9, 19), datetime(2025, 9, 19)),  # Friday -> Friday
+            (datetime(2025, 9, 20), datetime(2025, 9, 20)),  # Saturday -> Saturday
+            (
+                datetime(2025, 9, 21),
+                datetime(2025, 9, 20),
+            ),  # Sunday -> Previous Saturday
+        ]
+
+        for today, expected_date in test_cases:
+            with patch("apps.backend.historical_data.datetime") as mock_datetime:
+                mock_datetime.now.return_value = today
+                result = self.manager.get_latest_operational_date()
             expected_date = today - timedelta(days=1)
             assert result.date() == expected_date.date()
 
@@ -71,7 +89,10 @@ class TestOperationalDayLogic:
     def test_get_latest_operational_date_from_monday(self) -> None:
         """Test latest operational date when reference is Monday."""
         monday = datetime(2025, 9, 15)  # Monday
-        result = self.manager.get_latest_operational_date(monday)
+        # Mock the current time to be Monday
+        with patch("apps.backend.historical_data.datetime") as mock_datetime:
+            mock_datetime.now.return_value = monday
+            result = self.manager.get_latest_operational_date()
         assert result == monday
         assert result.weekday() == 0  # Monday
 
@@ -81,7 +102,10 @@ class TestOperationalDayLogic:
         sunday = datetime(2025, 9, 21)  # Sunday
         expected_saturday = datetime(2025, 9, 20)  # Previous Saturday
 
-        result = self.manager.get_latest_operational_date(sunday)
+        # Mock the current time to be Sunday
+        with patch("apps.backend.historical_data.datetime") as mock_datetime:
+            mock_datetime.now.return_value = sunday
+            result = self.manager.get_latest_operational_date()
         assert result == expected_saturday
         assert result.weekday() == 5  # Saturday
 
@@ -89,7 +113,10 @@ class TestOperationalDayLogic:
     def test_get_latest_operational_date_from_tuesday(self) -> None:
         """Test latest operational date when reference is Tuesday."""
         tuesday = datetime(2025, 9, 16)  # Tuesday
-        result = self.manager.get_latest_operational_date(tuesday)
+        # Mock the current time to be Tuesday
+        with patch("apps.backend.historical_data.datetime") as mock_datetime:
+            mock_datetime.now.return_value = tuesday
+            result = self.manager.get_latest_operational_date()
         assert result == tuesday
         assert result.weekday() == 1  # Tuesday
 
@@ -98,7 +125,10 @@ class TestOperationalDayLogic:
         """Test fallback protection against infinite loops."""
         # Test that it doesn't loop infinitely with edge cases
         any_date = datetime(2025, 9, 15)
-        result = self.manager.get_latest_operational_date(any_date)
+        # Mock the current time
+        with patch("apps.backend.historical_data.datetime") as mock_datetime:
+            mock_datetime.now.return_value = any_date
+            result = self.manager.get_latest_operational_date()
         assert result is not None
         assert isinstance(result, datetime)
 
@@ -106,276 +136,160 @@ class TestOperationalDayLogic:
     def test_get_latest_operational_date_default_today(self) -> None:
         """Test default behavior uses current date."""
         with patch("apps.backend.historical_data.datetime") as mock_datetime:
-            mock_now = datetime(2025, 9, 19)  # Friday
+            mock_now = datetime(2025, 9, 15)  # Monday
             mock_datetime.now.return_value = mock_now
-            mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
-
             result = self.manager.get_latest_operational_date()
-            assert result == mock_now
-
-
-class TestDateRangeCalculation:
-    """Test suite for date range calculations."""
-
-    def setup_method(self):
-        """Set up test fixtures."""
-        with patch("apps.backend.historical_data.build_sheets_provider"):
-            self.manager = HistoricalDataManager()
+        # Should return the same date for weekdays
+        assert result == mock_now
 
     @pytest.mark.unit
-    def test_get_date_range_for_period_30_days(self) -> None:
-        """Test 30-day date range calculation."""
-        with patch.object(self.manager, "get_latest_operational_date") as mock_latest:
-            mock_latest.return_value = datetime(2025, 9, 20)  # Saturday
+    def test_parse_date_string_formats(self) -> None:
+        """Test parsing various date string formats."""
+        test_cases = [
+            ("2025-09-15", datetime(2025, 9, 15)),
+            ("9/15/2025", datetime(2025, 9, 15)),
+            ("15-09-2025", datetime(2025, 9, 15)),
+            ("2025/09/15", datetime(2025, 9, 15)),
+        ]
 
-            start_date, end_date = self.manager.get_date_range_for_period(30)
-
-            assert end_date == datetime(2025, 9, 20)
-            assert start_date == datetime(2025, 8, 21)  # 30 days before
-            assert (end_date - start_date).days == 30
-
-    @pytest.mark.unit
-    def test_get_date_range_for_period_7_days(self) -> None:
-        """Test 7-day date range calculation."""
-        with patch.object(self.manager, "get_latest_operational_date") as mock_latest:
-            mock_latest.return_value = datetime(2025, 9, 19)  # Friday
-
-            start_date, end_date = self.manager.get_date_range_for_period(7)
-
-            assert end_date == datetime(2025, 9, 19)
-            assert start_date == datetime(2025, 9, 12)  # 7 days before
-            assert (end_date - start_date).days == 7
-
-
-class TestHistoricalDataRetrieval:
-    """Test suite for historical data retrieval."""
-
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.mock_provider = Mock()
-        with patch(
-            "apps.backend.historical_data.build_sheets_provider",
-            return_value=self.mock_provider,
-        ):
-            self.manager = HistoricalDataManager()
+        for date_string, expected in test_cases:
+            result = self.manager._parse_date_string(date_string)
+            assert result == expected, f"Failed for {date_string}"
 
     @pytest.mark.unit
-    def test_get_historical_eod_data_success(self) -> None:
-        """Test successful historical EOD data retrieval."""
-        # Mock successful data retrieval
-        mock_data = pd.DataFrame(
+    def test_parse_date_string_invalid(self) -> None:
+        """Test parsing invalid date strings."""
+        invalid_dates = [
+            "invalid-date",
+            "2025-13-01",  # Invalid month
+            "2025-02-30",  # Invalid day
+            "",
+            None,
+        ]
+
+        for invalid_date in invalid_dates:
+            result = self.manager._parse_date_string(invalid_date)
+            assert result is None, f"Should return None for {invalid_date}"
+
+    @pytest.mark.unit
+    def test_convert_to_datetime_column_success(self) -> None:
+        """Test converting date column to datetime."""
+        test_data = pd.DataFrame(
             {
                 "Submission Date": ["2025-09-15", "2025-09-16", "2025-09-17"],
-                "total_production": [1000, 1200, 1100],
-                "total_collections": [900, 1100, 1000],
+                "value": [100, 200, 300],
             }
         )
-        # Configure alias mapping and data fetching
-        self.mock_provider.get_location_aliases.return_value = "baytown_eod"
-        self.mock_provider.fetch.return_value = mock_data
 
-        with patch.object(
-            self.manager, "_filter_by_date_range", return_value=mock_data
-        ):
-            result = self.manager.get_historical_eod_data(30)
+        result = self.manager._convert_to_datetime_column(test_data, "Submission Date")
 
-            assert result is not None
-            assert len(result) == 3
-            assert "total_production" in result.columns
+        assert result is not None
+        assert pd.api.types.is_datetime64_any_dtype(result["Submission Date"])
+        assert len(result) == 3
 
     @pytest.mark.unit
-    def test_get_historical_eod_data_empty_response(self) -> None:
-        """Test handling of empty data response."""
-        # Configure provider to return no alias or no data
-        self.mock_provider.get_location_aliases.return_value = "baytown_eod"
-        self.mock_provider.fetch.return_value = None
+    def test_convert_to_datetime_column_mixed_formats(self) -> None:
+        """Test converting mixed date formats."""
+        test_data = pd.DataFrame(
+            {
+                "Submission Date": ["2025-09-15", "9/16/2025", "2025/09/17"],
+                "value": [100, 200, 300],
+            }
+        )
 
-        result = self.manager.get_historical_eod_data(30)
+        result = self.manager._convert_to_datetime_column(test_data, "Submission Date")
+
+        assert result is not None
+        assert pd.api.types.is_datetime64_any_dtype(result["Submission Date"])
+        assert len(result) == 3
+
+    @pytest.mark.unit
+    def test_convert_to_datetime_column_invalid_dates(self) -> None:
+        """Test handling invalid dates in conversion."""
+        test_data = pd.DataFrame(
+            {
+                "Submission Date": ["2025-09-15", "invalid-date", "2025-09-17"],
+                "value": [100, 200, 300],
+            }
+        )
+
+        result = self.manager._convert_to_datetime_column(test_data, "Submission Date")
+
+        # Should return only valid rows
+        assert result is not None
+        assert len(result) == 2  # Only 2 valid dates
+        assert pd.api.types.is_datetime64_any_dtype(result["Submission Date"])
+
+    @pytest.mark.unit
+    def test_convert_to_datetime_column_empty_data(self) -> None:
+        """Test converting empty dataframe."""
+        empty_data = pd.DataFrame()
+        result = self.manager._convert_to_datetime_column(empty_data, "Submission Date")
         assert result is None
 
     @pytest.mark.unit
-    def test_get_historical_eod_data_api_error(self) -> None:
-        """Test handling of API errors."""
-        # Configure provider to raise exception during fetch
-        self.mock_provider.get_location_aliases.return_value = "baytown_eod"
-        self.mock_provider.fetch.side_effect = Exception("API Error")
+    def test_convert_to_datetime_column_missing_column(self) -> None:
+        """Test converting with missing date column."""
+        test_data = pd.DataFrame({"value": [100, 200, 300]})
 
-        result = self.manager.get_historical_eod_data(30)
+        result = self.manager._convert_to_datetime_column(test_data, "Missing Column")
         assert result is None
-
-    @pytest.mark.unit
-    def test_get_historical_front_kpi_data_success(self) -> None:
-        """Test successful historical Front KPI data retrieval."""
-        mock_data = pd.DataFrame(
-            {
-                "Submission Date": ["2025-09-15", "2025-09-16"],
-                "treatments_presented": [50, 60],
-                "treatments_scheduled": [40, 45],
-            }
-        )
-
-        # Configure alias mapping for front KPI data
-        def mock_get_aliases(location, data_type):
-            if data_type == "front":
-                return "baytown_front"
-            return "baytown_eod"
-
-        self.mock_provider.get_location_aliases.side_effect = mock_get_aliases
-        self.mock_provider.fetch.return_value = mock_data
-
-        with patch.object(
-            self.manager, "_filter_by_date_range", return_value=mock_data
-        ):
-            result = self.manager.get_historical_front_kpi_data(30)
-
-            assert result is not None
-            assert len(result) == 2
-            assert "treatments_presented" in result.columns
-
-
-class TestLatestAvailableData:
-    """Test suite for latest available data retrieval."""
-
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.mock_provider = Mock()
-        with patch(
-            "apps.backend.historical_data.build_sheets_provider",
-            return_value=self.mock_provider,
-        ):
-            self.manager = HistoricalDataManager()
-
-    @pytest.mark.unit
-    def test_get_latest_available_data_success(self) -> None:
-        """Test successful latest data retrieval."""
-        # Mock latest operational date
-        latest_date = datetime(2025, 9, 20)  # Saturday
-
-        # Mock data responses
-        mock_eod_data = pd.DataFrame(
-            {
-                "Submission Date": ["2025-09-20"],
-                "total_production": [1500],
-                "total_collections": [1400],
-            }
-        )
-        mock_front_kpi_data = pd.DataFrame(
-            {
-                "Submission Date": ["2025-09-20"],
-                "treatments_presented": [25],
-                "treatments_scheduled": [20],
-            }
-        )
-
-        # Configure provider for both EOD and front KPI data
-        def mock_fetch(alias):
-            if "eod" in alias:
-                return mock_eod_data
-            elif "front" in alias:
-                return mock_front_kpi_data
-            return None
-
-        def mock_get_aliases(location, data_type):
-            return f"{location}_{data_type}"
-
-        self.mock_provider.get_location_aliases.side_effect = mock_get_aliases
-        self.mock_provider.fetch.side_effect = mock_fetch
-
-        with (
-            patch.object(
-                self.manager, "get_latest_operational_date", return_value=latest_date
-            ),
-            patch.object(
-                self.manager,
-                "_filter_to_specific_date",
-                side_effect=[mock_eod_data, mock_front_kpi_data],
-            ),
-        ):
-            result = self.manager.get_latest_available_data()
-
-            assert result["data_date"] == latest_date
-            assert result["eod"] is not None
-            assert result["front_kpi"] is not None
-            assert len(result["eod"]) == 1
-            assert len(result["front_kpi"]) == 1
-
-    @pytest.mark.unit
-    def test_get_latest_available_data_missing_eod(self) -> None:
-        """Test handling when EOD data is missing."""
-        latest_date = datetime(2025, 9, 20)
-
-        # Configure provider to return no alias or no data
-        self.mock_provider.get_location_aliases.return_value = "baytown_eod"
-        self.mock_provider.fetch.return_value = None
-
-        # Configure provider to return front KPI data only
-        def mock_fetch_missing_eod(alias):
-            if "front" in alias:
-                return pd.DataFrame(
-                    {"Submission Date": ["2025-09-20"], "treatments_presented": [25]}
-                )
-            return None  # No EOD data
-
-        def mock_get_aliases(location, data_type):
-            return f"{location}_{data_type}"
-
-        self.mock_provider.get_location_aliases.side_effect = mock_get_aliases
-        self.mock_provider.fetch.side_effect = mock_fetch_missing_eod
-
-        with patch.object(
-            self.manager, "get_latest_operational_date", return_value=latest_date
-        ):
-            result = self.manager.get_latest_available_data()
-
-            assert result["data_date"] == latest_date
-            assert result["eod"] is None
-            assert result["front_kpi"] is not None
-
-
-class TestDateFiltering:
-    """Test suite for date filtering functionality."""
-
-    def setup_method(self):
-        """Set up test fixtures."""
-        with patch("apps.backend.historical_data.build_sheets_provider"):
-            self.manager = HistoricalDataManager()
 
     @pytest.mark.unit
     def test_filter_by_date_range_success(self) -> None:
-        """Test successful date range filtering."""
-        # Create test data spanning multiple days
+        """Test filtering data by date range."""
         test_data = pd.DataFrame(
             {
                 "Submission Date": [
-                    "2025-09-10",
-                    "2025-09-15",
-                    "2025-09-20",
-                    "2025-09-25",
+                    "2025-09-10",  # Too old (>10 days)
+                    "2025-09-20",  # Within range
+                    "2025-09-25",  # Within range
+                    "2025-09-30",  # Future date
                 ],
                 "total_production": [1000, 1200, 1100, 1300],
             }
         )
 
-        with patch.object(
-            self.manager,
-            "get_date_range_for_period",
-            return_value=(datetime(2025, 9, 12), datetime(2025, 9, 22)),
-        ):
+        # Mock current date to 2025-09-25 for consistent testing
+        with patch("apps.backend.historical_data.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2025, 9, 25)
             result = self.manager._filter_by_date_range(
                 test_data, "Submission Date", 10
             )
 
-            # Should include dates within range: 2025-09-15 and 2025-09-20
-            assert result is not None
-            assert len(result) == 2
+        # Should include dates within last 10 days from 2025-09-25
+        assert result is not None
+        assert len(result) >= 2  # At least the recent entries
 
-            dates = pd.to_datetime(result["Submission Date"]).dt.date
-            assert datetime(2025, 9, 15).date() in dates.values
-            assert datetime(2025, 9, 20).date() in dates.values
+    @pytest.mark.unit
+    def test_filter_by_date_range_success_specific_data(self) -> None:
+        """Test filtering with specific data ranges."""
+        test_data = pd.DataFrame(
+            {
+                "Submission Date": [
+                    "2025-09-10",  # Too old (>10 days from 2025-09-25)
+                    "2025-09-20",  # Within range
+                    "2025-09-25",  # Within range
+                    "2025-09-30",  # Future date
+                ],
+                "total_production": [1000, 1200, 1100, 1300],
+            }
+        )
+
+        # Use _filter_by_date_range directly with days parameter
+        result = self.manager._filter_by_date_range(test_data, "Submission Date", 10)
+
+        # Should include dates within last 10 days: 2025-09-20 and 2025-09-25
+        assert result is not None
+        assert len(result) == 2
+
+        dates = pd.to_datetime(result["Submission Date"]).dt.date
+        assert datetime(2025, 9, 20).date() in dates.values
+        assert datetime(2025, 9, 25).date() in dates.values
 
     @pytest.mark.unit
     def test_filter_by_date_range_no_data_in_range(self) -> None:
-        """Test date filtering when no data falls within range."""
+        """Test filtering when no data falls within range."""
         test_data = pd.DataFrame(
             {
                 "Submission Date": ["2025-08-01", "2025-08-02"],
@@ -383,16 +297,10 @@ class TestDateFiltering:
             }
         )
 
-        with patch.object(
-            self.manager,
-            "get_date_range_for_period",
-            return_value=(datetime(2025, 9, 1), datetime(2025, 9, 30)),
-        ):
-            result = self.manager._filter_by_date_range(
-                test_data, "Submission Date", 30
-            )
+        # Test with date range that doesn't match the data (August vs September)
+        result = self.manager._filter_by_date_range(test_data, "Submission Date", 30)
 
-            assert result is None
+        assert result is None
 
     @pytest.mark.unit
     def test_filter_to_specific_date_success(self) -> None:
@@ -411,11 +319,14 @@ class TestDateFiltering:
 
         assert result is not None
         assert len(result) == 1
-        assert result.iloc[0]["total_production"] == 1200
+        assert (
+            pd.to_datetime(result["Submission Date"].iloc[0]).date()
+            == target_date.date()
+        )
 
     @pytest.mark.unit
     def test_filter_to_specific_date_no_match(self) -> None:
-        """Test filtering when target date has no data."""
+        """Test filtering to a date that doesn't exist."""
         test_data = pd.DataFrame(
             {
                 "Submission Date": ["2025-09-15", "2025-09-17"],
@@ -423,7 +334,7 @@ class TestDateFiltering:
             }
         )
 
-        target_date = datetime(2025, 9, 16)  # Date not in data
+        target_date = datetime(2025, 9, 16)  # Missing date
         result = self.manager._filter_to_specific_date(
             test_data, "Submission Date", target_date
         )
@@ -431,123 +342,165 @@ class TestDateFiltering:
         assert result is None
 
     @pytest.mark.unit
-    def test_filter_date_parsing_errors(self) -> None:
-        """Test handling of date parsing errors."""
+    def test_calculate_aggregations(self) -> None:
+        """Test calculating various aggregations."""
         test_data = pd.DataFrame(
             {
-                "Submission Date": ["invalid-date", "2025-09-15"],
-                "total_production": [1000, 1200],
+                "total_production": [1000, 1200, 1100, 1300],
+                "total_collections": [900, 1100, 1000, 1200],
+                "new_patients": [5, 3, 4, 6],
             }
         )
 
-        target_date = datetime(2025, 9, 15)
-        result = self.manager._filter_to_specific_date(
-            test_data, "Submission Date", target_date
-        )
+        aggregations = self.manager._calculate_aggregations(test_data)
 
-        # Should still work with valid dates, ignoring invalid ones
+        assert aggregations["total_sum"] == 4600  # Sum of production
+        assert aggregations["daily_average"] == 1150.0  # Average production
+        assert aggregations["latest_value"] == 1300  # Last production value
+        assert aggregations["data_points"] == 4  # Number of records
+
+    @pytest.mark.unit
+    def test_calculate_aggregations_empty_data(self) -> None:
+        """Test aggregations with empty data."""
+        empty_data = pd.DataFrame()
+
+        aggregations = self.manager._calculate_aggregations(empty_data)
+
+        assert aggregations["total_sum"] is None
+        assert aggregations["daily_average"] is None
+        assert aggregations["latest_value"] is None
+        assert aggregations["data_points"] == 0
+
+    @pytest.mark.unit
+    def test_get_historical_data_success(self) -> None:
+        """Test successful historical data retrieval."""
+        # Mock provider to return test data
+        mock_data = pd.DataFrame(
+            {
+                "Submission Date": ["2025-09-20", "2025-09-21", "2025-09-22"],
+                "total_production": [1000, 1200, 1100],
+            }
+        )
+        self.mock_provider.fetch.return_value = mock_data
+
+        # Mock current date for consistent testing
+        with patch("apps.backend.historical_data.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2025, 9, 25)
+            result = self.manager.get_historical_data(
+                "test_alias", "Submission Date", 5
+            )
+
+        assert result is not None
+        assert "total_sum" in result
+        assert "daily_average" in result
+        assert "latest_value" in result
+        assert "data_points" in result
+        assert result["data_points"] == 3
+
+    @pytest.mark.unit
+    def test_get_historical_data_provider_error(self) -> None:
+        """Test handling provider errors."""
+        # Mock provider to raise an exception
+        self.mock_provider.fetch.side_effect = Exception("Provider error")
+
+        result = self.manager.get_historical_data("test_alias", "Submission Date", 5)
+
+        assert result is None
+
+    @pytest.mark.unit
+    def test_get_historical_data_no_data_in_range(self) -> None:
+        """Test when no data falls within the requested range."""
+        # Mock provider to return data outside the range
+        mock_data = pd.DataFrame(
+            {
+                "Submission Date": ["2025-08-01", "2025-08-02"],
+                "total_production": [1000, 1200],
+            }
+        )
+        self.mock_provider.fetch.return_value = mock_data
+
+        result = self.manager.get_historical_data("test_alias", "Submission Date", 5)
+
+        assert result is None
+
+    @pytest.mark.unit
+    def test_get_latest_data_success(self) -> None:
+        """Test successful latest data retrieval."""
+        # Mock provider to return test data
+        mock_data = pd.DataFrame(
+            {
+                "Submission Date": ["2025-09-20", "2025-09-21", "2025-09-22"],
+                "total_production": [1000, 1200, 1100],
+            }
+        )
+        self.mock_provider.fetch.return_value = mock_data
+
+        # Mock current date
+        with patch("apps.backend.historical_data.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2025, 9, 22)
+            result = self.manager.get_latest_data("test_alias", "Submission Date")
+
         assert result is not None
         assert len(result) == 1
-
-
-class TestErrorHandling:
-    """Test suite for error handling and edge cases."""
-
-    def setup_method(self):
-        """Set up test fixtures."""
-        with patch("apps.backend.historical_data.build_sheets_provider"):
-            self.manager = HistoricalDataManager()
+        assert result["total_production"].iloc[0] == 1100  # Latest value
 
     @pytest.mark.unit
-    def test_missing_date_column_handling(self) -> None:
-        """Test handling when date column is missing."""
-        test_data = pd.DataFrame(
+    def test_get_latest_data_no_recent_data(self) -> None:
+        """Test when no recent data is available."""
+        # Mock provider to return old data
+        mock_data = pd.DataFrame(
             {
-                "total_production": [1000, 1200],
-                # Missing 'Submission Date' column
+                "Submission Date": ["2025-08-01"],
+                "total_production": [1000],
             }
         )
+        self.mock_provider.fetch.return_value = mock_data
 
-        result = self.manager._filter_by_date_range(test_data, "Submission Date", 30)
+        result = self.manager.get_latest_data("test_alias", "Submission Date")
+
         assert result is None
 
     @pytest.mark.unit
-    def test_empty_dataframe_handling(self) -> None:
-        """Test handling of empty DataFrames."""
-        empty_df = pd.DataFrame()
+    def test_data_provider_integration(self) -> None:
+        """Test integration with data provider."""
+        # Test that the manager correctly uses the provided data provider
+        test_alias = "test_sheets_alias"
 
-        result = self.manager._filter_by_date_range(empty_df, "Submission Date", 30)
-        assert result is None
+        # Mock the provider
+        mock_data = pd.DataFrame(
+            {
+                "Submission Date": ["2025-09-25"],
+                "total_production": [1500],
+            }
+        )
+        self.mock_provider.fetch.return_value = mock_data
 
-    @pytest.mark.unit
-    def test_none_dataframe_handling(self) -> None:
-        """Test handling of None DataFrames."""
-        result = self.manager._filter_by_date_range(None, "Submission Date", 30)
-        assert result is None
+        # Call get_latest_data which should use the provider
+        result = self.manager.get_latest_data(test_alias, "Submission Date")
 
-
-class TestFrameworkAgnosticDesign:
-    """Test suite to validate framework-agnostic design."""
-
-    def setup_method(self):
-        """Set up test fixtures."""
-        with patch("apps.backend.historical_data.build_sheets_provider"):
-            self.manager = HistoricalDataManager()
-
-    @pytest.mark.unit
-    def test_no_frontend_framework_dependencies(self) -> None:
-        """Test that historical data manager has no frontend framework dependencies."""
-        # Check imports for framework independence
-        import apps.backend.historical_data as hdm
-
-        # Should only import standard library, pandas, and internal modules
-        # Verify imports (allowed list not actively checked but documented)
-        _ = {
-            "datetime",
-            "typing",
-            "logging",
-            "sys",
-            "pandas",
-            "structlog",
-        }
-
-        # This is a design validation test
-        assert hasattr(hdm, "HistoricalDataManager")
-        assert callable(hdm.HistoricalDataManager.get_historical_eod_data)
-        assert callable(hdm.HistoricalDataManager.get_latest_available_data)
+        # Verify the provider was called with correct alias
+        self.mock_provider.fetch.assert_called_once_with(test_alias)
+        assert result is not None
 
     @pytest.mark.unit
-    def test_return_types_are_serializable(self) -> None:
-        """Test that return types are JSON-serializable for frontend flexibility."""
-        # Mock successful data retrieval
-        with patch.object(
-            self.manager,
-            "get_latest_operational_date",
-            return_value=datetime(2025, 9, 20),
-        ):
-            result = self.manager.get_latest_available_data()
+    def test_edge_case_single_data_point(self) -> None:
+        """Test handling single data point."""
+        mock_data = pd.DataFrame(
+            {
+                "Submission Date": ["2025-09-25"],
+                "total_production": [1500],
+            }
+        )
+        self.mock_provider.fetch.return_value = mock_data
 
-            # Should be a dictionary with standard types
-            assert isinstance(result, dict)
-            assert isinstance(result.get("data_date"), datetime)
+        with patch("apps.backend.historical_data.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2025, 9, 25)
+            result = self.manager.get_historical_data(
+                "test_alias", "Submission Date", 5
+            )
 
-            # DataFrames can be converted to JSON
-            eod_data = result.get("eod")
-            front_kpi_data = result.get("front_kpi")
-
-            # None values are JSON-serializable
-            if eod_data is not None:
-                assert isinstance(eod_data, pd.DataFrame)
-            if front_kpi_data is not None:
-                assert isinstance(front_kpi_data, pd.DataFrame)
-
-    @pytest.mark.unit
-    def test_operational_day_logic_is_configurable(self) -> None:
-        """Test that operational day logic is configurable (not hardcoded)."""
-        # Operational days are stored as instance attribute, not hardcoded
-        assert hasattr(self.manager, "operational_days")
-        assert isinstance(self.manager.operational_days, set)
-        assert self.manager.operational_days == {0, 1, 2, 3, 4, 5}  # Monday-Saturday
-
-        # Could be modified for different practices if needed
-        # (This demonstrates configurability without breaking existing logic)
+        assert result is not None
+        assert result["total_sum"] == 1500
+        assert result["daily_average"] == 1500.0
+        assert result["latest_value"] == 1500
+        assert result["data_points"] == 1

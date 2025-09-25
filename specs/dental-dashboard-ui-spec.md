@@ -190,7 +190,7 @@ with col3:
         st.metric(label="NEW PATIENTS", value="Data Unavailable")
 
 with col4:
-    treatment_accept = kpis.get('treatment_acceptance', 'N/A')
+    treatment_accept = kpis.get('case_acceptance', 'N/A')
     if treatment_accept != 'N/A':
         st.metric(
             label="TREATMENT ACCEPTANCE",

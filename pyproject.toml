@@ -21,6 +21,7 @@ dependencies = [
     "google-auth>=2.23",
     "google-api-python-client>=2.103",
     "pandas>=2.1",
+    "plotly>=5.17",
     "streamlit>=1.30",
     "watchdog>=6.0.0",
     "structlog>=25.4.0",

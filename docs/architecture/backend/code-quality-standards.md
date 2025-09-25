@@ -60,51 +60,18 @@ def get_sheet_data(spreadsheet_id: str, range_name: str) -> Optional[pd.DataFram
 - Target **90%+ coverage** for backend business logic
 
 ## Dental Domain Specific
-### KPI Formulas (exact implementations required)
-```python
-def calculate_collection_rate(df: pd.DataFrame) -> float:
-    """Collection Rate = (Patient + Unearned + Insurance Income) / Production × 100"""
-    production_total = (
-        df['Total Production Today'].sum()
-        + df['Adjustments Today'].sum()
-        + df['Write-offs Today'].sum()
-    )
-    collections_total = (
-        df['Patient Income Today'].sum()
-        + df['Unearned Income Today'].sum()
-        + df['Insurance Income Today'].sum()
-    )
-    if production_total == 0:
-        return 0.0
-    return (collections_total / production_total) * 100
 
+### KPI Formula Reference
+For complete dental KPI formulas and calculations, see:
+**[📊 Dental KPI Formulas Reference](../../reference/dental-kpi-formulas.md)**
 
-def calculate_case_acceptance(df: pd.DataFrame) -> float:
-    """Case Acceptance = (Scheduled + Same Day) / Presented × 100"""
-    presented = df['treatments_presented'].sum()
-    scheduled = df['treatments_scheduled'].sum()
-    same_day = df['$ Same Day Treatment'].sum()
-    if presented == 0:
-        return 0.0
-    return ((scheduled + same_day) / presented) * 100
-
-
-def calculate_hygiene_reappointment(df: pd.DataFrame) -> float:
-    """Hygiene Reappointment = (Reappointed / Total) × 100"""
-    total = df['Total hygiene Appointments'].sum()
-    not_reappointed = df['Number of patients NOT reappointed?'].sum()
-    if total == 0:
-        return 0.0
-    return ((total - not_reappointed) / total) * 100
-
-
-def calculate_daily_new_patients(df: pd.DataFrame) -> pd.Series:
-    """Daily new patients from month-to-date cumulative values."""
-    ordered = df.sort_values('Submission Date')
-    cumulative = ordered['New Patients - Total Month to Date'].astype(float)
-    deltas = cumulative.diff().fillna(cumulative).clip(lower=0)
-    return deltas
-```
+This includes:
+- Collection Rate (using adjusted production)
+- Case Acceptance Rate
+- Hygiene Reappointment Rate
+- New Patient Calculations
+- Production Total
+- Industry benchmarks and validation rules
 
 ### Data Validation
 ```python

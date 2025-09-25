@@ -82,7 +82,7 @@ kpi_validation:
     expected_range: '5 - 50 per month'
     validation_status: PENDING
     data_source: 'EOD - [Location] Billing!A:S'
-  treatment_acceptance:
+  case_acceptance:
     formula: 'Column R (latest entry)'
     expected_range: '60% - 85%'
     validation_status: PENDING

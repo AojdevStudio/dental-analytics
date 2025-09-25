@@ -13,11 +13,11 @@ from apps.backend.chart_data import (
     calculate_chart_statistics,
     create_time_series_point,
     format_all_chart_data,
+    format_case_acceptance_chart_data,
     format_collection_rate_chart_data,
     format_hygiene_reappointment_chart_data,
     format_new_patients_chart_data,
     format_production_chart_data,
-    format_treatment_acceptance_chart_data,
     parse_datetime_string,
     process_time_series_data,
     safe_float_conversion,
@@ -372,13 +372,13 @@ class TestNewPatientsChartFormatting:
 class TestTreatmentAcceptanceChartFormatting:
     """Test treatment acceptance chart data formatting."""
 
-    def test_format_treatment_acceptance_chart_data(
+    def test_format_case_acceptance_chart_data(
         self, sample_front_kpi_data: pd.DataFrame
     ) -> None:
         """Test formatting treatment acceptance chart data."""
-        chart_data = format_treatment_acceptance_chart_data(sample_front_kpi_data)
+        chart_data = format_case_acceptance_chart_data(sample_front_kpi_data)
 
-        assert chart_data["metric_name"] == "Treatment Acceptance"
+        assert chart_data["metric_name"] == "Case Acceptance"
         assert chart_data["chart_type"] == "line"
         assert chart_data["data_type"] == "percentage"
         assert chart_data["format_options"]["line_color"] == "#142D54"  # Navy
@@ -392,15 +392,15 @@ class TestTreatmentAcceptanceChartFormatting:
         # 2025-09-04: ((2715 + 1907) / 52085) * 100 = 8.875...
         assert abs(chart_data["time_series"][2]["value"] - 8.875) < 0.01
 
-    def test_format_treatment_acceptance_empty_data(self) -> None:
+    def test_format_case_acceptance_empty_data(self) -> None:
         """Test formatting treatment acceptance with empty data."""
-        chart_data = format_treatment_acceptance_chart_data(None)
+        chart_data = format_case_acceptance_chart_data(None)
 
         assert "error" in chart_data
         assert chart_data["error"] == "No data available"
         assert len(chart_data["time_series"]) == 0
 
-    def test_format_treatment_acceptance_zero_presented(self) -> None:
+    def test_format_case_acceptance_zero_presented(self) -> None:
         """Test treatment acceptance with zero treatments presented."""
         df = pd.DataFrame(
             {
@@ -411,7 +411,7 @@ class TestTreatmentAcceptanceChartFormatting:
             }
         )
 
-        chart_data = format_treatment_acceptance_chart_data(df)
+        chart_data = format_case_acceptance_chart_data(df)
 
         # First point should have no data due to zero presented
         assert chart_data["time_series"][0]["has_data"] is False
@@ -467,7 +467,7 @@ class TestAllChartDataFormatting:
             "production_total",
             "collection_rate",
             "new_patients",
-            "treatment_acceptance",
+            "case_acceptance",
             "hygiene_reappointment",
         ]
 
@@ -494,7 +494,7 @@ class TestAllChartDataFormatting:
         assert len(chart_data["new_patients"]["time_series"]) > 0
 
         # Front KPI metrics should show errors
-        assert "error" in chart_data["treatment_acceptance"]
+        assert "error" in chart_data["case_acceptance"]
         assert "error" in chart_data["hygiene_reappointment"]
 
         # Metadata should reflect partial availability
@@ -510,7 +510,7 @@ class TestAllChartDataFormatting:
             "production_total",
             "collection_rate",
             "new_patients",
-            "treatment_acceptance",
+            "case_acceptance",
             "hygiene_reappointment",
         ]:
             assert metric in chart_data

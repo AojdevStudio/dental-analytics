@@ -81,10 +81,11 @@ class TestLocationSwitching:
         mock_provider.fetch.assert_any_call("baytown_front")
 
         # Verify calculations
-        assert kpis["production_total"] == 1075.0  # 1000 + 50 + 25
-        assert kpis["collection_rate"] == pytest.approx(
-            97.67, rel=1e-2
-        )  # 1050/1075*100
+        assert kpis["production_total"] == 1075.0  # 1000 + 50 + 25 (gross production)
+        # Collection rate uses adjusted production: 1000 - 50 - 25 = 925
+        # Collections: 800 + 100 + 150 = 1050
+        # Rate: 1050/925 * 100 = 113.51%
+        assert kpis["collection_rate"] == pytest.approx(113.51, rel=1e-2)
 
     @patch("apps.backend.metrics.build_sheets_provider")
     def test_get_humble_kpis(self, mock_build_provider: Mock) -> None:
@@ -131,8 +132,11 @@ class TestLocationSwitching:
         mock_provider.fetch.assert_any_call("humble_front")
 
         # Verify calculations
-        assert kpis["production_total"] == 1615.0  # 1500 + 75 + 40
-        assert kpis["collection_rate"] == pytest.approx(96.0, rel=1e-2)  # 1550/1615*100
+        assert kpis["production_total"] == 1615.0  # 1500 + 75 + 40 (gross production)
+        # Collection rate uses adjusted production: 1500 - 75 - 40 = 1385
+        # Collections: 1200 + 150 + 200 = 1550
+        # Rate: 1550/1385 * 100 = 111.91%
+        assert kpis["collection_rate"] == pytest.approx(111.91, rel=1e-2)
 
     @patch("apps.backend.metrics.build_sheets_provider")
     def test_get_combined_kpis(self, mock_build_provider: Mock) -> None:
@@ -181,13 +185,19 @@ class TestLocationSwitching:
 
         # Verify Baytown KPIs
         baytown_kpis = combined_kpis["baytown"]
-        assert baytown_kpis["production_total"] == 1075.0
-        assert baytown_kpis["collection_rate"] == pytest.approx(97.67, rel=1e-2)
+        assert baytown_kpis["production_total"] == 1075.0  # gross production
+        # Collection rate uses adjusted production: 1000 - 50 - 25 = 925
+        # Collections: 800 + 100 + 150 = 1050
+        # Rate: 1050/925 * 100 = 113.51%
+        assert baytown_kpis["collection_rate"] == pytest.approx(113.51, rel=1e-2)
 
         # Verify Humble KPIs
         humble_kpis = combined_kpis["humble"]
-        assert humble_kpis["production_total"] == 1615.0
-        assert humble_kpis["collection_rate"] == pytest.approx(96.0, rel=1e-2)
+        assert humble_kpis["production_total"] == 1615.0  # gross production
+        # Collection rate uses adjusted production: 1500 - 75 - 40 = 1385
+        # Collections: 1200 + 150 + 200 = 1550
+        # Rate: 1550/1385 * 100 = 111.91%
+        assert humble_kpis["collection_rate"] == pytest.approx(111.91, rel=1e-2)
 
         # Verify provider was called for both locations
         assert (
@@ -235,10 +245,10 @@ class TestLocationSwitching:
         )
 
         rate = calculate_collection_rate(location_data)
-        # Total production: 1000 + 50 + 25 = 1075
+        # Adjusted production: 1000 - |50| - |25| = 925 (Story 2.1 formula)
         # Total collections: 800 + 100 + 150 = 1050
-        # Rate: 1050/1075 * 100 = 97.67%
-        assert rate == pytest.approx(97.67, rel=1e-2)
+        # Rate: 1050/925 * 100 = 113.51%
+        assert rate == pytest.approx(113.51, rel=1e-2)
 
     @patch("apps.backend.metrics.build_sheets_provider")
     def test_location_parameter_validation(self, mock_build_provider: Mock) -> None:

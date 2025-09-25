@@ -47,7 +47,7 @@ A minimalist, framework-agnostic backend architecture delivering 5 critical dent
 │  │  - calculate_production_total()                │  │
 │  │  - calculate_collection_rate()                 │  │
 │  │  - calculate_new_patients()                    │  │
-│  │  - calculate_treatment_acceptance()            │  │
+│  │  - calculate_case_acceptance()            │  │
 │  │  - calculate_hygiene_reappointment()           │  │
 │  │  - get_all_kpis() → Dict[str, float]          │  │
 │  └────────────────────────────────────────────────┘  │
@@ -160,7 +160,7 @@ class MetricsCalculator:
             return None
 
     @staticmethod
-    def calculate_treatment_acceptance(df: pd.DataFrame) -> Optional[float]:
+    def calculate_case_acceptance(df: pd.DataFrame) -> Optional[float]:
         """Calculate treatment acceptance rate."""
         if df is None or df.empty:
             return None
@@ -204,7 +204,7 @@ def get_all_kpis() -> Dict[str, Optional[float]]:
         'production_total': calculator.calculate_production_total(eod_data),
         'collection_rate': calculator.calculate_collection_rate(eod_data),
         'new_patients': calculator.calculate_new_patients(eod_data),
-        'treatment_acceptance': calculator.calculate_treatment_acceptance(front_kpi_data),
+        'case_acceptance': calculator.calculate_case_acceptance(front_kpi_data),
         'hygiene_reappointment': calculator.calculate_hygiene_reappointment(front_kpi_data)
     }
 ```
@@ -373,7 +373,7 @@ if denominator == 0:
    kpis = get_all_kpis()
    assert all(key in kpis for key in [
        'production_total', 'collection_rate',
-       'new_patients', 'treatment_acceptance',
+       'new_patients', 'case_acceptance',
        'hygiene_reappointment'
    ])
    ```

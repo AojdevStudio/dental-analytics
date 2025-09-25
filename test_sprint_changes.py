@@ -60,8 +60,8 @@ def test_baytown_kpis():
     if kpis["new_patients"] is not None:
         print(f"✅ New Patients: {kpis['new_patients']}")
 
-    if kpis["treatment_acceptance"] is not None:
-        print(f"✅ Treatment Acceptance: {kpis['treatment_acceptance']:.1f}%")
+    if kpis["case_acceptance"] is not None:
+        print(f"✅ Treatment Acceptance: {kpis['case_acceptance']:.1f}%")
 
     if kpis["hygiene_reappointment"] is not None:
         print(f"✅ Hygiene Reappointment: {kpis['hygiene_reappointment']:.1f}%")
@@ -105,7 +105,7 @@ def test_nested_structure():
         "production_total",
         "collection_rate",
         "new_patients",
-        "treatment_acceptance",
+        "case_acceptance",
         "hygiene_reappointment",
     }
     assert (

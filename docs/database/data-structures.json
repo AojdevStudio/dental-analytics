@@ -241,7 +241,10 @@
         "meaning": "same_day_treatment",
         "data_type": "currency",
         "description": "Dollar amount of treatment accepted same day",
-        "valid_range": [0, 50000],
+        "valid_range": [
+          0,
+          50000
+        ],
         "sheet_pattern": "*Front KPIs Form responses"
       },
       "eod_sheets": {
@@ -249,7 +252,10 @@
         "meaning": "calls_answered",
         "data_type": "integer",
         "description": "Number of phone calls answered",
-        "valid_range": [0, 500],
+        "valid_range": [
+          0,
+          500
+        ],
         "sheet_pattern": "EOD - * Billing"
       },
       "validation_rule": "MUST check sheet name before accessing Column N to determine correct data type"
@@ -305,7 +311,14 @@
       "operating_schedule": {
         "days_per_week": 5.5,
         "schedule_description": "Monday-Friday + Every other Saturday",
-        "weekly_pattern": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday (alternating)"],
+        "weekly_pattern": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday (alternating)"
+        ],
         "monthly_operating_days": {
           "typical_range": "23-24 days",
           "calculation_note": "Varies by Saturday schedule"
@@ -325,7 +338,12 @@
       "operating_schedule": {
         "days_per_week": 4,
         "schedule_description": "Monday-Thursday only",
-        "weekly_pattern": ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        "weekly_pattern": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday"
+        ],
         "monthly_operating_days": {
           "typical_range": "17-18 days",
           "calculation_note": "Consistent 4-day schedule"
@@ -417,25 +435,42 @@
         "name": "Danica Salinas",
         "role": "Social Media/Marketing",
         "location": "both",
-        "responsibilities": ["Social media management", "Marketing campaigns", "Brand management"]
+        "responsibilities": [
+          "Social media management",
+          "Marketing campaigns",
+          "Brand management"
+        ]
       },
       "veronica_vaca": {
         "name": "Veronica Vaca",
         "role": "Insurance Coordinator",
         "location": "both",
-        "responsibilities": ["Insurance verification", "Claims processing", "Benefit coordination"]
+        "responsibilities": [
+          "Insurance verification",
+          "Claims processing",
+          "Benefit coordination"
+        ]
       },
       "krissy_thomas": {
         "name": "Krissy Thomas",
         "role": "Treatment Coordinator/Office Manager",
         "location": "baytown",
-        "responsibilities": ["Treatment plan coordination", "Office management", "Staff supervision"]
+        "responsibilities": [
+          "Treatment plan coordination",
+          "Office management",
+          "Staff supervision"
+        ]
       },
       "bridget_pruett": {
         "name": "Bridget Pruett",
         "role": "Office Manager/Treatment Coordinator",
         "location": "humble",
-        "responsibilities": ["Office management", "Treatment coordination", "Staff supervision", "EOD form backup"]
+        "responsibilities": [
+          "Office management",
+          "Treatment coordination",
+          "Staff supervision",
+          "EOD form backup"
+        ]
       }
     },
     "baytown_team": {
@@ -444,21 +479,36 @@
           "name": "Wendy",
           "role": "Checkout Specialist",
           "primary_function": "checkout",
-          "front_desk_contributions": ["Payment processing", "Appointment checkout", "Reappointment scheduling", "Treatment plan financial discussions"],
+          "front_desk_contributions": [
+            "Payment processing",
+            "Appointment checkout",
+            "Reappointment scheduling",
+            "Treatment plan financial discussions"
+          ],
           "kpi_attribution": "Should receive credit for checkout-related conversions and reappointments"
         },
         "patience": {
           "name": "Patience",
           "role": "Check-in Specialist",
           "primary_function": "checkin",
-          "front_desk_contributions": ["Patient check-in", "Insurance verification", "Appointment confirmation", "Wait time management"],
+          "front_desk_contributions": [
+            "Patient check-in",
+            "Insurance verification",
+            "Appointment confirmation",
+            "Wait time management"
+          ],
           "kpi_attribution": "Should receive credit for check-in efficiency and patient flow management"
         },
         "kayla": {
           "name": "Kayla",
           "role": "Scheduler/Insurance Specialist",
           "primary_function": "scheduling",
-          "front_desk_contributions": ["Treatment call outreach", "Recall scheduling", "Insurance coordination", "Follow-up management"],
+          "front_desk_contributions": [
+            "Treatment call outreach",
+            "Recall scheduling",
+            "Insurance coordination",
+            "Follow-up management"
+          ],
           "kpi_attribution": "Primary credit for treatment calls, recalls, and outreach conversion metrics",
           "special_responsibility": "EOD form primary submitter for both locations"
         }
@@ -475,10 +525,22 @@
           "location": "baytown"
         },
         "dental_assistants": [
-          {"name": "Sade Holcomb", "role": "Dental Assistant"},
-          {"name": "Raquel Torres", "role": "Dental Assistant"},
-          {"name": "Paola", "role": "Dental Assistant"},
-          {"name": "Shikira Brown", "role": "Dental Assistant"}
+          {
+            "name": "Sade Holcomb",
+            "role": "Dental Assistant"
+          },
+          {
+            "name": "Raquel Torres",
+            "role": "Dental Assistant"
+          },
+          {
+            "name": "Paola",
+            "role": "Dental Assistant"
+          },
+          {
+            "name": "Shikira Brown",
+            "role": "Dental Assistant"
+          }
         ]
       }
     },
@@ -488,14 +550,25 @@
           "name": "Adriana",
           "role": "Front Desk Specialist",
           "primary_function": "front_desk_operations",
-          "front_desk_contributions": ["Patient check-in/checkout", "Treatment call outreach", "Recall scheduling", "Appointment management", "Financial discussions"],
+          "front_desk_contributions": [
+            "Patient check-in/checkout",
+            "Treatment call outreach",
+            "Recall scheduling",
+            "Appointment management",
+            "Financial discussions"
+          ],
           "kpi_attribution": "Should receive credit for all front desk conversion metrics and patient flow"
         },
         "bridget_pruett_front_desk": {
           "name": "Bridget Pruett",
           "role": "Office Manager with Front Desk Duties",
           "primary_function": "management_and_front_desk",
-          "front_desk_contributions": ["Front desk backup", "Complex treatment coordination", "Staff training", "Process oversight"],
+          "front_desk_contributions": [
+            "Front desk backup",
+            "Complex treatment coordination",
+            "Staff training",
+            "Process oversight"
+          ],
           "kpi_attribution": "Should receive credit for management support of front desk operations",
           "special_responsibility": "EOD form backup submitter"
         }
@@ -507,8 +580,14 @@
           "location": "humble"
         },
         "dental_assistants": [
-          {"name": "Melissa Reeves", "role": "Dental Assistant"},
-          {"name": "Jerilee Hicks", "role": "Dental Assistant"}
+          {
+            "name": "Melissa Reeves",
+            "role": "Dental Assistant"
+          },
+          {
+            "name": "Jerilee Hicks",
+            "role": "Dental Assistant"
+          }
         ]
       }
     },
@@ -576,353 +655,361 @@
         },
         {
           "name": "efficiency_analysis",
-          "template": "**📊 EFFICIENCY METRICS:**\n• **Best Conversion Rate**: {best_conversion_metric} at **{best_rate}%**\n• **Weakest Conversion**: {weakest_conversion_metric} at **{weakest_rate}%**\n• **Overall Efficiency Score**: {efficiency_rating}",
-          "format": "performance_based"
+       case_acceptance EFFICIENCY METRICS:**\n• **Best Conversion Rate**: {best_conversion_metric
+          } at **{best_rate
+          }%**\n• **Weakest Conversion**: {weakest_conversion_metric
+          } at **{weakest_rate
+          }%**\n• **Overall Efficiency Score**: {efficiency_rating
+          }","format": "performance_based"
         },
         {
-          "name": "improvement_opportunities",
-          "template": "**🎯 CONVERSION OPTIMIZATION for {remaining_period}:**\n• **Current {period} Gap**: {conversion_gap_analysis}\n• **Revenue Opportunity {time_left}**: ${potential_revenue_if_target_met}\n• **Focus Area**: {lowest_conversion_area} (currently {current_rate}%, target {target_rate}%)\n• **Action Required {urgency}**: {specific_conversion_improvement_action}\n\n**📚 TRAINING RESOURCES:**\n{training_recommendations_with_links}",
-          "temporal_context": {
-            "remaining_period": "Dynamically calculated based on report type",
-            "time_left": "e.g., 'in remaining 2 days', 'by month-end'",
-            "urgency": "e.g., 'TODAY', 'this week', 'before month-end'"
-          },
-          "format": "action_oriented"
-        }
-      ]
-    },
-    "daily_operations_template": {
-      "subject_template": "{location} Daily Performance Alert - {date}",
-      "sections": [
-        {
-          "name": "executive_summary",
-          "template": "**Daily Performance Summary**: {primary_insight}. {critical_action_needed}.",
-          "max_length": 200,
-          "tone": "urgent_operational"
+       case_acceptanceent_opportunities","template": "**🎯 CONVERSION OPTIMIZATION for {remaining_period
+          }:**\n• **Current {period
+          } Gap**: {conversion_gap_analysis
+          }\n• **Revenue Opportunity {time_left
+          }**: ${potential_revenue_if_target_met
+          }\n• **Focus Area**: {lowest_conversion_area
+          } (currently {current_rate
+          }%, target {target_rate
+          }%)\n• **Action Required {urgency
+          }**: {specific_conversion_improvement_action
+          }\n\n**📚 TRAINING RESOURCES:**\n{training_recommendations_with_links
+          }","temporal_context": {"remaining_period": "Dynamically calculated based on report type","time_left": "e.g., 'in remaining 2 days', 'by month-end'","urgency": "e.g., 'TODAY', 'this week', 'before month-end'"
         },
-        {
-          "name": "key_metrics",
-          "template": "• **Production Today**: {total_production}\n• **Collections Today**: {total_collections} ({collection_efficiency}% efficiency)\n• **Patients Seen**: {total_patients} (New: {new_patients})\n• **Call Answer Rate**: {call_answer_rate}%",
-          "format": "bullet_points"
-        }
-      ]
+       case_acceptance_oriented"
+      }
+    ]case_acceptance
+  },
+  "daily_operations_template": {
+    "subject_template": "{location} Daily Performance Alert - {date}",
+    "sections": [
+      {
+        "name": "executive_summary",
+        "template": "**Daily Performance Summary**: {primary_insight}. {critical_action_needed}.",
+        "max_length": 200,
+        "tone": "urgent_operational"
+      },
+      {
+        "name": "key_metrics",
+        "template": "• **Production Today**: {total_production}\n• **Collections Today**: {total_collections} ({collection_efficiency}% efficiency)\n• **Patients Seen**: {total_patients} (New: {new_patients})\n• **Call Answer Rate**: {call_answer_rate}%",
+        "format": "bullet_points"
+      }
+    ]
+  }
+},
+"front_desk_calculations": {
+  "hygiene_reappointment_rate": {
+    "formula": "((total_hygiene_appointments - patients_not_reappointed) / total_hygiene_appointments) * 100",
+    "format": "percentage",
+    "success_threshold": 95,
+    "description": "Target: 95%+ of hygiene patients reappointed"
+  },
+  "treatment_call_conversion_rate": {
+    "formula": "(patients_scheduled_from_calls / unscheduled_tx_calls) * 100",
+    "format": "percentage",
+    "success_threshold": 30,
+    "description": "Success metric: 30%+ conversion rate on treatment calls"
+  },
+  "recall_conversion_rate": {
+    "formula": "(total_pts_scheduled / recalls_completed) * 100",
+    "format": "percentage",
+    "success_threshold": 25,
+    "description": "Target: 25%+ of recall calls result in scheduled appointments"
+  },
+  "follow_up_conversion_rate": {
+    "formula": "(patients_scheduled_from_follow_ups / follow_ups_completed_clickup) * 100",
+    "format": "percentage",
+    "success_threshold": 40,
+    "description": "Target: 40%+ of follow-ups convert to appointments"
+  },
+  "case_acceptance_rate": {
+    "formula": "(dollar_amount_scheduled / dollar_amount_presented) * 100",
+    "format": "percentage",
+    "success_threshold": 60,
+    "description": "Target: 60%+ of presented treatment accepted"
+  },
+  "same_day_treatment_total": {
+    "formula": "same_day_treatment",
+    "format": "currency",
+    "success_threshold": 1000,
+    "description": "Target: $1,000+ same-day treatment accepted daily"
+  },
+  "cancellation_rate": {
+    "formula": "(total_cancellations / total_scheduled_appointments) * 100",
+    "format": "percentage"
+  }
+},
+"performance_benchmarks": {
+  "excellent_conversion_performance": {
+    "treatment_call_conversion": ">= 40%",
+    "recall_to_appointment_conversion": ">= 35%",
+    "follow_up_to_appointment_conversion": ">= 50%",
+    "treatment_acceptance_rate": ">= 70%",
+    "same_day_treatment_total": ">= $2,000",
+    "hygiene_reappointment_rate": ">= 98%"
+  },
+  "good_conversion_performance": {
+    "treatmcase_acceptance: "30-39%","recall_to_appointment_conversion": "25-34%","follow_up_to_appointment_conversion": "40-49%",
+    "treatment_acceptance_rate": "60-69%",
+    "same_day_treatment_total": "$1,000-$1,999",
+    "hygiene_reappointment_rate": "95-97%"
+  },
+  "acceptable_conversion_performance": {
+    "treatment_call_conversion": "20-29%",
+    "recall_to_appointment_conversion": "15-24%",
+    "follow_up_to_appointment_conversion": "30-39%",
+    "treatment_acceptance_rate": "40-59%",
+    "same_day_treatment_total": "$500-$999",
+    "hygiene_reappointment_rate": "90-94%"
+  },
+  "needs_improvement": {
+    "treatment_call_conversion": "< 20%",
+    "recall_to_appointment_conversion": "< 15%",
+    "follow_up_to_appointment_conversion": "< 30%",
+    "treatment_acceptance_rate": "< 40%",
+    "same_day_treatment_total": "< $500",
+    "hygiene_reappointment_rate": "< 90%",
+    "action_required": "Focus on conversion training, not increasing call volume"
+  }
+},
+"temporal_context_calculations": {
+  "week_position": {
+    "formula": "current_day_of_week / 5",
+    "interpretation": {
+      "0.2": "Early week (Monday)",
+      "0.4": "Early-mid week (Tuesday)",
+      "0.6": "Mid-week (Wednesday)",
+      "0.8": "Late week (Thursday)",
+      "1.0": "Week complete (Friday)"
     }
   },
-  "front_desk_calculations": {
-    "hygiene_reappointment_rate": {
-      "formula": "((total_hygiene_appointments - patients_not_reappointed) / total_hygiene_appointments) * 100",
-      "format": "percentage",
-      "success_threshold": 95,
-      "description": "Target: 95%+ of hygiene patients reappointed"
-    },
-    "treatment_call_conversion_rate": {
-      "formula": "(patients_scheduled_from_calls / unscheduled_tx_calls) * 100",
-      "format": "percentage",
-      "success_threshold": 30,
-      "description": "Success metric: 30%+ conversion rate on treatment calls"
-    },
-    "recall_conversion_rate": {
-      "formula": "(total_pts_scheduled / recalls_completed) * 100",
-      "format": "percentage",
-      "success_threshold": 25,
-      "description": "Target: 25%+ of recall calls result in scheduled appointments"
-    },
-    "follow_up_conversion_rate": {
-      "formula": "(patients_scheduled_from_follow_ups / follow_ups_completed_clickup) * 100",
-      "format": "percentage",
-      "success_threshold": 40,
-      "description": "Target: 40%+ of follow-ups convert to appointments"
-    },
-    "treatment_acceptance_rate": {
-      "formula": "(dollar_amount_scheduled / dollar_amount_presented) * 100",
-      "format": "percentage",
-      "success_threshold": 60,
-      "description": "Target: 60%+ of presented treatment accepted"
-    },
-    "same_day_treatment_total": {
-      "formula": "same_day_treatment",
-      "format": "currency",
-      "success_threshold": 1000,
-      "description": "Target: $1,000+ same-day treatment accepted daily"
-    },
-    "cancellation_rate": {
-      "formula": "(total_cancellations / total_scheduled_appointments) * 100",
-      "format": "percentage"
+  "month_position": {
+    "formula": "current_day_of_month / total_days_in_month",
+    "interpretation": {
+      "0-0.33": "Early month",
+      "0.34-0.66": "Mid-month",
+      "0.67-0.90": "Late month",
+      "0.91-1.0": "Month-end"
     }
   },
-  "performance_benchmarks": {
-    "excellent_conversion_performance": {
-      "treatment_call_conversion": ">= 40%",
-      "recall_to_appointment_conversion": ">= 35%",
-      "follow_up_to_appointment_conversion": ">= 50%",
-      "treatment_acceptance_rate": ">= 70%",
-      "same_day_treatment_total": ">= $2,000",
-      "hygiene_reappointment_rate": ">= 98%"
-    },
-    "good_conversion_performance": {
-      "treatment_call_conversion": "30-39%",
-      "recall_to_appointment_conversion": "25-34%",
-      "follow_up_to_appointment_conversion": "40-49%",
-      "treatment_acceptance_rate": "60-69%",
-      "same_day_treatment_total": "$1,000-$1,999",
-      "hygiene_reappointment_rate": "95-97%"
-    },
-    "acceptable_conversion_performance": {
-      "treatment_call_conversion": "20-29%",
-      "recall_to_appointment_conversion": "15-24%",
-      "follow_up_to_appointment_conversion": "30-39%",
-      "treatment_acceptance_rate": "40-59%",
-      "same_day_treatment_total": "$500-$999",
-      "hygiene_reappointment_rate": "90-94%"
-    },
-    "needs_improvement": {
-      "treatment_call_conversion": "< 20%",
-      "recall_to_appointment_conversion": "< 15%",
-      "follow_up_to_appointment_conversion": "< 30%",
-      "treatment_acceptance_rate": "< 40%",
-      "same_day_treatment_total": "< $500",
-      "hygiene_reappointment_rate": "< 90%",
-      "action_required": "Focus on conversion training, not increasing call volume"
-    }
+  "days_remaining": {
+    "weekly": "5 - current_day_of_week",
+    "monthly": "total_days_in_month - current_day_of_month"
   },
-  "temporal_context_calculations": {
-    "week_position": {
-      "formula": "current_day_of_week / 5",
-      "interpretation": {
-        "0.2": "Early week (Monday)",
-        "0.4": "Early-mid week (Tuesday)",
-        "0.6": "Mid-week (Wednesday)",
-        "0.8": "Late week (Thursday)",
-        "1.0": "Week complete (Friday)"
-      }
+  "progress_language": {
+    "week": {
+      "20%": "Just getting started this week",
+      "40%": "Building momentum",
+      "60%": "At the halfway point",
+      "80%": "Final push",
+      "100%": "Week complete"
     },
-    "month_position": {
-      "formula": "current_day_of_month / total_days_in_month",
-      "interpretation": {
-        "0-0.33": "Early month",
-        "0.34-0.66": "Mid-month",
-        "0.67-0.90": "Late month",
-        "0.91-1.0": "Month-end"
-      }
-    },
-    "days_remaining": {
-      "weekly": "5 - current_day_of_week",
-      "monthly": "total_days_in_month - current_day_of_month"
-    },
-    "progress_language": {
-      "week": {
-        "20%": "Just getting started this week",
-        "40%": "Building momentum",
-        "60%": "At the halfway point",
-        "80%": "Final push",
-        "100%": "Week complete"
-      },
-      "month": {
-        "early": "Setting the pace for {month}",
-        "mid": "Halfway through {month}",
-        "late": "Closing out {month} strong",
-        "end": "{month} complete"
-      }
+    "month": {
+      "early": "Setting the pace for {month}",
+      "mid": "Halfway through {month}",
+      "late": "Closing out {month} strong",
+      "end": "{month} complete"
     }
+  }
+},
+"validation_rules": {
+  "data_integrity": {
+    "required_fields_eod": [
+      "total_production",
+      "total_collections",
+      "total_patients",
+      "call_answer_rate"
+    ],
+    "required_fields_front_desk": [
+      "total_hygiene_appointments",
+      "dollar_amount_presented",
+      "dollar_amount_scheduled",
+      "total_cancellations"
+    ]
   },
-  "validation_rules": {
-    "data_integrity": {
-      "required_fields_eod": [
-        "total_production",
-        "total_collections",
-        "total_patients",
-        "call_answer_rate"
-      ],
-      "required_fields_front_desk": [
-        "total_hygiene_appointments",
-        "dollar_amount_presented",
-        "dollar_amount_scheduled",
-        "total_cancellations"
-      ]
-    },
-    "business_logic": {
-      "performance_thresholds": {
-        "production_target": {
-          "baytown_daily": 8000,
-          "humble_daily": 7000
-        },
-        "front_desk_targets": {
-          "hygiene_reappointment_minimum": 95,
-          "recall_calls_daily_minimum": 15,
-          "treatment_scheduling_conversion_minimum": 30,
-          "same_day_treatment_minimum": 2000,
-          "treatment_acceptance_minimum": 40,
-          "cancellation_rate_maximum": 10
-        }
-      }
-    }
-  },
-  "training_resources": {
-    "front_desk_training": {
-      "front_office_academy": {
-        "title": "Front Office Academy",
-        "description": "Comprehensive front office training modules and best practices",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "comprehensive_training",
-        "duration": "varies"
+  "business_logic": {
+    "performance_thresholds": {
+      "production_target": {
+        "baytown_daily": 8000,
+        "humble_daily": 7000
       },
-      "caitlyn_trainings_front_office": {
-        "title": "Caitlyn Trainings (Front Office)",
-        "description": "Specialized front office training by Caitlyn",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "front_office_skills",
-        "duration": "varies"
-      },
-      "treatment_presentation_script": {
-        "title": "Treatment Presentation Script",
-        "description": "Proven scripts for presenting treatment to patients",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "conversion_skills",
-        "duration": "15 minutes"
-      },
-      "overcoming_objections_script": {
-        "title": "Overcoming Objections Script",
-        "description": "Scripts and techniques for handling patient objections",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "conversion_skills",
-        "duration": "20 minutes"
-      },
-      "outbound_call_scripting": {
-        "title": "Outbound Call Scripting",
-        "description": "Scripts for treatment calls, recalls, and follow-ups",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "communication_skills",
-        "duration": "15 minutes"
-      },
-      "inbound_calls": {
-        "title": "Inbound Calls",
-        "description": "Best practices for handling incoming patient calls",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "communication_skills",
-        "duration": "20 minutes"
-      },
-      "cherry_estimator_training": {
-        "title": "Cherry Estimator Training",
-        "description": "Training on using Cherry payment estimator tool",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "financial_tools",
-        "duration": "25 minutes"
-      },
-      "front_back_office_tutorials": {
-        "title": "Front & Back Office Tutorials",
-        "description": "Comprehensive tutorials for both front and back office procedures",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "comprehensive_training",
-        "duration": "varies"
-      }
-    },
-    "quick_reference_guides": {
-      "guidebooks": {
-        "title": "Guidebooks",
-        "description": "Quick reference guidebooks for daily procedures",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "quick_reference"
-      },
-      "reporting_data_training": {
-        "title": "Reporting & Data Training",
-        "description": "Training on reports, KPIs, and data entry procedures",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "data_skills"
-      },
-      "scheduling_institute": {
-        "title": "Scheduling Institute",
-        "description": "Advanced scheduling and appointment management training",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "scheduling_optimization"
-      }
-    },
-    "specialized_training": {
-      "amy_trainings_insurance": {
-        "title": "Amy Trainings (Insurance)",
-        "description": "Insurance-specific training modules by Amy",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "insurance_skills",
-        "duration": "varies"
-      },
-      "diagnostic_protocols_hygiene": {
-        "title": "Diagnostic Protocols for Hygiene",
-        "description": "Clinical diagnostic protocols for hygiene department",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "clinical_skills",
-        "duration": "30 minutes"
-      },
-      "hygienist_training_videos": {
-        "title": "Hygienist Training Videos",
-        "description": "Video-based training for hygienist procedures",
-        "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
-        "category": "clinical_skills",
-        "duration": "varies"
-      }
-    }
-  },
-  "actionable_recommendations_with_links": {
-    "low_treatment_call_conversion": {
-      "threshold": "< 20%",
-      "recommendation": "Treatment Presentation Review: One-on-one training on overcoming objections and closing techniques",
-      "training_link": "{training_resources.front_desk_training.treatment_presentation_script.url}",
-      "quick_reference": "{training_resources.front_desk_training.overcoming_objections_script.url}",
-      "comprehensive_training": "{training_resources.front_desk_training.front_office_academy.url}"
-    },
-    "poor_follow_up_conversion": {
-      "threshold": "< 30%",
-      "recommendation": "Follow-up Protocol: Ensure immediate follow-up on all unscheduled treatment calls (don't lose momentum)",
-      "training_link": "{training_resources.front_desk_training.outbound_call_scripting.url}",
-      "quick_reference": "{training_resources.quick_reference_guides.guidebooks.url}",
-      "comprehensive_training": "{training_resources.front_desk_training.caitlyn_trainings_front_office.url}"
-    },
-    "low_treatment_acceptance": {
-      "threshold": "< 40%",
-      "recommendation": "Presentation Value Enhancement: Focus on emotional benefits and urgency in treatment discussions",
-      "training_link": "{training_resources.front_desk_training.treatment_presentation_script.url}",
-      "quick_reference": "{training_resources.front_desk_training.cherry_estimator_training.url}",
-      "comprehensive_training": "{training_resources.front_desk_training.front_office_academy.url}"
-    },
-    "poor_inbound_call_handling": {
-      "threshold": "< 70% call answer rate",
-      "recommendation": "Inbound Call Training: Improve call handling and scheduling conversion",
-      "training_link": "{training_resources.front_desk_training.inbound_calls.url}",
-      "quick_reference": "{training_resources.quick_reference_guides.scheduling_institute.url}"
-    },
-    "inconsistent_tracking": {
-      "recommendation": "Daily Conversion Tracking: End-of-day review of actual appointments scheduled vs calls made",
-      "training_link": "{training_resources.quick_reference_guides.reporting_data_training.url}",
-      "comprehensive_training": "{training_resources.front_desk_training.front_back_office_tutorials.url}"
-    },
-    "week_end_push_needed": {
-      "recommendation": "Week-End Target: Convert at least 5 patients from remaining treatment and recall outreach efforts",
-      "training_link": "{training_resources.front_desk_training.outbound_call_scripting.url}",
-      "comprehensive_training": "{training_resources.front_desk_training.caitlyn_trainings_front_office.url}"
-    }
-  },
-  "css_styling_framework": {
-    "email_themes": {
-      "theme-baytown": {
-        "primary_color": "#2C5282",
-        "secondary_color": "#4299E1",
-        "accent_color": "#63B3ED",
-        "header_style": "background: linear-gradient(135deg, #2C5282 0%, #4299E1 100%); color: #000000;",
-        "font_family": "Segoe UI, Arial, sans-serif"
-      },
-      "theme-humble": {
-        "primary_color": "#2D7D32",
-        "secondary_color": "#43A047",
-        "accent_color": "#81C784",
-        "header_style": "background: linear-gradient(135deg, #2D7D32 0%, #43A047 100%); color: #000000;",
-        "font_family": "Segoe UI, Arial, sans-serif"
-      }
-    },
-    "component_styles": {
-      "metric_card": {
-        "css": "border-left: 4px solid {primary_color}; padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 4px;"
-      },
-      "front_desk_card": {
-        "css": "border: 2px solid {accent_color}; padding: 16px; margin: 12px 0; background: linear-gradient(to right, #ffffff, {accent_color}15); border-radius: 8px;"
+      "front_desk_targets": {
+        "hygiene_reappointment_minimum": 95,
+        "recall_calls_daily_minimum": 15,
+        "treatment_scheduling_conversion_minimum": 30,
+        "same_day_treatment_minimum": 2000,
+        "treatment_acceptance_minimum": 40,
+        "cancellation_rate_maximum": 10
       }
     }
   }
+},
+"training_resources": {
+  "front_desk_training": {
+    "front_office_academy": {
+      "title": "Front Office Academy",
+      "description": "Comprehensive front office training modules and best practices",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "comprehensive_training",
+      "duration": "varies"
+    },
+    "caitlyn_trainings_front_office": {
+      "title": "Caitlyn Trainings (Front Office)",
+      "description": "Specialized front office training by Caitlyn",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "front_office_skills",
+      "duration": "varies"
+    },
+    "treatment_presentation_script": {
+      "title": "Treatment Presentation Script",
+      "description": "Proven scripts for presenting treatment to patients",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "conversion_skills",
+      "duration": "15 minutes"
+    },
+    "overcoming_objections_script": {
+      "title": "Overcoming Objections Script",
+      "description": "Scripts and techniques for handling patient objections",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "conversion_skills",
+      "duration": "20 minutes"
+    },case_acceptance
+    "outbound_call_scripting": {
+      "title": "Outbound Call Scripting",
+      "description": "Scripts for treatment calls, recalls, and follow-ups",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "communication_skills",
+      "duration": "15 minutes"
+    },
+    "inbound_calls": {
+      "title": "Inbound Calls",
+      "description": "Best practices for handling incoming patient calls",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "communication_skills",
+      "duration": "20 minutes"
+    },
+    "cherry_estimator_training": {
+      "title": "Cherry Estimator Training",
+      "description": "Training on using Cherry payment estimator tool",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "financial_tools",
+      "duration": "25 minutes"
+    },
+    "front_back_office_tutorials": {
+      "title": "Front & Back Office Tutorials",
+      "description": "Comprehensive tutorials for both front and back office procedures",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "comprehensive_training",
+      "duration": "varies"
+    }
+  },
+  "quick_reference_guides": {
+    "guidebooks": {
+      "title": "Guidebooks",
+      "description": "Quick reference guidebooks for daily procedures",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "quick_reference"
+    },
+    "reporting_data_training": {
+      "title": "Reporting & Data Training",
+      "description": "Training on reports, KPIs, and data entry procedures",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "data_skills"
+    },
+    "scheduling_institute": {
+      "title": "Scheduling Institute",
+      "description": "Advanced scheduling and appointment management training",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "scheduling_optimization"
+    }
+  },
+  "specialized_training": {
+    "amy_trainings_insurance": {
+      "title": "Amy Trainings (Insurance)",
+      "description": "Insurance-specific training modules by Amy",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "insurance_skills",
+      "duration": "varies"
+    },
+    "diagnostic_protocols_hygiene": {
+      "title": "Diagnostic Protocols for Hygiene",
+      "description": "Clinical diagnostic protocols for hygiene department",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "clinical_skills",
+      "duration": "30 minutes"
+    },
+    "hygienist_training_videos": {
+      "title": "Hygienist Training Videos",
+      "description": "Video-based training for hygienist procedures",
+      "url": "HYPERLINK_FROM_TEAM_DASHBOARD",
+      "category": "clinical_skills",
+      "duration": "varies"
+    }
+  }
+},
+"actionable_recommendations_with_links": {
+  "low_treatment_call_conversion": {
+    "threshold": "< 20%",
+    "recommendation": "Treatment Presentation Review: One-on-one training on overcoming objections and closing techniques",
+    "training_link": "{training_resources.front_desk_training.treatment_presentation_script.url}",
+    "quick_reference": "{training_resources.front_desk_training.overcoming_objections_script.url}",
+    "comprehensive_training": "{training_resources.front_desk_training.front_office_academy.url}"
+  },
+  "poor_follow_up_conversion": {
+    "threshold": "< 30%",
+    "recommendation": "Follow-up Protocol: Ensure immediate follow-up on all unscheduled treatment calls (don't lose momentum)",
+    "training_link": "{training_resources.front_desk_training.outbound_call_scripting.url}",
+    "quick_reference": "{training_resources.quick_reference_guides.guidebooks.url}",
+    "comprehensive_training": "{training_resources.front_desk_training.caitlyn_trainings_front_office.url}"
+  },
+  "low_treatment_acceptance": {
+    "threshold": "< 40%",
+    "recommendation": "Presentation Value Enhancement: Focus on emotional benefits and urgency in treatment discussions",
+    "training_link": "{training_resources.front_desk_training.treatment_presentation_script.url}",
+    "quick_reference": "{training_resources.front_desk_training.cherry_estimator_training.url}",
+    "comprehensive_training": "{training_resources.front_desk_training.front_office_academy.url}"
+  },
+  "poor_inbound_call_handling": {
+    "threshold": "< 70% call answer rate",
+    "recommendation": "Inbound Call Training: Improve call handling and scheduling conversion",
+    "training_link": "{training_resources.front_desk_training.inbound_calls.url}",
+    "quick_reference": "{training_resources.quick_reference_guides.scheduling_institute.url}"
+  },
+  "inconsistent_tracking": {
+    "recommendation": "Daily Conversion Tracking: End-of-day review of actual appointments scheduled vs calls made",
+    "training_link": "{training_resources.quick_reference_guides.reporting_data_training.url}",
+    "comprehensive_training": "{training_resources.front_desk_training.front_back_office_tutorials.url}"
+  },
+  "week_end_push_needed": {
+    "recommendation": "Week-End Target: Convert at least 5 patients from remaining treatment and recall outreach efforts",
+    "training_link": "{training_resources.front_desk_training.outbound_call_scripting.url}",
+    "comprehensive_training": "{training_resources.front_desk_training.caitlyn_trainings_front_office.url}"
+  }
+},
+"css_styling_framework": {
+  "email_themes": {
+    "theme-baytown": {
+      "primary_color": "#2C5282",
+      "secondary_color": "#4299E1",
+      "accent_color": "#63B3ED",
+      "header_style": "background: linear-gradient(135deg, #2C5282 0%, #4299E1 100%); color: #000000;",
+      "font_family": "Segoe UI, Arial, sans-serif"
+    },
+    "theme-humble": {
+      "primary_color": "#2D7D32",
+      "secondary_color": "#43A047",
+      "accent_color": "#81C784",
+      "header_style": "background: linear-gradient(135deg, #2D7D32 0%, #43A047 100%); color: #000000;",
+      "font_family": "Segoe UI, Arial, sans-serif"
+    }
+  },
+  "component_styles": {
+    "metric_card": {
+      "css": "border-left: 4px solid {primary_color}; padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 4px;"
+    },
+    "front_desk_card": {
+      "css": "border: 2px solid {accent_color}; padding: 16px; margin: 12px 0; background: linear-gradient(to right, #ffffff, {accent_color}15); border-radius: 8px;"
+    }
+  }
+}
 }

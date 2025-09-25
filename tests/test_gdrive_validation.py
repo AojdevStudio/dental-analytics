@@ -4,11 +4,11 @@ import pandas as pd
 import pytest
 
 from apps.backend.metrics import (
+    calculate_case_acceptance,
     calculate_collection_rate,
     calculate_hygiene_reappointment,
     calculate_new_patients,
     calculate_production_total,
-    calculate_treatment_acceptance,
 )
 
 
@@ -104,7 +104,7 @@ class TestSheetsStructure:
         assert new_patients == 7
 
     @pytest.mark.unit
-    def test_front_kpi_treatment_acceptance(self) -> None:
+    def test_front_kpi_case_acceptance(self) -> None:
         """Test treatment acceptance calculation with Front KPI data."""
         test_data = pd.DataFrame(
             {
@@ -117,7 +117,7 @@ class TestSheetsStructure:
             }
         )
 
-        acceptance_rate = calculate_treatment_acceptance(test_data)
+        acceptance_rate = calculate_case_acceptance(test_data)
         # (($120,000 + $15,000) / $150,000) * 100 = 90%
         assert acceptance_rate == 90.0
 
@@ -202,8 +202,8 @@ class TestSheetsStructure:
         new_patients = calculate_new_patients(daily_eod)
         assert new_patients == 4
 
-        treatment_acceptance = calculate_treatment_acceptance(daily_front)
-        assert treatment_acceptance == 85.0  # ((68000 + 4250) / 85000) * 100
+        case_acceptance = calculate_case_acceptance(daily_front)
+        assert case_acceptance == 85.0  # ((68000 + 4250) / 85000) * 100
 
         hygiene_reappointment = calculate_hygiene_reappointment(daily_front)
         assert hygiene_reappointment == 92.0  # ((25-2)/25) * 100
@@ -280,12 +280,12 @@ class TestSheetsStructure:
         assert calculate_production_total(empty_df) is None
         assert calculate_collection_rate(empty_df) is None
         assert calculate_new_patients(empty_df) is None
-        assert calculate_treatment_acceptance(empty_df) is None
+        assert calculate_case_acceptance(empty_df) is None
         assert calculate_hygiene_reappointment(empty_df) is None
 
         # Test None input
         assert calculate_production_total(None) is None
         assert calculate_collection_rate(None) is None
         assert calculate_new_patients(None) is None
-        assert calculate_treatment_acceptance(None) is None
+        assert calculate_case_acceptance(None) is None
         assert calculate_hygiene_reappointment(None) is None

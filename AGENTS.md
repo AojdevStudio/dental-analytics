@@ -285,8 +285,8 @@ def calculate_collection_rate(df: pd.DataFrame) -> float:
     """Collection Rate = (Collections / Production) × 100"""
     return (df['Collections'].sum() / df['Production'].sum()) * 100
 
-def calculate_treatment_acceptance(df: pd.DataFrame) -> float:
-    """Treatment Acceptance = (Scheduled / Presented) × 100"""
+def calculate_case_acceptance(df: pd.DataFrame) -> float:
+    """Case Acceptance = (Scheduled / Presented) × 100"""
     return (df['Scheduled'].sum() / df['Presented'].sum()) * 100
 ```
 

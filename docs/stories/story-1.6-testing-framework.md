@@ -280,20 +280,20 @@ class TestMetricsCalculator:
         assert result == 6  # Should handle nulls gracefully
 
     @pytest.mark.unit
-    def test_calculate_treatment_acceptance(self, sample_front_kpi_data):
+    def test_calculate_case_acceptance(self, sample_front_kpi_data):
         """Test treatment acceptance rate calculation."""
-        result = MetricsCalculator.calculate_treatment_acceptance(sample_front_kpi_data)
+        result = MetricsCalculator.calculate_case_acceptance(sample_front_kpi_data)
         # (20455 / 24600) * 100 = 83.15...
         assert abs(result - 83.15) < 0.01
 
     @pytest.mark.unit
-    def test_calculate_treatment_acceptance_zero_presented(self):
+    def test_calculate_case_acceptance_zero_presented(self):
         """Test treatment acceptance with zero presented."""
         df = pd.DataFrame({
             'dollar_presented': [0, 0],
             'dollar_scheduled': [0, 0]
         })
-        result = MetricsCalculator.calculate_treatment_acceptance(df)
+        result = MetricsCalculator.calculate_case_acceptance(df)
         assert result is None
 
     @pytest.mark.unit
@@ -482,14 +482,14 @@ class TestFullIntegration:
             assert 'production_total' in kpis
             assert 'collection_rate' in kpis
             assert 'new_patients' in kpis
-            assert 'treatment_acceptance' in kpis
+            assert 'case_acceptance' in kpis
             assert 'hygiene_reappointment' in kpis
 
             # Validate values are reasonable
             assert kpis['production_total'] > 0
             assert 0 <= kpis['collection_rate'] <= 100
             assert kpis['new_patients'] >= 0
-            assert 0 <= kpis['treatment_acceptance'] <= 100
+            assert 0 <= kpis['case_acceptance'] <= 100
             assert 0 <= kpis['hygiene_reappointment'] <= 100
 
     @pytest.mark.integration
@@ -515,7 +515,7 @@ class TestFullIntegration:
             assert kpis['new_patients'] is not None
 
             # Front KPI-based should be None
-            assert kpis['treatment_acceptance'] is None
+            assert kpis['case_acceptance'] is None
             assert kpis['hygiene_reappointment'] is None
 
     @pytest.mark.integration
@@ -727,7 +727,7 @@ tests/
   - `calculate_production_total()` - Sum of Column E
   - `calculate_collection_rate()` - (F/E) × 100
   - `calculate_new_patients()` - Sum of Column J
-  - `calculate_treatment_acceptance()` - (M/L) × 100
+  - `calculate_case_acceptance()` - (M/L) × 100
   - `calculate_hygiene_reappointment()` - ((C-D)/C) × 100
 - `get_all_kpis()` - Orchestrator function returning all 5 KPIs
 - All functions return numeric values or None for errors
@@ -820,7 +820,7 @@ tests/
   - [x] Test calculate_production_total with normal and edge cases
   - [x] Test calculate_collection_rate including division by zero
   - [x] Test calculate_new_patients with null handling
-  - [x] Test calculate_treatment_acceptance with zero presented cases
+  - [x] Test calculate_case_acceptance with zero presented cases
   - [x] Test calculate_hygiene_reappointment with zero appointments
   - [x] Verify all calculations match expected values within 0.01% tolerance
   - [x] Add tests for column name mismatches and missing data

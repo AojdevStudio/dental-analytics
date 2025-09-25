@@ -40,7 +40,7 @@ Done 
   - [x] Modify existing get_all_kpis() function in metrics.py
   - [x] Add call to calculate_hygiene_reappointment() function
   - [x] Integrate hygiene reappointment with Front KPI sheet data (same source as treatment acceptance)
-  - [x] Return updated dictionary with all 5 KPIs (production, collection_rate, new_patients, treatment_acceptance, hygiene_reappointment)
+  - [x] Return updated dictionary with all 5 KPIs (production, collection_rate, new_patients, case_acceptance, hygiene_reappointment)
   - [x] Ensure backward compatibility with existing KPI structure
 
 - [x] **Task 4: Create Manual Verification Script** (AC: 6)
@@ -63,11 +63,11 @@ Done 
 ### Previous Story Context
 [Source: docs/stories/story-1.3.md - Dev Agent Record]
 - **MetricsCalculator Class Available:** Successfully implemented with static method pattern (67 lines)
-- **Existing Functions:** calculate_production_total(), calculate_collection_rate(), calculate_new_patients(), calculate_treatment_acceptance() working
+- **Existing Functions:** calculate_production_total(), calculate_collection_rate(), calculate_new_patients(), calculate_case_acceptance() working
 - **Error Handling Pattern:** Returns None on failure, uses pd.to_numeric(errors='coerce')
 - **Current Backend Status:** 144 lines total (sheets_reader.py: 77 + metrics.py: 67)
 - **Available Lines:** Limited - already over 50-line target for metrics.py
-- **Front KPI Sheet Access:** Already established in Story 1.3 - same data source as treatment_acceptance
+- **Front KPI Sheet Access:** Already established in Story 1.3 - same data source as case_acceptance
 
 ### Module Architecture Requirements
 [Source: architecture/source-tree.md#backend-directory and story-1.3 implementation]
@@ -112,7 +112,7 @@ class MetricsCalculator:
             'production_total': cls.calculate_production_total(eod_data),
             'collection_rate': cls.calculate_collection_rate(eod_data),
             'new_patients': cls.calculate_new_patients(eod_data),
-            'treatment_acceptance': cls.calculate_treatment_acceptance(front_kpi_data),
+            'case_acceptance': cls.calculate_case_acceptance(front_kpi_data),
             'hygiene_reappointment': cls.calculate_hygiene_reappointment(front_kpi_data)
         }
 ```
@@ -141,7 +141,7 @@ class MetricsCalculator:
 - **Division by zero → return None** (total_hygiene = 0)
 - **Missing columns → KeyError → return None**
 - **Empty DataFrame checks at method start**
-- **Same Front KPI sheet structure as treatment_acceptance** (established in Story 1.3)
+- **Same Front KPI sheet structure as case_acceptance** (established in Story 1.3)
 
 ### Data Types and Validation
 [Source: Stories 1.2-1.3 established patterns]
@@ -167,13 +167,13 @@ return ((total_hygiene - not_reappointed) / total_hygiene) * 100
 [Source: backend/metrics.py current implementation from Story 1.3]
 - **Import Pattern:** Already established in get_all_kpis() function
 - **Data Source:**
-  - Front KPI data: Use existing SheetsReader call for Front KPI sheets (same as treatment_acceptance)
+  - Front KPI data: Use existing SheetsReader call for Front KPI sheets (same as case_acceptance)
 - **Return Structure:** Extend existing dictionary with hygiene_reappointment key
 - **Backward Compatibility:** Ensure existing 4 KPIs still work unchanged
 
 ### Performance Considerations
-- **Single Front KPI sheet call:** Reuse same data source as treatment_acceptance
-- **No additional API calls needed:** Both treatment_acceptance and hygiene_reappointment use same sheet
+- **Single Front KPI sheet call:** Reuse same data source as case_acceptance
+- **No additional API calls needed:** Both case_acceptance and hygiene_reappointment use same sheet
 - **Efficient data sharing:** Front KPI data fetched once, used for both calculations
 
 ## Testing
@@ -220,7 +220,7 @@ def test_hygiene_reappointment_thresholds():
 def test_get_all_kpis_complete():
     """Test that get_all_kpis returns all 5 expected KPIs."""
     kpis = MetricsCalculator.get_all_kpis()
-    expected_keys = ['production_total', 'collection_rate', 'new_patients', 'treatment_acceptance', 'hygiene_reappointment']
+    expected_keys = ['production_total', 'collection_rate', 'new_patients', 'case_acceptance', 'hygiene_reappointment']
     assert all(key in kpis for key in expected_keys), "Missing expected KPI keys"
     print("✅ Complete 5 KPIs structure test passed")
 ```
@@ -288,7 +288,7 @@ def test_get_all_kpis_complete():
 **None Required** - The implementation is exemplary as delivered. No refactoring was necessary due to:
 - Clean, self-documenting code following established patterns
 - Proper separation of concerns
-- Efficient data sharing with existing treatment_acceptance calculation
+- Efficient data sharing with existing case_acceptance calculation
 - Type hints throughout with modern Python union syntax
 
 ### Compliance Check
@@ -364,7 +364,7 @@ def test_get_all_kpis_complete():
 ### Performance Considerations
 
 **PASS** - Highly efficient implementation:
-- **Data Reuse**: Leverages same Front KPI sheet as treatment_acceptance (no additional API calls)
+- **Data Reuse**: Leverages same Front KPI sheet as case_acceptance (no additional API calls)
 - **Single Sheet Fetch**: Front KPI data retrieved once, used for both calculations
 - **Minimal Processing**: Simple mathematical operations with pandas vectorization
 - **Memory Efficient**: No data caching or large object creation

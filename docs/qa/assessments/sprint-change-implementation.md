@@ -55,14 +55,14 @@ Successfully implemented the approved Sprint Change Proposal to fix KPI calculat
     "production_total": 6450.0,
     "collection_rate": 40.8,
     "new_patients": 7,
-    "treatment_acceptance": 0.0,
+    "case_acceptance": 0.0,
     "hygiene_reappointment": 100.0
   },
   "humble": {
     "production_total": null,
     "collection_rate": null,
     "new_patients": 4,
-    "treatment_acceptance": 0.0,
+    "case_acceptance": 0.0,
     "hygiene_reappointment": 100.0
   }
 }

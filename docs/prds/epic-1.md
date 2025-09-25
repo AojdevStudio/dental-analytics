@@ -39,7 +39,7 @@
 
 **Acceptance Criteria:**
 1. calculate_new_patients() function extracts count from Column J in EOD sheets
-2. calculate_treatment_acceptance() implements formula: (Column M / Column L) × 100 from Front KPI sheets
+2. calculate_case_acceptance() implements formula: (Column M / Column L) × 100 from Front KPI sheets
 3. Functions handle sheet name differences correctly (EOD vs Front KPI sheets)
 4. Treatment acceptance calculation handles division by zero cases
 5. Both functions integrated into metrics.py module

@@ -186,7 +186,7 @@ jobs:
             calculate_production_total,
             calculate_collection_rate,
             calculate_new_patients,
-            calculate_treatment_acceptance,
+            calculate_case_acceptance,
             calculate_hygiene_reappointment
         )
 
@@ -238,7 +238,7 @@ jobs:
                     calculate_production_total,
                     calculate_collection_rate,
                     calculate_new_patients,
-                    calculate_treatment_acceptance,
+                    calculate_case_acceptance,
                     calculate_hygiene_reappointment
                 ]
 
