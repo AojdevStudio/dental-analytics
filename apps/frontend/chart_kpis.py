@@ -5,6 +5,10 @@ hygiene reappointment charts. Includes the main dispatcher function
 create_chart_from_data.
 """
 
+from __future__ import annotations
+
+from typing import Any, Callable
+
 import structlog
 from plotly.graph_objects import Figure
 
@@ -14,6 +18,7 @@ from .chart_base import (
     apply_range_selector,
     create_base_figure,
 )
+from .chart_production import create_production_chart
 from .chart_utils import (
     add_trend_line,
     add_trend_pattern_annotation,
@@ -412,32 +417,147 @@ def create_hygiene_reappointment_chart(
 
 
 # Chart dispatcher for dynamic chart creation
+METRIC_ALIASES: dict[str, str] = {
+    "production_total": "production_total",
+    "production": "production_total",
+    "total_production": "production_total",
+    "collection_rate": "collection_rate",
+    "collections": "collection_rate",
+    "collection": "collection_rate",
+    "new_patients": "new_patients",
+    "new_patient": "new_patients",
+    "case_acceptance": "case_acceptance",
+    "treatment_acceptance": "case_acceptance",
+    "hygiene_reappointment": "hygiene_reappointment",
+    "hygiene_recall": "hygiene_reappointment",
+    "hygiene": "hygiene_reappointment",
+}
+
+
+def _normalize_metric_key(metric_name: str | None) -> str | None:
+    """Normalize various metric labels to canonical dispatch keys."""
+
+    if not metric_name:
+        return None
+
+    slug = (
+        metric_name.strip()
+        .lower()
+        .replace("-", "_")
+        .replace(" ", "_")
+    )
+
+    return METRIC_ALIASES.get(slug, slug or None)
+
+
+def _prepare_series_lists(chart_data: dict[str, Any]) -> dict[str, Any]:
+    """Ensure chart payload contains parallel date/value lists."""
+
+    if "dates" in chart_data and "values" in chart_data:
+        return chart_data
+
+    time_series = chart_data.get("time_series") or []
+    if not time_series:
+        return {
+            **chart_data,
+            "dates": chart_data.get("dates", []),
+            "values": chart_data.get("values", []),
+        }
+
+    dates: list[str] = []
+    values: list[Any] = []
+
+    for point in time_series:
+        if not isinstance(point, dict):
+            continue
+
+        date = point.get("date")
+        if not date:
+            continue
+
+        dates.append(date)
+        values.append(point.get("value"))
+
+    return {**chart_data, "dates": dates, "values": values}
+
+
 def create_chart_from_data(
-    chart_data: dict, kpi_type: str, format_options: dict | None = None
+    chart_data: dict[str, Any],
+    metric_name: str | None = None,
+    **overrides: Any,
 ) -> Figure:
     """Create appropriate chart based on KPI type.
 
     Args:
-        chart_data: Dictionary with dates, values, and metadata
-        kpi_type: Type of KPI chart to create
-        format_options: Chart formatting preferences
+        chart_data: Dictionary with time-series data and metadata
+        metric_name: Optional explicit metric identifier for dispatch
+        **overrides: Additional format overrides such as show_trend
 
     Returns:
         Plotly figure for the specified KPI type
 
     Raises:
-        ValueError: If kpi_type is not supported
+        ValueError: If the metric type cannot be determined or supported
     """
-    chart_creators = {
+
+    if not isinstance(chart_data, dict):
+        raise TypeError("chart_data must be a dictionary")
+
+    metric_candidates = [
+        metric_name,
+        chart_data.get("metric_key"),
+        chart_data.get("metric_name"),
+        chart_data.get("metadata", {}).get("metric_key"),
+        chart_data.get("metadata", {}).get("metric"),
+    ]
+
+    resolved_metric: str | None = None
+    for candidate in metric_candidates:
+        normalized = _normalize_metric_key(candidate)
+        if normalized:
+            resolved_metric = normalized
+            break
+
+    if resolved_metric is None:
+        raise ValueError("Unable to determine metric type for chart data")
+
+    show_trend_override = overrides.pop("show_trend", None)
+    timeframe_override = overrides.pop("timeframe", None)
+
+    if resolved_metric == "production_total":
+        production_kwargs: dict[str, Any] = {}
+        if show_trend_override is not None:
+            production_kwargs["show_trend"] = show_trend_override
+        if timeframe_override is not None:
+            production_kwargs["timeframe"] = timeframe_override
+
+        log.info("chart.dynamic_creation", metric=resolved_metric)
+        return create_production_chart(chart_data, **production_kwargs)
+
+    chart_creators: dict[str, Callable[[dict[str, Any], dict[str, Any]], Figure]] = {
         "collection_rate": create_collection_rate_chart,
         "new_patients": create_new_patients_chart,
         "case_acceptance": create_case_acceptance_chart,
         "hygiene_reappointment": create_hygiene_reappointment_chart,
     }
 
-    if kpi_type not in chart_creators:
-        available_types = ", ".join(chart_creators.keys())
-        raise ValueError(f"Unknown KPI type: {kpi_type}. Available: {available_types}")
+    creator = chart_creators.get(resolved_metric)
+    if creator is None:
+        available_types = sorted(list(chart_creators.keys()) + ["production_total"])
+        raise ValueError(
+            f"Unknown KPI type: {resolved_metric}. Available: {', '.join(available_types)}"
+        )
 
-    log.info("chart.dynamic_creation", kpi_type=kpi_type)
-    return chart_creators[kpi_type](chart_data, format_options)
+    normalized_data = _prepare_series_lists(chart_data)
+    format_options = {**normalized_data.get("format_options", {})}
+
+    if show_trend_override is not None:
+        format_options["show_trend"] = show_trend_override
+    if timeframe_override is not None:
+        format_options["timeframe"] = timeframe_override
+
+    for key, value in overrides.items():
+        format_options[key] = value
+
+    log.info("chart.dynamic_creation", metric=resolved_metric)
+    return creator(normalized_data, format_options)
