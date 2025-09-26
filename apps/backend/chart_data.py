@@ -10,6 +10,8 @@ from typing import Any
 import pandas as pd
 import structlog
 
+from .metrics import clean_currency_string
+
 try:
     from config.data_sources import COLUMN_MAPPINGS
 except ImportError:  # pragma: no cover - configuration module should exist in runtime
@@ -108,7 +110,7 @@ def process_production_data_for_chart(df: pd.DataFrame) -> dict[str, Any]:
         # Convert dates to datetime and production to numeric
         chart_df[date_col] = pd.to_datetime(chart_df[date_col], errors="coerce")
         chart_df[production_col] = pd.to_numeric(
-            chart_df[production_col], errors="coerce"
+            chart_df[production_col].apply(clean_currency_string), errors="coerce"
         )
 
         # Remove any rows where conversion failed
@@ -214,7 +216,7 @@ def process_collection_rate_data_for_chart(df: pd.DataFrame) -> dict[str, Any]:
         # Add insurance collections if available
         if insurance_col in df.columns:
             chart_df[insurance_col] = pd.to_numeric(
-                df[insurance_col], errors="coerce"
+                df[insurance_col].apply(clean_currency_string), errors="coerce"
             ).fillna(0)
         else:
             chart_df[insurance_col] = 0
@@ -228,10 +230,10 @@ def process_collection_rate_data_for_chart(df: pd.DataFrame) -> dict[str, Any]:
         # Convert data types
         chart_df[date_col] = pd.to_datetime(chart_df[date_col], errors="coerce")
         chart_df[production_col] = pd.to_numeric(
-            chart_df[production_col], errors="coerce"
+            chart_df[production_col].apply(clean_currency_string), errors="coerce"
         )
         chart_df[collections_col] = pd.to_numeric(
-            chart_df[collections_col], errors="coerce"
+            chart_df[collections_col].apply(clean_currency_string), errors="coerce"
         )
 
         # Remove rows with conversion failures

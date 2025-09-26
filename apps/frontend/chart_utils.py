@@ -328,3 +328,43 @@ def add_trend_pattern_annotation(fig: Figure, values: list[float]) -> None:
 
     except Exception as e:
         log.error("chart_utils.pattern_annotation_error", error=str(e))
+
+
+def apply_alpha_to_color(color: str, alpha: float = 0.2) -> str:
+    """Convert a hex color to rgba with the provided alpha.
+
+    Args:
+        color: Hex (`#RRGGBB` or `#RRGGBBAA`) or rgba string.
+        alpha: Alpha component between 0 and 1.
+
+    Returns:
+        Color string in rgba format when conversion is possible.
+    """
+
+    if not color:
+        return color
+
+    normalized_alpha = min(max(alpha, 0.0), 1.0)
+
+    if color.startswith("rgba"):
+        return color
+
+    if color.startswith("#"):
+        hex_value = color.lstrip("#")
+
+        # Remove trailing alpha channel if present
+        if len(hex_value) == 8:
+            hex_value = hex_value[:6]
+
+        if len(hex_value) == 6:
+            try:
+                r = int(hex_value[0:2], 16)
+                g = int(hex_value[2:4], 16)
+                b = int(hex_value[4:6], 16)
+            except ValueError:
+                return color
+
+            return f"rgba({r}, {g}, {b}, {normalized_alpha:.3f})"
+
+    return color
+

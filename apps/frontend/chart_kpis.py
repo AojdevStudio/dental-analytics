@@ -14,7 +14,11 @@ from .chart_base import (
     apply_range_selector,
     create_base_figure,
 )
-from .chart_utils import add_trend_line, add_trend_pattern_annotation
+from .chart_utils import (
+    add_trend_line,
+    add_trend_pattern_annotation,
+    apply_alpha_to_color,
+)
 
 # Configure structured logging
 log = structlog.get_logger()
@@ -52,7 +56,13 @@ def create_collection_rate_chart(
 
     # Configure chart style
     line_color = format_options.get("line_color", BRAND_COLORS["teal_accent"])
-    fill_color = format_options.get("fill_color", f"{line_color}20")  # 20% opacity
+    fill_alpha = format_options.get("fill_opacity", 0.125)
+    fill_color_setting = format_options.get("fill_color")
+    fill_color = (
+        apply_alpha_to_color(fill_color_setting, fill_alpha)
+        if fill_color_setting
+        else apply_alpha_to_color(line_color, fill_alpha)
+    )
     marker_size = format_options.get("marker_size", 8)
 
     # Main data trace

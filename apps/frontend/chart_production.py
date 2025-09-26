@@ -38,16 +38,24 @@ def create_production_chart(
     Returns:
         Configured Plotly figure for production data
     """
-    if not chart_data.get("time_series"):
+    time_series = chart_data.get("time_series")
+    format_options = chart_data.get("format_options", {})
+
+    # Fallback for legacy data shape that uses separate lists
+    if not time_series and chart_data.get("dates") and chart_data.get("values"):
+        time_series = [
+            {"date": date, "value": value}
+            for date, value in zip(chart_data["dates"], chart_data["values"])
+        ]
+
+    if not time_series:
         return handle_empty_data("Production Total")
 
-    # Import aggregation function
-    from apps.backend.chart_data import aggregate_chart_data
-
-    # Aggregate data based on timeframe
-    aggregated_data = aggregate_chart_data(chart_data, timeframe)
-    time_series = aggregated_data.get("time_series", chart_data["time_series"])
-    format_options = aggregated_data.get("format_options", {})
+    if timeframe != "daily" and not chart_data.get("aggregation"):
+        log.warning(
+            "chart.production_aggregation_unavailable",
+            timeframe=timeframe,
+        )
 
     # Extract dates and values
     dates = [point["date"] for point in time_series]
@@ -99,8 +107,9 @@ def create_production_chart(
 
     # Update layout with timeframe info
     title_text = f"{timeframe.capitalize()} Production Total"
-    if aggregated_data.get("aggregation"):
-        title_text += f" ({aggregated_data.get('data_points', 0)} data points)"
+    aggregation = chart_data.get("aggregation")
+    if aggregation:
+        title_text += f" ({chart_data.get('data_points', len(time_series))} data points)"
 
     fig.update_layout(
         title={
