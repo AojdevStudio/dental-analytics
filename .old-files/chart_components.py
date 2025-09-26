@@ -226,11 +226,186 @@ def handle_empty_data(metric_name: str) -> Figure:
     return fig
 
 
-def create_production_chart(chart_data: dict[str, Any]) -> Figure:
-    """Create interactive production total chart.
+def calculate_trend_line(dates: list, values: list) -> tuple:
+    """Calculate linear trend line for time series data.
+
+    Args:
+        dates: List of date strings
+        values: List of numeric values
+
+    Returns:
+        Tuple of (trend_values, slope, r_squared)
+    """
+    try:
+        import numpy as np
+        from datetime import datetime
+        import pandas as pd
+
+        if not dates or not values or len(dates) != len(values):
+            return [], 0, 0
+
+        # Convert dates to numeric values (days from first date)
+        date_objs = pd.to_datetime(dates)
+        x = (date_objs - date_objs.min()).days.values
+        y = np.array(values)
+
+        # Remove NaN values
+        mask = ~np.isnan(y)
+        x = x[mask]
+        y = y[mask]
+
+        if len(x) < 2:
+            return [], 0, 0
+
+        # Calculate linear regression
+        coeffs = np.polyfit(x, y, 1)
+        slope = coeffs[0]
+        intercept = coeffs[1]
+
+        # Calculate trend line values
+        trend_values = [slope * xi + intercept for xi in x]
+
+        # Calculate R-squared
+        y_mean = np.mean(y)
+        ss_tot = np.sum((y - y_mean) ** 2)
+        ss_res = np.sum((y - trend_values) ** 2)
+        r_squared = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
+
+        # Map back to full date range
+        full_trend = []
+        trend_idx = 0
+        for i, date in enumerate(dates):
+            if mask[i]:
+                full_trend.append(trend_values[trend_idx])
+                trend_idx += 1
+            else:
+                full_trend.append(None)
+
+        return full_trend, slope, r_squared
+
+    except Exception as e:
+        log.error(f"Error calculating trend line: {e}")
+        return [], 0, 0
+
+
+def identify_pattern(values: list, window: int = 7) -> str:
+    """Identify patterns in time series data.
+
+    Args:
+        values: List of numeric values
+        window: Rolling window size for pattern detection
+
+    Returns:
+        Pattern description string
+    """
+    try:
+        import numpy as np
+
+        if not values or len(values) < window:
+            return "Insufficient data"
+
+        # Remove None/NaN values
+        clean_values = [v for v in values if v is not None and not np.isnan(v)]
+        if len(clean_values) < window:
+            return "Insufficient data"
+
+        values_array = np.array(clean_values)
+
+        # Calculate rolling statistics
+        recent = values_array[-window:]
+        older = values_array[:-window] if len(values_array) > window else []
+
+        # Determine trend
+        if len(older) > 0:
+            recent_mean = np.mean(recent)
+            older_mean = np.mean(older)
+            change_pct = (
+                ((recent_mean - older_mean) / older_mean * 100)
+                if older_mean != 0
+                else 0
+            )
+
+            if change_pct > 10:
+                return f"📈 Strong upward trend (+{change_pct:.1f}%)"
+            elif change_pct > 3:
+                return f"📊 Moderate growth (+{change_pct:.1f}%)"
+            elif change_pct < -10:
+                return f"📉 Declining trend ({change_pct:.1f}%)"
+            elif change_pct < -3:
+                return f"⚠️ Slight decline ({change_pct:.1f}%)"
+            else:
+                return f"➡️ Stable (±{abs(change_pct):.1f}%)"
+        else:
+            return "📊 Establishing baseline"
+
+    except Exception as e:
+        log.error(f"Error identifying pattern: {e}")
+        return "Pattern analysis unavailable"
+
+
+def add_trend_line_to_figure(
+    fig, dates: list, values: list, name: str = "Trend", color: str = "#FF6B6B"
+) -> None:
+    """Add trend line to existing plotly figure.
+
+    Args:
+        fig: Plotly figure object
+        dates: List of date strings
+        values: List of numeric values
+        name: Name for the trend line
+        color: Color for the trend line
+    """
+    trend_values, slope, r_squared = calculate_trend_line(dates, values)
+
+    if trend_values:
+        import plotly.graph_objects as go
+
+        # Determine trend direction for styling
+        if slope > 0:
+            dash_style = "dot"
+            opacity = 0.7
+        else:
+            dash_style = "dash"
+            opacity = 0.5
+
+        fig.add_trace(
+            go.Scatter(
+                x=dates,
+                y=trend_values,
+                mode="lines",
+                name=name,
+                line=dict(color=color, width=2, dash=dash_style),
+                opacity=opacity,
+                hovertemplate="Trend: %{y:.2f}<extra></extra>",
+                showlegend=True,
+            )
+        )
+
+        # Add R² annotation if significant
+        if r_squared > 0.5:
+            fig.add_annotation(
+                text=f"R² = {r_squared:.3f}",
+                xref="paper",
+                yref="paper",
+                x=0.02,
+                y=0.98,
+                showarrow=False,
+                font=dict(size=10, color="#666"),
+                bgcolor="rgba(255,255,255,0.8)",
+                bordercolor="#ddd",
+                borderwidth=1,
+            )
+
+
+def create_production_chart(
+    chart_data: dict[str, Any], show_trend: bool = True, timeframe: str = "daily"
+) -> Figure:
+    """Create interactive production total chart with trend analysis.
 
     Args:
         chart_data: Formatted chart data from format_production_chart_data()
+        show_trend: Whether to display trend line
+        timeframe: Time aggregation level (daily, weekly, monthly)
 
     Returns:
         Configured Plotly figure for production data
@@ -238,8 +413,13 @@ def create_production_chart(chart_data: dict[str, Any]) -> Figure:
     if not chart_data.get("time_series"):
         return handle_empty_data("Production")
 
-    time_series = chart_data["time_series"]
-    format_options = chart_data.get("format_options", {})
+    # Import aggregation function
+    from apps.backend.chart_data import aggregate_chart_data
+
+    # Aggregate data based on timeframe
+    aggregated_data = aggregate_chart_data(chart_data, timeframe)
+    time_series = aggregated_data.get("time_series", chart_data["time_series"])
+    format_options = aggregated_data.get("format_options", {})
 
     # Extract dates and values
     dates = [point["date"] for point in time_series]
@@ -248,6 +428,7 @@ def create_production_chart(chart_data: dict[str, Any]) -> Figure:
     # Create line chart
     fig = create_base_figure()
 
+    # Main data trace with enhanced interactivity
     fig.add_trace(
         go.Scatter(
             x=dates,
@@ -256,6 +437,7 @@ def create_production_chart(chart_data: dict[str, Any]) -> Figure:
             line={
                 "color": format_options.get("line_color", BRAND_COLORS["teal_accent"]),
                 "width": 3,
+                "shape": "spline",  # Smooth lines
             },
             marker={
                 "size": 8,
@@ -263,23 +445,59 @@ def create_production_chart(chart_data: dict[str, Any]) -> Figure:
                 "line": {"color": "white", "width": 2},
             },
             hovertemplate="<b>%{x}</b><br>"
-            + "Production: %{customdata}<br>"
+            + f"Production ({timeframe}): %{{customdata}}<br>"
             + "<extra></extra>",
             customdata=[format_currency_hover(v) for v in values],
             name="Production",
         )
     )
 
-    # Update layout
+    # Add trend line if requested
+    if show_trend and len(values) > 3:
+        add_trend_line_to_figure(
+            fig,
+            dates,
+            values,
+            name="Trend",
+            color=(
+                BRAND_COLORS["emergency_red"]
+                if any(v < 0 for v in values if v)
+                else BRAND_COLORS["success_green"]
+            ),
+        )
+
+    # Add pattern identification annotation
+    pattern = identify_pattern(values)
+    fig.add_annotation(
+        text=pattern,
+        xref="paper",
+        yref="paper",
+        x=0.5,
+        y=1.15,
+        showarrow=False,
+        font=dict(size=12, color=BRAND_COLORS["primary_navy"]),
+        bgcolor="rgba(255,255,255,0.9)",
+        bordercolor=BRAND_COLORS["border"],
+        borderwidth=1,
+        borderpad=4,
+    )
+
+    # Update layout with timeframe info
+    title_text = f"{timeframe.capitalize()} Production Total"
+    if aggregated_data.get("aggregation"):
+        title_text += f" ({aggregated_data.get('data_points', 0)} data points)"
+
     fig.update_layout(
         title={
-            "text": "Daily Production Total",
+            "text": title_text,
             "x": 0.5,
             "font": {"size": 16, "color": BRAND_COLORS["primary_navy"]},
         },
         xaxis_title="Date",
         yaxis_title="Production Amount ($)",
-        height=400,
+        height=450,  # Slightly taller for annotations
+        dragmode="zoom",  # Enable zoom by default
+        hovermode="x unified",  # Better hover experience
     )
 
     # Apply consistent styling
@@ -288,11 +506,34 @@ def create_production_chart(chart_data: dict[str, Any]) -> Figure:
     # Format y-axis for currency
     fig.update_yaxes(tickformat="$,.0f")
 
-    log.info("chart.production_created", data_points=len(time_series))
+    # Add range selector buttons for better interaction
+    fig.update_xaxes(
+        rangeselector=dict(
+            buttons=list(
+                [
+                    dict(count=7, label="1w", step="day", stepmode="backward"),
+                    dict(count=14, label="2w", step="day", stepmode="backward"),
+                    dict(count=1, label="1m", step="month", stepmode="backward"),
+                    dict(step="all", label="All"),
+                ]
+            ),
+            bgcolor="rgba(255,255,255,0.7)",
+            activecolor=BRAND_COLORS["teal_accent"],
+            x=0,
+            y=1.1,
+        ),
+        rangeslider=dict(visible=False),  # Hide range slider for cleaner look
+    )
+
+    log.info(
+        "chart.production_created", data_points=len(time_series), timeframe=timeframe
+    )
     return fig
 
 
-def create_collection_rate_chart(chart_data: dict[str, Any]) -> Figure:
+def create_collection_rate_chart(
+    chart_data: dict[str, Any], show_trend: bool = True, timeframe: str = "daily"
+) -> Figure:
     """Create interactive collection rate chart.
 
     Args:
@@ -363,7 +604,9 @@ def create_collection_rate_chart(chart_data: dict[str, Any]) -> Figure:
     return fig
 
 
-def create_new_patients_chart(chart_data: dict[str, Any]) -> Figure:
+def create_new_patients_chart(
+    chart_data: dict[str, Any], show_trend: bool = True, timeframe: str = "daily"
+) -> Figure:
     """Create interactive new patients chart.
 
     Args:
@@ -424,7 +667,9 @@ def create_new_patients_chart(chart_data: dict[str, Any]) -> Figure:
     return fig
 
 
-def create_case_acceptance_chart(chart_data: dict[str, Any]) -> Figure:
+def create_case_acceptance_chart(
+    chart_data: dict[str, Any], show_trend: bool = True, timeframe: str = "daily"
+) -> Figure:
     """Create interactive case acceptance chart.
 
     Args:
@@ -495,7 +740,9 @@ def create_case_acceptance_chart(chart_data: dict[str, Any]) -> Figure:
     return fig
 
 
-def create_hygiene_reappointment_chart(chart_data: dict[str, Any]) -> Figure:
+def create_hygiene_reappointment_chart(
+    chart_data: dict[str, Any], show_trend: bool = True, timeframe: str = "daily"
+) -> Figure:
     """Create interactive hygiene reappointment chart.
 
     Args:
@@ -607,11 +854,15 @@ def validate_chart_data_structure(chart_data: dict[str, Any]) -> bool:
         return False
 
 
-def create_chart_from_data(chart_data: dict[str, Any]) -> Figure:
-    """Create appropriate chart based on chart data structure.
+def create_chart_from_data(
+    chart_data: dict[str, Any], show_trend: bool = True, timeframe: str = "daily"
+) -> Figure:
+    """Create appropriate chart based on chart data structure with advanced features.
 
     Args:
         chart_data: Formatted chart data from backend functions
+        show_trend: Whether to display trend line
+        timeframe: Time aggregation level (daily, weekly, monthly)
 
     Returns:
         Configured Plotly figure
@@ -637,7 +888,8 @@ def create_chart_from_data(chart_data: dict[str, Any]) -> Figure:
         return handle_empty_data(metric_name)
 
     try:
-        return creator_func(chart_data)
+        # Pass advanced parameters to chart creation functions
+        return creator_func(chart_data, show_trend=show_trend, timeframe=timeframe)
     except Exception as e:
         log.error("chart.creation_error", metric=metric_name, error=str(e))
         return handle_empty_data(metric_name)

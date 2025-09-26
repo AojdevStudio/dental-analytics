@@ -32,8 +32,7 @@ project_readme_template:
       description: "{{HIGHLIGHT_DESCRIPTION_1}}"
     - title: "{{HIGHLIGHT_TITLE_2}}"
       description: "{{HIGHLIGHT_DESCRIPTION_2}}"
-
-  summary:
+    summary:
       intro: >
         {{PROJECT_NAME}} is designed to address challenges such as {{CHALLENGE_1}}, {{CHALLENGE_2}},
         and more—delivering {{BENEFIT_1}}, {{BENEFIT_2}}, and {{BENEFIT_3}} through

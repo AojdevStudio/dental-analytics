@@ -423,6 +423,6 @@ _A comprehensive checklist for frontend development best practices_
 
 ---
 
-**Source:** Frontend Checklist (frontendchecklist.io)
-**Last Updated:** 2025-08-25
+**Source:** Frontend Checklist (frontendchecklist.io)  
+**Last Updated:** 2025-08-25  
 **Note:** This checklist should be used as a comprehensive guide for frontend development best practices.
