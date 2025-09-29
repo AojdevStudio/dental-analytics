@@ -45,7 +45,11 @@ def create_production_chart(
     if not time_series and chart_data.get("dates") and chart_data.get("values"):
         time_series = [
             {"date": date, "value": value}
-            for date, value in zip(chart_data["dates"], chart_data["values"])
+            for date, value in zip(
+                chart_data["dates"],
+                chart_data["values"],
+                strict=False,
+            )
         ]
 
     if not time_series:
@@ -109,7 +113,9 @@ def create_production_chart(
     title_text = f"{timeframe.capitalize()} Production Total"
     aggregation = chart_data.get("aggregation")
     if aggregation:
-        title_text += f" ({chart_data.get('data_points', len(time_series))} data points)"
+        title_text += (
+            f" ({chart_data.get('data_points', len(time_series))} data points)"
+        )
 
     fig.update_layout(
         title={

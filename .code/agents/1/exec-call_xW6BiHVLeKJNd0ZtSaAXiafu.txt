@@ -1,0 +1,885 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.11, pytest-8.4.2, pluggy-1.6.0 -- /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/ossieirondi/Projects/unified-dental/dental-analytics
+configfile: pytest.ini
+testpaths: tests
+plugins: mock-3.15.0, Faker-37.6.0, cov-6.2.1
+collecting ... collected 232 items
+
+tests/integration/test_historical_data_flow.py::TestHistoricalDataIntegrationFlow::test_complete_operational_day_workflow PASSED [  0%]
+tests/integration/test_historical_data_flow.py::TestHistoricalDataIntegrationFlow::test_missing_data_handling_workflow PASSED [  0%]
+tests/integration/test_historical_data_flow.py::TestHistoricalDataIntegrationFlow::test_data_source_configuration_integration PASSED [  1%]
+tests/integration/test_historical_data_flow.py::TestHistoricalDataIntegrationFlow::test_weekend_gap_handling PASSED [  1%]
+tests/integration/test_historical_data_flow.py::TestHistoricalDataIntegrationFlow::test_data_quality_validation_flow PASSED [  2%]
+tests/integration/test_historical_data_flow.py::TestHistoricalDataIntegrationFlow::test_performance_with_large_dataset PASSED [  2%]
+tests/integration/test_historical_data_flow.py::TestErrorHandlingIntegration::test_cascading_error_handling PASSED [  3%]
+tests/integration/test_historical_data_flow.py::TestErrorHandlingIntegration::test_data_validation_integration PASSED [  3%]
+tests/integration/test_historical_data_flow.py::TestRealWorldScenarios::test_holiday_week_scenario PASSED [  3%]
+tests/integration/test_historical_data_flow.py::TestRealWorldScenarios::test_month_end_reporting_scenario PASSED [  4%]
+tests/integration/test_historical_data_flow.py::TestRealWorldScenarios::test_new_practice_startup_scenario PASSED [  4%]
+tests/integration/test_historical_data_flow.py::TestRealWorldScenarios::test_high_volume_practice_scenario PASSED [  5%]
+tests/test_advanced_charts.py::test_time_aggregation FAILED              [  5%]
+tests/test_advanced_charts.py::test_trend_analysis PASSED                [  6%]
+tests/test_advanced_charts.py::test_performance_benchmarks PASSED        [  6%]
+tests/test_advanced_charts.py::test_chart_interactions FAILED            [  6%]
+tests/test_advanced_charts.py::test_visual_styling PASSED                [  7%]
+tests/test_advanced_charts.py::test_error_handling FAILED                [  7%]
+tests/test_chart_data.py::TestSafeConversions::test_safe_float_conversion_valid_numbers PASSED [  8%]
+tests/test_chart_data.py::TestSafeConversions::test_safe_float_conversion_invalid_values PASSED [  8%]
+tests/test_chart_data.py::TestSafeConversions::test_safe_int_conversion_valid_numbers PASSED [  9%]
+tests/test_chart_data.py::TestSafeConversions::test_safe_int_conversion_invalid_values PASSED [  9%]
+tests/test_chart_data.py::TestDateTimeParsing::test_parse_datetime_with_time PASSED [  9%]
+tests/test_chart_data.py::TestDateTimeParsing::test_parse_date_only PASSED [ 10%]
+tests/test_chart_data.py::TestDateTimeParsing::test_parse_invalid_datetime PASSED [ 10%]
+tests/test_chart_data.py::TestDateTimeParsing::test_parse_datetime_with_whitespace PASSED [ 11%]
+tests/test_chart_data.py::TestTimeSeriesPoint::test_create_valid_time_series_point PASSED [ 11%]
+tests/test_chart_data.py::TestTimeSeriesPoint::test_create_time_series_point_with_none_value PASSED [ 12%]
+tests/test_chart_data.py::TestTimeSeriesPoint::test_create_time_series_point_invalid_date PASSED [ 12%]
+tests/test_chart_data.py::TestTimeSeriesProcessing::test_process_valid_time_series_data PASSED [ 12%]
+tests/test_chart_data.py::TestTimeSeriesProcessing::test_process_time_series_with_missing_data PASSED [ 13%]
+tests/test_chart_data.py::TestTimeSeriesProcessing::test_process_empty_dataframe PASSED [ 13%]
+tests/test_chart_data.py::TestTimeSeriesProcessing::test_process_none_dataframe PASSED [ 14%]
+tests/test_chart_data.py::TestTimeSeriesProcessing::test_process_missing_columns PASSED [ 14%]
+tests/test_chart_data.py::TestTimeSeriesProcessing::test_process_integer_data_type PASSED [ 15%]
+tests/test_chart_data.py::TestChartStatistics::test_calculate_statistics_with_data PASSED [ 15%]
+tests/test_chart_data.py::TestChartStatistics::test_calculate_statistics_empty_data PASSED [ 15%]
+tests/test_chart_data.py::TestChartStatistics::test_calculate_statistics_all_missing PASSED [ 16%]
+tests/test_chart_data.py::TestProductionChartFormatting::test_format_production_chart_data PASSED [ 16%]
+tests/test_chart_data.py::TestProductionChartFormatting::test_format_production_empty_data PASSED [ 17%]
+tests/test_chart_data.py::TestProductionChartFormatting::test_format_production_alternative_column_names PASSED [ 17%]
+tests/test_chart_data.py::TestCollectionRateChartFormatting::test_format_collection_rate_chart_data PASSED [ 18%]
+tests/test_chart_data.py::TestCollectionRateChartFormatting::test_format_collection_rate_with_zero_production PASSED [ 18%]
+tests/test_chart_data.py::TestCollectionRateChartFormatting::test_format_collection_rate_missing_columns PASSED [ 18%]
+tests/test_chart_data.py::TestNewPatientsChartFormatting::test_format_new_patients_chart_data PASSED [ 19%]
+tests/test_chart_data.py::TestTreatmentAcceptanceChartFormatting::test_format_case_acceptance_chart_data PASSED [ 19%]
+tests/test_chart_data.py::TestTreatmentAcceptanceChartFormatting::test_format_case_acceptance_empty_data PASSED [ 20%]
+tests/test_chart_data.py::TestTreatmentAcceptanceChartFormatting::test_format_case_acceptance_zero_presented PASSED [ 20%]
+tests/test_chart_data.py::TestHygieneReappointmentChartFormatting::test_format_hygiene_reappointment_chart_data PASSED [ 21%]
+tests/test_chart_data.py::TestHygieneReappointmentChartFormatting::test_format_hygiene_reappointment_zero_total PASSED [ 21%]
+tests/test_chart_data.py::TestAllChartDataFormatting::test_format_all_chart_data_complete PASSED [ 21%]
+tests/test_chart_data.py::TestAllChartDataFormatting::test_format_all_chart_data_partial_data PASSED [ 22%]
+tests/test_chart_data.py::TestAllChartDataFormatting::test_format_all_chart_data_no_data PASSED [ 22%]
+tests/test_chart_data.py::TestChartDataValidation::test_validate_valid_chart_data PASSED [ 23%]
+tests/test_chart_data.py::TestChartDataValidation::test_validate_missing_required_fields PASSED [ 23%]
+tests/test_chart_data.py::TestChartDataValidation::test_validate_invalid_time_series PASSED [ 24%]
+tests/test_chart_data.py::TestChartDataValidation::test_validate_empty_time_series PASSED [ 24%]
+tests/test_chart_data.py::TestEdgeCasesAndErrorHandling::test_malformed_currency_strings PASSED [ 25%]
+tests/test_chart_data.py::TestEdgeCasesAndErrorHandling::test_large_numerical_values PASSED [ 25%]
+tests/test_chart_data.py::TestEdgeCasesAndErrorHandling::test_mixed_data_types_in_columns PASSED [ 25%]
+tests/test_chart_data.py::TestEdgeCasesAndErrorHandling::test_datetime_timezone_handling PASSED [ 26%]
+tests/test_chart_data.py::TestIntegrationWithExistingFixtures::test_chart_formatting_with_sample_fixtures PASSED [ 26%]
+tests/test_chart_integration.py::test_validate_chart_data_structure_handles_empty PASSED [ 27%]
+tests/test_chart_integration.py::test_create_chart_from_data_returns_placeholder_on_empty PASSED [ 27%]
+tests/test_chart_integration.py::test_individual_chart_factories_accept_empty_payload[create_production_chart] PASSED [ 28%]
+tests/test_chart_integration.py::test_individual_chart_factories_accept_empty_payload[create_collection_rate_chart] PASSED [ 28%]
+tests/test_chart_integration.py::test_individual_chart_factories_accept_empty_payload[create_new_patients_chart] PASSED [ 28%]
+tests/test_chart_integration.py::test_individual_chart_factories_accept_empty_payload[create_case_acceptance_chart] PASSED [ 29%]
+tests/test_chart_integration.py::test_individual_chart_factories_accept_empty_payload[create_hygiene_reappointment_chart] PASSED [ 29%]
+tests/test_chart_integration.py::test_format_all_chart_data_produces_expected_keys PASSED [ 30%]
+tests/test_chart_utils_helpers.py::test_format_currency_hover_positive PASSED [ 30%]
+tests/test_chart_utils_helpers.py::test_format_currency_hover_negative PASSED [ 31%]
+tests/test_chart_utils_helpers.py::test_format_currency_hover_none FAILED [ 31%]
+tests/test_chart_utils_helpers.py::test_handle_empty_data FAILED         [ 31%]
+tests/test_chart_utils_helpers.py::test_add_trend_line_to_figure PASSED  [ 32%]
+tests/test_chart_utils_helpers.py::test_add_pattern_annotation PASSED    [ 32%]
+tests/test_chart_utils_helpers.py::test_add_trend_line_with_empty_data PASSED [ 33%]
+tests/test_chart_utils_helpers.py::test_add_pattern_annotation_insufficient_data FAILED [ 33%]
+tests/test_currency_parsing.py::TestCurrencyParsing::test_clean_currency_string_basic PASSED [ 34%]
+tests/test_currency_parsing.py::TestCurrencyParsing::test_clean_currency_string_edge_cases PASSED [ 34%]
+tests/test_currency_parsing.py::TestCurrencyParsing::test_safe_numeric_conversion_with_currency PASSED [ 34%]
+tests/test_currency_parsing.py::TestCurrencyParsing::test_safe_float_conversion_chart_data PASSED [ 35%]
+tests/test_currency_parsing.py::TestRealDataScenarios::test_production_calculation_with_currency_format PASSED [ 35%]
+tests/test_currency_parsing.py::TestRealDataScenarios::test_historical_production_with_mixed_formats PASSED [ 36%]
+tests/test_currency_parsing.py::TestRealDataScenarios::test_chart_data_formatting_with_currency PASSED [ 36%]
+tests/test_data_sources.py::TestDataSourceConfig::test_get_eod_billing_config PASSED [ 37%]
+tests/test_data_sources.py::TestDataSourceConfig::test_get_front_kpi_config PASSED [ 37%]
+tests/test_data_sources.py::TestDataSourceConfig::test_get_nonexistent_config PASSED [ 37%]
+tests/test_data_sources.py::TestDataSourceConfig::test_get_empty_source_name PASSED [ 38%]
+tests/test_data_sources.py::TestOperationalDayLogic::test_monday_is_operational PASSED [ 38%]
+tests/test_data_sources.py::TestOperationalDayLogic::test_tuesday_is_operational PASSED [ 39%]
+tests/test_data_sources.py::TestOperationalDayLogic::test_wednesday_is_operational PASSED [ 39%]
+tests/test_data_sources.py::TestOperationalDayLogic::test_thursday_is_operational PASSED [ 40%]
+tests/test_data_sources.py::TestOperationalDayLogic::test_friday_is_operational PASSED [ 40%]
+tests/test_data_sources.py::TestOperationalDayLogic::test_saturday_is_operational PASSED [ 40%]
+tests/test_data_sources.py::TestOperationalDayLogic::test_sunday_is_not_operational PASSED [ 41%]
+tests/test_data_sources.py::TestLatestOperationalDate::test_monday_returns_self PASSED [ 41%]
+tests/test_data_sources.py::TestLatestOperationalDate::test_sunday_returns_previous_saturday PASSED [ 42%]
+tests/test_data_sources.py::TestLatestOperationalDate::test_saturday_returns_self PASSED [ 42%]
+tests/test_data_sources.py::TestLatestOperationalDate::test_tuesday_returns_self PASSED [ 43%]
+tests/test_data_sources.py::TestLatestOperationalDate::test_no_reference_date_uses_today PASSED [ 43%]
+tests/test_data_sources.py::TestLatestOperationalDate::test_time_component_removed PASSED [ 43%]
+tests/test_data_sources.py::TestHistoricalDateRange::test_30_day_range PASSED [ 44%]
+tests/test_data_sources.py::TestHistoricalDateRange::test_custom_day_range PASSED [ 44%]
+tests/test_data_sources.py::TestHistoricalDateRange::test_zero_days_range PASSED [ 45%]
+tests/test_data_sources.py::TestOperationalDaysInRange::test_week_with_sunday PASSED [ 45%]
+tests/test_data_sources.py::TestOperationalDaysInRange::test_single_operational_day PASSED [ 46%]
+tests/test_data_sources.py::TestOperationalDaysInRange::test_single_non_operational_day PASSED [ 46%]
+tests/test_data_sources.py::TestOperationalDaysInRange::test_full_month_september_2025 PASSED [ 46%]
+tests/test_data_sources.py::TestOperationalDaysInRange::test_empty_range PASSED [ 47%]
+tests/test_data_sources.py::TestConfigValidation::test_valid_configuration PASSED [ 47%]
+tests/test_data_sources.py::TestConfigValidation::test_missing_required_key PASSED [ 48%]
+tests/test_data_sources.py::TestConfigValidation::test_operational_schedule_constants PASSED [ 48%]
+tests/test_data_sources.py::TestConfigValidation::test_chart_defaults_constants PASSED [ 49%]
+tests/test_data_sources.py::TestEdgeCases::test_leap_year_february PASSED [ 49%]
+tests/test_data_sources.py::TestEdgeCases::test_year_boundary PASSED     [ 50%]
+tests/test_data_sources.py::TestIntegrationScenarios::test_current_sunday_scenario PASSED [ 50%]
+tests/test_data_sources.py::TestIntegrationScenarios::test_holiday_monday_scenario PASSED [ 50%]
+tests/test_data_sources.py::TestIntegrationScenarios::test_weekend_data_collection PASSED [ 51%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_column_mappings PASSED [ 51%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_eod_production_calculation PASSED [ 52%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_eod_collection_calculation PASSED [ 52%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_eod_new_patients_calculation PASSED [ 53%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_front_kpi_case_acceptance PASSED [ 53%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_front_kpi_hygiene_reappointment PASSED [ 53%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_edge_case_zero_values PASSED [ 54%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_realistic_daily_numbers PASSED [ 54%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_currency_format_handling PASSED [ 55%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_spreadsheet_id_in_config PASSED [ 55%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_data_type_conversions PASSED [ 56%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_missing_column_handling PASSED [ 56%]
+tests/test_gdrive_validation.py::TestSheetsStructure::test_empty_dataframe_handling PASSED [ 56%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_initialization ERROR [ 57%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_operational_date_weekday ERROR [ 57%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_operational_date_sunday ERROR [ 58%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_operational_date_edge_cases ERROR [ 58%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date ERROR [ 59%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_from_monday ERROR [ 59%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_from_sunday ERROR [ 59%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_from_tuesday ERROR [ 60%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_fallback_protection ERROR [ 60%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_default_today ERROR [ 61%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_parse_date_string_formats ERROR [ 61%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_parse_date_string_invalid ERROR [ 62%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_success ERROR [ 62%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_mixed_formats ERROR [ 62%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_invalid_dates ERROR [ 63%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_empty_data ERROR [ 63%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_missing_column ERROR [ 64%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_filter_by_date_range_success ERROR [ 64%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_filter_by_date_range_success_specific_data ERROR [ 65%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_filter_by_date_range_no_data_in_range ERROR [ 65%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_filter_to_specific_date_success ERROR [ 65%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_filter_to_specific_date_no_match ERROR [ 66%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_calculate_aggregations ERROR [ 66%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_calculate_aggregations_empty_data ERROR [ 67%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_historical_data_success ERROR [ 67%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_historical_data_provider_error ERROR [ 68%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_historical_data_no_data_in_range ERROR [ 68%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_data_success ERROR [ 68%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_data_no_recent_data ERROR [ 69%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_data_provider_integration ERROR [ 69%]
+tests/test_historical_data.py::TestHistoricalDataManager::test_edge_case_single_data_point ERROR [ 70%]
+tests/test_historical_metrics.py::TestTimeSeriesConversion::test_safe_time_series_conversion_success PASSED [ 70%]
+tests/test_historical_metrics.py::TestTimeSeriesConversion::test_safe_time_series_conversion_empty_dataframe PASSED [ 71%]
+tests/test_historical_metrics.py::TestTimeSeriesConversion::test_safe_time_series_conversion_none_dataframe PASSED [ 71%]
+tests/test_historical_metrics.py::TestTimeSeriesConversion::test_safe_time_series_conversion_missing_column PASSED [ 71%]
+tests/test_historical_metrics.py::TestTimeSeriesConversion::test_safe_time_series_conversion_missing_date_column PASSED [ 72%]
+tests/test_historical_metrics.py::TestTimeSeriesConversion::test_safe_time_series_conversion_invalid_dates PASSED [ 72%]
+tests/test_historical_metrics.py::TestTimeSeriesConversion::test_safe_time_series_conversion_invalid_values PASSED [ 73%]
+tests/test_historical_metrics.py::TestHistoricalProductionTotal::test_calculate_historical_production_total_success PASSED [ 73%]
+tests/test_historical_metrics.py::TestHistoricalProductionTotal::test_calculate_historical_production_total_unprefixed_columns PASSED [ 74%]
+tests/test_historical_metrics.py::TestHistoricalProductionTotal::test_calculate_historical_production_total_empty_dataframe PASSED [ 74%]
+tests/test_historical_metrics.py::TestHistoricalProductionTotal::test_calculate_historical_production_total_none_dataframe PASSED [ 75%]
+tests/test_historical_metrics.py::TestHistoricalProductionTotal::test_calculate_historical_production_total_missing_column PASSED [ 75%]
+tests/test_historical_metrics.py::TestHistoricalCollectionRate::test_calculate_historical_collection_rate_success PASSED [ 75%]
+tests/test_historical_metrics.py::TestHistoricalCollectionRate::test_calculate_historical_collection_rate_unprefixed_columns PASSED [ 76%]
+tests/test_historical_metrics.py::TestHistoricalCollectionRate::test_calculate_historical_collection_rate_zero_production PASSED [ 76%]
+tests/test_historical_metrics.py::TestHistoricalCollectionRate::test_calculate_historical_collection_rate_missing_columns PASSED [ 77%]
+tests/test_historical_metrics.py::TestHistoricalCollectionRate::test_calculate_historical_collection_rate_missing_date_column PASSED [ 77%]
+tests/test_historical_metrics.py::TestHistoricalNewPatients::test_calculate_historical_new_patients_success PASSED [ 78%]
+tests/test_historical_metrics.py::TestHistoricalNewPatients::test_calculate_historical_new_patients_zero_values PASSED [ 78%]
+tests/test_historical_metrics.py::TestHistoricalNewPatients::test_calculate_historical_new_patients_missing_column PASSED [ 78%]
+tests/test_historical_metrics.py::TestGetAllHistoricalKPIs::test_get_all_historical_kpis_success PASSED [ 79%]
+tests/test_historical_metrics.py::TestGetAllHistoricalKPIs::test_get_all_historical_kpis_error_handling PASSED [ 79%]
+tests/test_historical_metrics.py::TestGetAllHistoricalKPIs::test_get_all_historical_kpis_partial_data_failure PASSED [ 80%]
+tests/test_historical_metrics.py::TestBackwardCompatibility::test_existing_functions_still_work PASSED [ 80%]
+tests/test_historical_metrics.py::TestBackwardCompatibility::test_historical_functions_are_new_additions PASSED [ 81%]
+tests/test_historical_metrics.py::TestBackwardCompatibility::test_historical_vs_current_function_signatures PASSED [ 81%]
+tests/test_historical_metrics.py::TestDataStructureCompatibility::test_historical_data_structure_is_serializable PASSED [ 81%]
+tests/test_historical_metrics.py::TestDataStructureCompatibility::test_time_series_format_is_frontend_friendly PASSED [ 82%]
+tests/test_location_switching.py::TestLocationSwitching::test_get_baytown_kpis PASSED [ 82%]
+tests/test_location_switching.py::TestLocationSwitching::test_get_humble_kpis PASSED [ 83%]
+tests/test_location_switching.py::TestLocationSwitching::test_get_combined_kpis PASSED [ 83%]
+tests/test_location_switching.py::TestLocationSwitching::test_calculate_production_with_location_data PASSED [ 84%]
+tests/test_location_switching.py::TestLocationSwitching::test_calculate_collection_rate_with_location_data PASSED [ 84%]
+tests/test_location_switching.py::TestLocationSwitching::test_location_parameter_validation PASSED [ 84%]
+tests/test_location_switching.py::TestLocationSwitching::test_default_location_parameter PASSED [ 85%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_production_total_success PASSED [ 85%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_production_total_empty PASSED [ 86%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_production_total_none PASSED [ 86%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_production_total_missing_column PASSED [ 87%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_collection_rate_success PASSED [ 87%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_collection_rate_zero_production PASSED [ 87%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_collection_rate_empty PASSED [ 88%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_collection_rate_none PASSED [ 88%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_new_patients_success PASSED [ 89%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_new_patients_with_nulls PASSED [ 89%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_new_patients_empty PASSED [ 90%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_case_acceptance_success PASSED [ 90%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_case_acceptance_zero_presented PASSED [ 90%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_hygiene_reappointment_success PASSED [ 91%]
+tests/test_metrics.py::TestKPICalculations::test_calculate_hygiene_reappointment_zero_appointments PASSED [ 91%]
+tests/test_metrics.py::TestKPICalculations::test_column_name_mismatch_handling PASSED [ 92%]
+tests/test_metrics.py::TestKPICalculations::test_unprefixed_column_name_support PASSED [ 92%]
+tests/test_metrics.py::TestKPICalculations::test_prefixed_column_name_support PASSED [ 93%]
+tests/test_metrics.py::TestKPICalculations::test_mixed_column_name_scenarios PASSED [ 93%]
+tests/test_metrics.py::TestKPICalculations::test_collection_rate_missing_collections_column PASSED [ 93%]
+tests/test_metrics.py::TestKPICalculations::test_new_patients_missing_column PASSED [ 94%]
+tests/test_metrics.py::TestKPICalculations::test_case_acceptance_missing_columns PASSED [ 94%]
+tests/test_metrics.py::TestKPICalculations::test_hygiene_reappointment_missing_columns PASSED [ 95%]
+tests/test_metrics.py::TestKPIThresholds::test_production_threshold_categories PASSED [ 95%]
+tests/test_metrics.py::TestKPIThresholds::test_collection_rate_thresholds PASSED [ 96%]
+tests/test_metrics.py::TestKPIThresholds::test_hygiene_reappointment_thresholds PASSED [ 96%]
+tests/test_plotly_charts.py::test_production_charts PASSED               [ 96%]
+tests/test_plotly_charts.py::test_collection_rate_charts PASSED          [ 97%]
+tests/test_plotly_charts.py::test_new_patients_charts PASSED             [ 97%]
+tests/test_plotly_charts.py::test_case_acceptance_charts PASSED          [ 98%]
+tests/test_plotly_charts.py::test_hygiene_reappointment_charts PASSED    [ 98%]
+tests/test_plotly_charts.py::test_edge_cases PASSED                      [ 99%]
+tests/test_plotly_charts.py::test_chart_interactivity PASSED             [ 99%]
+tests/test_plotly_charts.py::test_all_chart_types PASSED                 [100%]
+
+==================================== ERRORS ====================================
+_______ ERROR at setup of TestHistoricalDataManager.test_initialization ________
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e0d70>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_operational_date_weekday _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x108572f60>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_operational_date_sunday _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085705f0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_operational_date_edge_cases _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085719d0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_latest_operational_date _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x10852ff50>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_latest_operational_date_from_monday _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e0c50>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_latest_operational_date_from_sunday _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e0fb0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_latest_operational_date_from_tuesday _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1190>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_latest_operational_date_fallback_protection _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1370>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_latest_operational_date_default_today _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1550>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+__ ERROR at setup of TestHistoricalDataManager.test_parse_date_string_formats __
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1730>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+__ ERROR at setup of TestHistoricalDataManager.test_parse_date_string_invalid __
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1910>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_convert_to_datetime_column_success _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1af0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_convert_to_datetime_column_mixed_formats _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1cd0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_convert_to_datetime_column_invalid_dates _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1eb0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_convert_to_datetime_column_empty_data _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2090>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_convert_to_datetime_column_missing_column _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2270>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_filter_by_date_range_success _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2450>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_filter_by_date_range_success_specific_data _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2630>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_filter_by_date_range_no_data_in_range _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2810>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_filter_to_specific_date_success _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e29f0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_filter_to_specific_date_no_match _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2bd0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+___ ERROR at setup of TestHistoricalDataManager.test_calculate_aggregations ____
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2db0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_calculate_aggregations_empty_data _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2f90>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_historical_data_success _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x108570b30>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_historical_data_provider_error _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2c00>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_historical_data_no_data_in_range _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2750>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+___ ERROR at setup of TestHistoricalDataManager.test_get_latest_data_success ___
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e2180>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_get_latest_data_no_recent_data _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1940>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+__ ERROR at setup of TestHistoricalDataManager.test_data_provider_integration __
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e1490>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+_ ERROR at setup of TestHistoricalDataManager.test_edge_case_single_data_point _
+
+self = <tests.test_historical_data.TestHistoricalDataManager object at 0x1085e0ec0>
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_provider = Mock()
+>       self.manager = HistoricalDataManager(self.mock_provider)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: HistoricalDataManager.__init__() takes 1 positional argument but 2 were given
+
+tests/test_historical_data.py:18: TypeError
+=================================== FAILURES ===================================
+____________________________ test_time_aggregation _____________________________
+
+    def test_time_aggregation():
+        """Test weekly and monthly data aggregation features."""
+        print("📊 Testing time-based aggregation...")
+    
+        test_data = create_test_data(30)  # 30 days of data
+    
+        # Test weekly aggregation
+        weekly_data = aggregate_to_weekly(test_data)
+>       assert "aggregation" in weekly_data
+E       AssertionError: assert 'aggregation' in {'dates': ['2025-08-30', '2025-09-06', '2025-09-13', '2025-09-20', '2025-09-26'], 'metadata': {'aggregation': 'weekly', 'business_days_only': True, 'test_data': True}, 'statistics': {'average': 43314.4, 'data_points': 5, 'maximum': 52465, 'minimum': 28232, ...}, 'values': [28232, 48198, 52465, 46228, 41449]}
+
+tests/test_advanced_charts.py:54: AssertionError
+----------------------------- Captured stdout call -----------------------------
+📊 Testing time-based aggregation...
+___________________________ test_chart_interactions ____________________________
+
+    def test_chart_interactions():
+        """Test interactive chart features and controls."""
+        print("🎮 Testing chart interactions...")
+    
+        test_data = create_test_data(14)  # 2 weeks
+    
+        # Create chart with all interactive features
+>       chart = create_production_chart(
+            test_data, show_trend=True, show_range_selector=True
+        )
+E       TypeError: create_production_chart() got an unexpected keyword argument 'show_range_selector'
+
+tests/test_advanced_charts.py:163: TypeError
+----------------------------- Captured stdout call -----------------------------
+🎮 Testing chart interactions...
+_____________________________ test_error_handling ______________________________
+
+    def test_error_handling():
+        """Test error handling with invalid or missing data."""
+        print("🛡️ Testing error handling...")
+    
+        # Test with empty data
+        empty_data = {"dates": [], "values": []}
+        chart = create_production_chart(empty_data)
+        assert chart is not None, "Chart creation failed with empty data"
+    
+        # Test with mismatched data lengths
+        bad_data = {"dates": ["2024-01-01", "2024-01-02"], "values": [1000]}
+        chart = create_production_chart(bad_data)
+        assert chart is not None, "Chart creation failed with mismatched data"
+    
+        # Test with None data
+>       chart = create_production_chart(None)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_advanced_charts.py:224: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+chart_data = None, show_trend = True, timeframe = 'daily'
+
+    def create_production_chart(
+        chart_data: dict[str, Any], show_trend: bool = True, timeframe: str = "daily"
+    ) -> Figure:
+        """Create interactive production total chart with trend analysis.
+    
+        Args:
+            chart_data: Formatted chart data from format_production_chart_data()
+            show_trend: Whether to display trend line
+            timeframe: Time aggregation level (daily, weekly, monthly)
+    
+        Returns:
+            Configured Plotly figure for production data
+        """
+>       time_series = chart_data.get("time_series")
+                      ^^^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'get'
+
+apps/frontend/chart_production.py:41: AttributeError
+----------------------------- Captured stdout call -----------------------------
+🛡️ Testing error handling...
+----------------------------- Captured stderr call -----------------------------
+{"event": "chart_utils.pattern_annotation.insufficient_values", "level": "warning", "timestamp": "2025-09-27T15:33:10.061902Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_utils.py", "lineno": 460}
+{"data_points": 1, "timeframe": "daily", "event": "chart.production_created", "level": "info", "timestamp": "2025-09-27T15:33:10.071143Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_production.py", "lineno": 136}
+_______________________ test_format_currency_hover_none ________________________
+
+    def test_format_currency_hover_none():
+        """Test handling None values in currency formatting."""
+>       assert format_currency_hover(None) == "N/A"
+E       AssertionError: assert 'No data' == 'N/A'
+E         
+E         - N/A
+E         + No data
+
+tests/test_chart_utils_helpers.py:30: AssertionError
+____________________________ test_handle_empty_data ____________________________
+
+    def test_handle_empty_data():
+        """Test empty data chart generation."""
+        fig = handle_empty_data("Test Metric")
+    
+        # Check it returns a valid figure
+        assert isinstance(fig, go.Figure)
+    
+        # Check the annotation text
+        assert len(fig.layout.annotations) == 1
+        assert "No data available for Test Metric" in fig.layout.annotations[0].text
+    
+        # Check the title
+>       assert fig.layout.title.text == "Test Metric - No Data"
+E       AssertionError: assert None == 'Test Metric - No Data'
+E        +  where None = layout.Title().text
+E        +    where layout.Title() = Layout({\n    'annotations': [{'bgcolor': 'rgba(255,255,255,0.95)',\n                     'bordercolor': '#E9ECEF',\n                     'borderpad': 6,\n                     'borderwidth': 1,\n                     'font': {'color': '#6C757D', 'size': 14},\n                     'showarrow': False,\n                     'text': 'No data available for Test Metric',\n                     'x': 0.5,\n                     'xref': 'paper',\n                     'y': 0.5,\n                     'yref': 'paper'}],\n    'height': 360,\n    'margin': {'b': 40, 'l': 40, 'r': 40, 't': 60},\n    'template': '...',\n    'xaxis': {'visible': False},\n    'yaxis': {'visible': False}\n}).title
+E        +      where Layout({\n    'annotations': [{'bgcolor': 'rgba(255,255,255,0.95)',\n                     'bordercolor': '#E9ECEF',\n                     'borderpad': 6,\n                     'borderwidth': 1,\n                     'font': {'color': '#6C757D', 'size': 14},\n                     'showarrow': False,\n                     'text': 'No data available for Test Metric',\n                     'x': 0.5,\n                     'xref': 'paper',\n                     'y': 0.5,\n                     'yref': 'paper'}],\n    'height': 360,\n    'margin': {'b': 40, 'l': 40, 'r': 40, 't': 60},\n    'template': '...',\n    'xaxis': {'visible': False},\n    'yaxis': {'visible': False}\n}) = Figure({\n    'data': [],\n    'layout': {'annotations': [{'bgcolor': 'rgba(255,255,255,0.95)',\n                                'bordercolor': '#E9ECEF',\n                                'borderpad': 6,\n                                'borderwidth': 1,\n                                'font': {'color': '#6C757D', 'size': 14},\n                                'showarrow': False,\n                                'text': 'No data available for Test Metric',\n                                'x': 0.5,\n                                'xref': 'paper',\n                                'y': 0.5,\n                                'yref': 'paper'}],\n               'height': 360,\n               'margin': {'b': 40, 'l': 40, 'r': 40, 't': 60},\n               'template': '...',\n               'xaxis': {'visible': False},\n               'yaxis': {'visible': False}}\n}).layout
+
+tests/test_chart_utils_helpers.py:45: AssertionError
+________________ test_add_pattern_annotation_insufficient_data _________________
+
+    def test_add_pattern_annotation_insufficient_data():
+        """Test pattern annotation with insufficient data."""
+        fig = go.Figure()
+        values = [100]  # Only one data point
+    
+        # Should not raise any errors
+        add_pattern_annotation(fig, values)
+    
+        # Should add annotation indicating insufficient data
+>       assert len(fig.layout.annotations) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len(())
+E        +    where () = Layout({\n    'template': '...'\n}).annotations
+E        +      where Layout({\n    'template': '...'\n}) = Figure({\n    'data': [], 'layout': {'template': '...'}\n}).layout
+
+tests/test_chart_utils_helpers.py:102: AssertionError
+----------------------------- Captured stderr call -----------------------------
+{"event": "chart_utils.pattern_annotation.insufficient_values", "level": "warning", "timestamp": "2025-09-27T15:33:10.224720Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_utils.py", "lineno": 460}
+=============================== warnings summary ===============================
+tests/test_advanced_charts.py::test_trend_analysis
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_advanced_charts.py::test_trend_analysis returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_advanced_charts.py::test_performance_benchmarks
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_advanced_charts.py::test_performance_benchmarks returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_advanced_charts.py::test_visual_styling
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_advanced_charts.py::test_visual_styling returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_historical_metrics.py::TestTimeSeriesConversion::test_safe_time_series_conversion_invalid_dates
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/backend/metrics.py:514: UserWarning:
+  
+  Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+
+tests/test_plotly_charts.py::test_production_charts
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_plotly_charts.py::test_production_charts returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_plotly_charts.py::test_collection_rate_charts
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_plotly_charts.py::test_collection_rate_charts returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_plotly_charts.py::test_new_patients_charts
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_plotly_charts.py::test_new_patients_charts returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_plotly_charts.py::test_case_acceptance_charts
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_plotly_charts.py::test_case_acceptance_charts returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_plotly_charts.py::test_hygiene_reappointment_charts
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_plotly_charts.py::test_hygiene_reappointment_charts returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_plotly_charts.py::test_edge_cases
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_plotly_charts.py::test_edge_cases returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_plotly_charts.py::test_chart_interactivity
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_plotly_charts.py::test_chart_interactivity returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+tests/test_plotly_charts.py::test_all_chart_types
+  /Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_pytest/python.py:161: PytestReturnNotNoneWarning:
+  
+  Test functions should return None, but tests/test_plotly_charts.py::test_all_chart_types returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+______________ coverage: platform darwin, python 3.12.11-final-0 _______________
+
+Name                              Stmts   Miss  Cover   Missing
+---------------------------------------------------------------
+apps/backend/__init__.py              0      0   100%
+apps/backend/chart_data.py          496    260    48%   37, 152-153, 163-165, 177-287, 299-419, 435-515, 531-647, 663-764, 781, 792, 819-834, 846, 873-897, 915, 928, 954, 973-975, 990-1051, 1067-1111
+apps/backend/data_providers.py      118     56    53%   39, 43, 47, 80, 90, 97-98, 107, 117-118, 128, 143-178, 186, 198-212, 223-225, 236-240, 262-264
+apps/backend/historical_data.py     112     95    15%   51-52, 62-75, 90-132, 147-184, 199-236, 254-309, 325-377, 392
+apps/backend/metrics.py             382     29    92%   454-456, 535-537, 712-726, 781, 806-808, 881, 884, 923, 940, 1031-1033, 1050, 1067-1071, 1093, 1115-1117
+---------------------------------------------------------------
+TOTAL                              1108    440    60%
+Coverage HTML written to dir htmlcov
+=========================== short test summary info ============================
+FAILED tests/test_advanced_charts.py::test_time_aggregation - AssertionError:...
+FAILED tests/test_advanced_charts.py::test_chart_interactions - TypeError: cr...
+FAILED tests/test_advanced_charts.py::test_error_handling - AttributeError: '...
+FAILED tests/test_chart_utils_helpers.py::test_format_currency_hover_none - A...
+FAILED tests/test_chart_utils_helpers.py::test_handle_empty_data - AssertionE...
+FAILED tests/test_chart_utils_helpers.py::test_add_pattern_annotation_insufficient_data
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_initialization
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_operational_date_weekday
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_operational_date_sunday
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_operational_date_edge_cases
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_from_monday
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_from_sunday
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_from_tuesday
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_fallback_protection
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_operational_date_default_today
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_parse_date_string_formats
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_parse_date_string_invalid
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_success
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_mixed_formats
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_invalid_dates
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_empty_data
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_convert_to_datetime_column_missing_column
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_filter_by_date_range_success
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_filter_by_date_range_success_specific_data
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_filter_by_date_range_no_data_in_range
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_filter_to_specific_date_success
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_filter_to_specific_date_no_match
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_calculate_aggregations
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_calculate_aggregations_empty_data
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_historical_data_success
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_historical_data_provider_error
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_historical_data_no_data_in_range
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_data_success
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_get_latest_data_no_recent_data
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_data_provider_integration
+ERROR tests/test_historical_data.py::TestHistoricalDataManager::test_edge_case_single_data_point
+============ 6 failed, 195 passed, 12 warnings, 31 errors in 1.50s =============

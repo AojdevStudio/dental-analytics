@@ -7,7 +7,8 @@ create_chart_from_data.
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import structlog
 from plotly.graph_objects import Figure
@@ -20,6 +21,7 @@ from .chart_base import (
 )
 from .chart_production import create_production_chart
 from .chart_utils import (
+    add_pattern_annotation,
     add_trend_line,
     add_trend_pattern_annotation,
     apply_alpha_to_color,
@@ -53,9 +55,10 @@ def create_collection_rate_chart(
 
     # Data validation
     dates = chart_data.get("dates", [])
-    values = chart_data.get("values", [])
+    raw_values = chart_data.get("values", [])
+    clean_values = [value for value in raw_values if value is not None]
 
-    if not dates or not values:
+    if not dates or not clean_values:
         log.warning("chart.collection_rate_no_data")
         return fig
 
@@ -73,7 +76,7 @@ def create_collection_rate_chart(
     # Main data trace
     fig.add_scatter(
         x=dates,
-        y=values,
+        y=clean_values,
         mode="lines+markers",
         line={"color": line_color, "width": 3},
         marker={
@@ -89,7 +92,7 @@ def create_collection_rate_chart(
 
     # Add trend line if requested
     if format_options.get("show_trend", False):
-        add_trend_line(fig, dates, values, "Collection Rate Trend")
+        add_trend_line(fig, dates, clean_values, "Collection Rate Trend")
 
     # Add target line at 95% (industry standard)
     target_rate = format_options.get("target_rate", 95)
@@ -128,12 +131,12 @@ def create_collection_rate_chart(
 
     # Add trend pattern annotation if enabled
     if format_options.get("show_trend_pattern", True):
-        add_trend_pattern_annotation(fig, values)
+        add_pattern_annotation(fig, clean_values)
 
     log.info(
         "chart.collection_rate_completed",
         data_points=len(dates),
-        avg_rate=sum(values) / len(values) if values else 0,
+        avg_rate=sum(clean_values) / len(clean_values) if clean_values else 0,
     )
 
     return fig
@@ -252,7 +255,8 @@ def create_case_acceptance_chart(
 
     # Data validation
     dates = chart_data.get("dates", [])
-    values = chart_data.get("values", [])
+    raw_values = chart_data.get("values", [])
+    values = [value for value in raw_values if value is not None]
 
     if not dates or not values:
         log.warning("chart.case_acceptance_no_data")
@@ -260,7 +264,9 @@ def create_case_acceptance_chart(
 
     # Configure chart style
     line_color = format_options.get("line_color", BRAND_COLORS["success_green"])
-    fill_color = format_options.get("fill_color", f"{line_color}20")
+    fill_alpha = format_options.get("fill_opacity", 0.15)
+    fill_base_color = format_options.get("fill_color", line_color)
+    fill_color = apply_alpha_to_color(fill_base_color, fill_alpha)
 
     # Main data trace
     fig.add_scatter(
@@ -346,7 +352,8 @@ def create_hygiene_reappointment_chart(
 
     # Data validation
     dates = chart_data.get("dates", [])
-    values = chart_data.get("values", [])
+    raw_values = chart_data.get("values", [])
+    values = [value for value in raw_values if value is not None]
 
     if not dates or not values:
         log.warning("chart.hygiene_reappointment_no_data")
@@ -354,7 +361,9 @@ def create_hygiene_reappointment_chart(
 
     # Configure chart style
     line_color = format_options.get("line_color", BRAND_COLORS["accent"])
-    fill_color = format_options.get("fill_color", f"{line_color}20")
+    fill_alpha = format_options.get("fill_opacity", 0.15)
+    fill_base_color = format_options.get("fill_color", line_color)
+    fill_color = apply_alpha_to_color(fill_base_color, fill_alpha)
 
     # Main data trace
     fig.add_scatter(
@@ -440,12 +449,7 @@ def _normalize_metric_key(metric_name: str | None) -> str | None:
     if not metric_name:
         return None
 
-    slug = (
-        metric_name.strip()
-        .lower()
-        .replace("-", "_")
-        .replace(" ", "_")
-    )
+    slug = metric_name.strip().lower().replace("-", "_").replace(" ", "_")
 
     return METRIC_ALIASES.get(slug, slug or None)
 
@@ -544,8 +548,9 @@ def create_chart_from_data(
     creator = chart_creators.get(resolved_metric)
     if creator is None:
         available_types = sorted(list(chart_creators.keys()) + ["production_total"])
+        joined_types = ", ".join(available_types)
         raise ValueError(
-            f"Unknown KPI type: {resolved_metric}. Available: {', '.join(available_types)}"
+            f"Unknown KPI type: {resolved_metric}. Available: {joined_types}"
         )
 
     normalized_data = _prepare_series_lists(chart_data)

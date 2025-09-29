@@ -1,0 +1,1072 @@
+[2025-09-27T15:23:32] Code v0.2.144
+--------
+workdir: /Users/ossieirondi/Projects/unified-dental/dental-analytics
+model: gpt-5-codex
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: low
+reasoning summaries: auto
+--------
+[2025-09-27T15:23:32] User instructions:
+# Repository Context
+- Project: Dental analytics Streamlit dashboard for multi-location KPIs
+- Branch: fix-production-data-loading-and-chart-errors (as of 2025-09-27)
+- Environment: Python 3.11+, uv for dependency management, Streamlit frontend at `apps/frontend/app.py`
+- Commands:
+  - Run dashboard: `uv run streamlit run apps/frontend/app.py`
+  - Run tests: `uv run pytest`
+  - Format: `uv run black .`
+- Google Sheets credentials expected at `config/credentials.json` (service account JSON). YAML alias mapping in `config/sheets.yml`.
+
+# Problem Summary
+Running the Streamlit app currently crashes before the UI renders. Console output:
+```
+Traceback (most recent call last):
+  File ".../streamlit/runtime/scriptrunner/script_runner.py", line ..., in _run_script
+    exec(code, module.__dict__)
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/app.py", line 28, in <module>
+    from apps.frontend.chart_kpis import create_chart_from_data
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", line 18, in <module>
+    from .chart_production import create_production_chart
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_production.py", line 17, in <module>
+    from apps.frontend.chart_utils import (
+ImportError: cannot import name 'add_trend_line_to_figure' from 'apps.frontend.chart_utils' (/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_utils.py)
+```
+This import failure cascades, preventing any chart modules from loading. Additional functions referenced in `chart_production.py` (`add_pattern_annotation`, `format_currency_hover`, `handle_empty_data`) are also missing from `chart_utils.py`. The UI therefore cannot instantiate charts, and all KPI tabs show loading failures.
+
+Goal: Restore full chart functionality so the dashboard loads without errors and all 5 KPI charts render correctly for both locations.
+
+# Key Observations
+- `apps/frontend/chart_production.py` imports helper utilities that do not exist.
+- `apps/frontend/chart_utils.py` currently defines generic helpers (trend detection, target lines, alpha conversion) but lacks production-specific helpers.
+- Chart data is provided by `apps/backend/chart_data.py` via `format_all_chart_data`, returning structures consumed by `create_chart_from_data` in `chart_kpis.py`.
+- KPI metric functions in `apps/backend/metrics.py` and provider logic in `apps/backend/data_providers.py` appear intact; issue isolated to frontend chart utilities.
+- We must add the missing helper implementations (or adjust imports) and ensure compatibility with the chart payload shape.
+- After fixes, run `uv run streamlit run apps/frontend/app.py` to confirm the dashboard loads, and execute `uv run pytest` to ensure regression safety.
+
+# Relevant Files (full contents)
+
+## apps/frontend/app.py
+```python
+"""
+Main Streamlit dashboard application for Kam Dental Analytics.
+
+This application displays 5 key dental practice KPIs in a clean, branded interface:
+- Production Total (daily revenue)
+- Collection Rate (payment efficiency)
+- New Patient Count (growth metric)
+- Case Acceptance (treatment conversion)
+- Hygiene Reappointment Rate (patient retention)
+
+Features:
+- Multi-location support (Baytown and Humble)
+- Real-time Google Sheets integration
+- Interactive charts with historical data
+- Responsive design with brand colors
+- Performance-optimized caching
+"""
+
+import sys
+from datetime import datetime
+from pathlib import Path
+
+import streamlit as st
+
+# Add project root to path for imports
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from apps.backend.chart_data import format_all_chart_data  # noqa: E402
+from apps.backend.data_providers import SheetsProvider  # noqa: E402
+from apps.backend.metrics import get_all_kpis  # noqa: E402
+from apps.frontend.chart_kpis import create_chart_from_data  # noqa: E402
+
+# Configure Streamlit page settings
+st.set_page_config(
+    page_title="Kam Dental Analytics",
+    page_icon="🦷",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# Location selector at the top
+st.markdown("### 📍 **Practice Location**")
+location = st.radio(
+    "Select practice location:",
+    options=["baytown", "humble"],
+    format_func=lambda x: x.title(),
+    horizontal=True,
+    help="Choose which practice location to view KPI data for",
+)
+
+# Location selector only (Chart Time Range moved to Interactive Charts section)
+col_location = st.columns([1])[0]
+
+# Custom CSS for KamDental branding with location-specific accents
+location_colors = {
+    "baytown": {
+        "primary": "#142D54",  # Navy blue
+        "accent": "#007E9E",  # Teal
+        "success": "#28a745",
+        "warning": "#ffc107",
+        "danger": "#dc3545",
+    },
+    "humble": {
+        "primary": "#142D54",  # Navy blue
+        "accent": "#6F42C1",  # Purple accent for differentiation
+        "success": "#28a745",
+        "warning": "#ffc107",
+        "danger": "#dc3545",
+    },
+}
+
+colors = location_colors[location]
+
+st.markdown(
+    f"""
+    <style>
+    .main-header {{
+        color: {colors["primary"]};
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }}
+    .location-badge {{
+        background: linear-gradient(135deg, {colors["accent"]}, {colors["primary"]});
+        color: white;
+        padding: 0.3rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        display: inline-block;
+        margin: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }}
+    .metric-container {{
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid {colors["accent"]};
+        margin: 0.5rem 0;
+    }}
+    .metric-title {{
+        color: {colors["primary"]};
+        font-weight: bold;
+        font-size: 1.1rem;
+    }}
+    .metric-value {{
+        color: {colors["accent"]};
+        font-size: 2rem;
+        font-weight: bold;
+    }}
+    .subtitle {{
+        color: {colors["primary"]};
+        text-align: center;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }}
+    .stSelectbox > div > div {{
+        background-color: {colors["accent"]};
+        color: white;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Main header with location indicator
+st.markdown(
+    '<h1 class="main-header">🦷 KAM DENTAL ANALYTICS</h1>', unsafe_allow_html=True
+)
+location_badge_html = (
+    f'<div style="text-align: center;">'
+    f'<span class="location-badge">{location.title()} Practice</span></div>'
+)
+st.markdown(location_badge_html, unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Real-time KPI Dashboard</p>', unsafe_allow_html=True)
+
+# Date and separator
+st.markdown(f"**Daily KPI Report** • {datetime.now().strftime('%B %d, %Y')}")
+st.markdown("---")
+
+
+# Cache function for chart data (Story 2.3: Performance Optimization)
+@st.cache_data(ttl=300)  # 5 minute cache
+def load_chart_data(location: str):
+    """Load chart data with caching for performance."""
+    try:
+        provider = SheetsProvider()
+        eod_alias = f"{location}_eod"
+        front_alias = f"{location}_front"
+
+        eod_df = (
+            provider.fetch(eod_alias) if provider.validate_alias(eod_alias) else None
+        )
+        front_df = (
+            provider.fetch(front_alias)
+            if provider.validate_alias(front_alias)
+            else None
+        )
+
+        if eod_df is not None and front_df is not None:
+            return format_all_chart_data(eod_df, front_df)
+    except Exception as e:
+        st.error(f"Error loading chart data: {e}")
+    return None
+
+
+# Cache KPI data separately for faster updates
+@st.cache_data(ttl=300)  # 5 minute cache
+def load_kpi_data(location: str):
+    """Load KPI data with caching."""
+    return get_all_kpis(location=location)
+
+
+# Load KPI data and chart data (Task 3: Location-aware data calls)
+with st.spinner(f"Loading {location.title()} KPI data from Google Sheets..."):
+    try:
+        # Use cached functions for better performance
+        kpis = load_kpi_data(location)
+
+        # Load chart data for interactive visualizations
+        chart_data = load_chart_data(location)
+
+        st.success(f"✅ {location.title()} data loaded successfully")
+    except Exception as e:
+        st.error(f"❌ Error loading data: {e}")
+        st.info("Please check your internet connection and try refreshing the page.")
+        kpis = {}
+        chart_data = None
+
+# Primary KPIs Row (2 columns)
+st.markdown("## 💰 **Primary Financial Metrics**")
+col1, col2 = st.columns(2)
+
+with col1:
+    if kpis.get("production_total") is not None:
+        st.metric(
+            label="📈 **Production Total**",
+            value=f"${kpis['production_total']:,.0f}",
+            help="Total production (revenue) for the selected time period",
+        )
+    else:
+        st.metric(label="📈 **Production Total**", value="Data Unavailable")
+
+with col2:
+    if kpis.get("collection_rate") is not None:
+        collection_rate = kpis["collection_rate"]
+        delta_color = "normal" if collection_rate >= 95 else "inverse"
+        st.metric(
+            label="💳 **Collection Rate**",
+            value=f"{collection_rate:.1f}%",
+            delta="Target: 95%",
+            delta_color=delta_color,
+            help="Percentage of production successfully collected (Target: 95%+)",
+        )
+    else:
+        st.metric(label="💳 **Collection Rate**", value="Data Unavailable")
+
+# Secondary KPIs Row (3 columns)
+st.markdown("---")
+st.markdown("## 📊 **Operational Metrics**")
+col3, col4, col5 = st.columns(3)
+
+with col3:
+    if kpis.get("new_patients") is not None:
+        st.metric(
+            label="👥 **New Patients**",
+            value=f"{kpis['new_patients']:,}",
+            help="Total new patients for the month to date",
+        )
+    else:
+        st.metric(label="👥 **New Patients**", value="Data Unavailable")
+
+with col4:
+    if kpis.get("case_acceptance") is not None:
+        case_acceptance = kpis["case_acceptance"]
+        delta_color = "normal" if case_acceptance >= 80 else "inverse"
+        st.metric(
+            label="✅ **Case Acceptance**",
+            value=f"{case_acceptance:.1f}%",
+            delta="Target: 80%",
+            delta_color=delta_color,
+            help="Percentage of presented treatments that were accepted (Target: 80%+)",
+        )
+    else:
+        st.metric(label="✅ **Case Acceptance**", value="Data Unavailable")
+
+with col5:
+    if kpis.get("hygiene_reappointment") is not None:
+        hygiene_rate = kpis["hygiene_reappointment"]
+        delta_color = "normal" if hygiene_rate >= 90 else "inverse"
+        hygiene_help = (
+            "Percentage of hygiene patients who scheduled "
+            "next appointment (Target: 90%+)"
+        )
+        st.metric(
+            label="🔄 **Hygiene Reappointment**",
+            value=f"{hygiene_rate:.1f}%",
+            delta="Target: 90%",
+            delta_color=delta_color,
+            help=hygiene_help,
+        )
+    else:
+        st.metric(label="🔄 **Hygiene Reappointment**", value="Data Unavailable")
+
+# Interactive Charts Section
+st.markdown("---")
+st.markdown("## 📊 **Interactive KPI Charts**")
+st.markdown("Explore your data with interactive charts featuring zoom, hover, and pan.")
+
+# Time Range Selector (Story 2.3) - Moved to be contextual with charts
+timeframe = st.radio(
+    "📊 **Chart Time Range:**",
+    options=["daily", "weekly", "monthly"],
+    format_func=lambda x: x.capitalize(),
+    horizontal=True,
+    key="timeframe_selector",
+    help="Select the time aggregation for historical charts",
+    index=0,  # Default to daily view
+)
+
+# Chart display with tabs for organized viewing
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    [
+        "📈 Production",
+        "💳 Collection Rate",
+        "👥 New Patients",
+        "✅ Case Acceptance",
+        "🔄 Hygiene Reappointment",
+    ]
+)
+
+with tab1:
+    if chart_data and "production_total" in chart_data:
+        # Pass timeframe parameter for advanced features (Story 2.3)
+        production_chart = create_chart_from_data(
+            chart_data["production_total"], show_trend=True, timeframe=timeframe
+        )
+        st.plotly_chart(
+            production_chart, use_container_width=True, key="production_chart"
+        )
+    else:
+        st.info("📈 Production chart data unavailable for selected location")
+
+with tab2:
+    if chart_data and "collection_rate" in chart_data:
+        collection_chart = create_chart_from_data(
+            chart_data["collection_rate"], show_trend=True, timeframe=timeframe
+        )
+        st.plotly_chart(
+            collection_chart, use_container_width=True, key="collection_chart"
+        )
+    else:
+        st.info("📈 Collection rate chart data unavailable for selected location")
+
+with tab3:
+    if chart_data and "new_patients" in chart_data:
+        new_patients_chart = create_chart_from_data(
+            chart_data["new_patients"], show_trend=True, timeframe=timeframe
+        )
+        st.plotly_chart(
+            new_patients_chart, use_container_width=True, key="new_patients_chart"
+        )
+    else:
+        st.info("📈 New patients chart data unavailable for selected location")
+
+with tab4:
+    if chart_data and "case_acceptance" in chart_data:
+        treatment_chart = create_chart_from_data(
+            chart_data["case_acceptance"], show_trend=True, timeframe=timeframe
+        )
+        st.plotly_chart(
+            treatment_chart, use_container_width=True, key="treatment_chart"
+        )
+    else:
+        st.info("📈 Treatment acceptance chart data unavailable for selected location")
+
+with tab5:
+    if chart_data and "hygiene_reappointment" in chart_data:
+        hygiene_chart = create_chart_from_data(
+            chart_data["hygiene_reappointment"], show_trend=True, timeframe=timeframe
+        )
+        st.plotly_chart(hygiene_chart, use_container_width=True, key="hygiene_chart")
+    else:
+        st.info("📈 Hygiene reappointment chart data unavailable for selected location")
+
+# Footer
+st.markdown("---")
+st.markdown(
+    f"""
+    <div style='text-align: center; color: {colors["primary"]}; padding: 1rem;'>
+        <small>
+        ⚡ Powered by Google Sheets API •
+        🔄 Auto-refreshes on page reload •
+        📊 Real-time data from {location.title()} Practice
+        </small>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+```
+
+## apps/frontend/chart_production.py
+```python
+"""Production chart creation with enhanced features.
+
+Specialized chart for production metrics with trend analysis and interactivity.
+"""
+
+from typing import Any
+
+import plotly.graph_objects as go
+import structlog
+from plotly.graph_objects import Figure
+
+from apps.frontend.chart_base import (
+    BRAND_COLORS,
+    apply_axis_styling,
+    apply_range_selector,
+    create_base_figure,
+)
+from apps.frontend.chart_utils import (
+    add_pattern_annotation,
+    add_trend_line_to_figure,
+    format_currency_hover,
+    handle_empty_data,
+)
+
+log = structlog.get_logger()
+
+
+def create_production_chart(
+    chart_data: dict[str, Any], show_trend: bool = True, timeframe: str = "daily"
+) -> Figure:
+    """Create interactive production total chart with trend analysis.
+
+    Args:
+        chart_data: Formatted chart data from format_production_chart_data()
+        show_trend: Whether to display trend line
+        timeframe: Time aggregation level (daily, weekly, monthly)
+
+    Returns:
+        Configured Plotly figure for production data
+    """
+    time_series = chart_data.get("time_series")
+    format_options = chart_data.get("format_options", {})
+
+    # Fallback for legacy data shape that uses separate lists
+    if not time_series and chart_data.get("dates") and chart_data.get("values"):
+        time_series = [
+            {"date": date, "value": value}
+            for date, value in zip(chart_data["dates"], chart_data["values"])
+        ]
+
+    if not time_series:
+        return handle_empty_data("Production Total")
+
+    if timeframe != "daily" and not chart_data.get("aggregation"):
+        log.warning(
+            "chart.production_aggregation_unavailable",
+            timeframe=timeframe,
+        )
+
+    # Extract dates and values
+    dates = [point["date"] for point in time_series]
+    values = [point["value"] for point in time_series]
+
+    # Create line chart
+    fig = create_base_figure()
+
+    # Main data trace with enhanced interactivity
+    fig.add_trace(
+        go.Scatter(
+            x=dates,
+            y=values,
+            mode="lines+markers",
+            line={
+                "color": format_options.get("line_color", BRAND_COLORS["teal_accent"]),
+                "width": 3,
+                "shape": "spline",  # Smooth lines
+            },
+            marker={
+                "size": 8,
+                "color": format_options.get("line_color", BRAND_COLORS["teal_accent"]),
+                "line": {"color": "white", "width": 2},
+            },
+            hovertemplate="<b>%{x}</b><br>"
+            + f"Production ({timeframe}): %{{customdata}}<br>"
+            + "<extra></extra>",
+            customdata=[format_currency_hover(v) for v in values],
+            name="Production",
+        )
+    )
+
+    # Add trend line if requested
+    if show_trend and len(values) > 3:
+        add_trend_line_to_figure(
+            fig,
+            dates,
+            values,
+            name="Trend",
+            color=(
+                BRAND_COLORS["emergency_red"]
+                if any(v < 0 for v in values if v)
+                else BRAND_COLORS["success_green"]
+            ),
+        )
+
+    # Add pattern identification annotation
+    add_pattern_annotation(fig, values)
+
+    # Update layout with timeframe info
+    title_text = f"{timeframe.capitalize()} Production Total"
+    aggregation = chart_data.get("aggregation")
+    if aggregation:
+        title_text += f" ({chart_data.get('data_points', len(time_series))} data points)"
+
+    fig.update_layout(
+        title={
+            "text": title_text,
+            "x": 0.5,
+            "font": {"size": 16, "color": BRAND_COLORS["primary_navy"]},
+        },
+        xaxis_title="Date",
+        yaxis_title="Production Amount ($)",
+        height=450,  # Slightly taller for annotations
+        dragmode="zoom",  # Enable zoom by default
+        hovermode="x unified",  # Better hover experience
+    )
+
+    # Apply consistent styling
+    apply_axis_styling(fig, format_options.get("show_grid", True))
+
+    # Format y-axis for currency
+    fig.update_yaxes(tickformat="$,.0f")
+
+    # Add range selector buttons for better interaction
+    apply_range_selector(fig)
+
+    log.info(
+        "chart.production_created", data_points=len(time_series), timeframe=timeframe
+    )
+    return fig
+```
+
+## apps/frontend/chart_utils.py
+```python
+"""Chart utilities for enhanced visualizations.
+
+Provides common chart features: trend lines, statistical annotations,
+pattern detection, and data validation across all chart types.
+"""
+
+from typing import Any
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import structlog
+from plotly.graph_objects import Figure
+
+from .chart_base import BRAND_COLORS
+
+# Configure structured logging
+log = structlog.get_logger()
+
+
+def format_currency(value: float) -> str:
+    """Format currency values for display.
+
+    Args:
+        value: Numeric value to format
+
+    Returns:
+        Formatted currency string
+    """
+    if value >= 1_000_000:
+        return f"${value/1_000_000:.1f}M"
+    elif value >= 1_000:
+        return f"${value/1_000:.1f}K"
+    else:
+        return f"${value:,.0f}"
+
+
+def format_percentage(value: float) -> str:
+    """Format percentage values for display.
+
+    Args:
+        value: Numeric percentage value
+
+    Returns:
+        Formatted percentage string
+    """
+    return f"{value:.1f}%"
+
+
+def calculate_moving_average(values: list[float], window: int = 7) -> list[float]:
+    """Calculate moving average for trend smoothing.
+
+    Args:
+        values: List of numeric values
+        window: Window size for moving average
+
+    Returns:
+        List of moving average values
+    """
+    if len(values) < window:
+        return values
+
+    # Use pandas for efficient moving average calculation
+    series = pd.Series(values)
+    moving_avg = series.rolling(window=window, min_periods=1).mean()
+    return moving_avg.tolist()
+
+
+def detect_trend_pattern(values: list[float]) -> str:
+    """Detect trend pattern in time series data.
+
+    Args:
+        values: List of numeric values
+
+    Returns:
+        String describing the trend pattern
+    """
+    if len(values) < 3:
+        return "Insufficient data"
+
+    # Calculate slope using linear regression
+    x = np.arange(len(values))
+    y = np.array(values)
+
+    # Remove any NaN values
+    valid_indices = ~np.isnan(y)
+    if np.sum(valid_indices) < 3:
+        return "Insufficient valid data"
+
+    x_valid = x[valid_indices]
+    y_valid = y[valid_indices]
+
+    # Simple linear regression
+    if len(x_valid) > 1:
+        slope = np.polyfit(x_valid, y_valid, 1)[0]
+
+        # Calculate relative change
+        first_value = y_valid[0]
+        last_value = y_valid[-1]
+
+        if first_value != 0:
+            relative_change = abs((last_value - first_value) / first_value)
+        else:
+            relative_change = 0
+
+        # Determine trend strength and direction
+        if abs(slope) < 0.1 and relative_change < 0.05:
+            return "📊 Stable"
+        elif slope > 0:
+            if relative_change > 0.2:
+                return "📈 Strong upward trend"
+            else:
+                return "🔼 Upward trend"
+        else:
+            if relative_change > 0.2:
+                return "📉 Strong downward trend"
+            else:
+                return "🔽 Downward trend"
+
+    return "📊 Stable"
+
+
+def calculate_trend_line(
+    dates: list[str], values: list[float]
+) -> tuple[list[float], float, float]:
+    """Calculate trend line using linear regression.
+
+    Args:
+        dates: List of date strings
+        values: List of numeric values
+
+    Returns:
+        Tuple of (trend_values, slope, r_squared)
+    """
+    try:
+        if not dates or not values or len(dates) != len(values):
+            return [], 0, 0
+
+        # Convert dates to numeric values - sort by date to ensure
+        # proper trend direction
+        date_objs = pd.to_datetime(dates)
+        y = np.array(values)
+
+        # Remove NaN values
+        valid_mask = ~np.isnan(y)
+        if np.sum(valid_mask) < 2:
+            return [], 0, 0
+
+        date_nums = pd.to_numeric(date_objs[valid_mask])
+        y_valid = y[valid_mask]
+
+        # Normalize x values to avoid numerical issues
+        x_norm = (date_nums - date_nums.min()) / (date_nums.max() - date_nums.min())
+
+        # Calculate linear regression
+        coeffs = np.polyfit(x_norm, y_valid, 1)
+        slope, intercept = coeffs
+
+        # Calculate R-squared
+        y_pred = slope * x_norm + intercept
+        ss_res = np.sum((y_valid - y_pred) ** 2)
+        ss_tot = np.sum((y_valid - np.mean(y_valid)) ** 2)
+
+        r_squared = 0 if ss_tot == 0 else 1 - (ss_res / ss_tot)
+
+        # Generate trend line for all original dates
+        x_all_norm = (pd.to_numeric(date_objs) - date_nums.min()) / (
+            date_nums.max() - date_nums.min()
+        )
+        trend_values = (slope * x_all_norm + intercept).tolist()
+
+        return trend_values, slope, r_squared
+
+    except Exception as e:
+        log.error("chart_utils.trend_calculation_error", error=str(e))
+        return [], 0, 0
+
+
+def add_trend_line(
+    fig: Figure,
+    dates: list[str],
+    values: list[float],
+    name: str = "Trend",
+    color: str | None = None,
+) -> None:
+    """Add trend line to existing figure.
+
+    Args:
+        fig: Plotly figure to add trend line to
+        dates: List of date strings
+        values: List of numeric values
+        name: Name for the trend line
+        color: Color for trend line (optional)
+    """
+    try:
+        trend_values, slope, r_squared = calculate_trend_line(dates, values)
+
+        if not trend_values:
+            log.warning("chart_utils.no_trend_calculated")
+            return
+
+        # Set default color if not provided
+        if color is None:
+            color = BRAND_COLORS["medium_gray"]
+
+        # Determine line style based on trend strength
+        if r_squared > 0.7:
+            dash_style = "solid"
+            opacity = 0.8
+        elif r_squared > 0.4:
+            dash_style = "dash"
+            opacity = 0.6
+        else:
+            dash_style = "dot"
+            opacity = 0.5
+
+        fig.add_trace(
+            go.Scatter(
+                x=dates,
+                y=trend_values,
+                mode="lines",
+                name=name,
+                line={"color": color, "width": 2, "dash": dash_style},
+                opacity=opacity,
+                hovertemplate="Trend: %{y:.2f}<extra></extra>",
+                showlegend=True,
+            )
+        )
+
+        # Add R² annotation if significant
+        if r_squared > 0.5:
+            fig.add_annotation(
+                text=f"R² = {r_squared:.3f}",
+                xref="paper",
+                yref="paper",
+                x=0.02,
+                y=0.98,
+                showarrow=False,
+                font={"size": 10, "color": "#666"},
+                bgcolor="rgba(255,255,255,0.8)",
+                bordercolor="#ddd",
+                borderwidth=1,
+            )
+
+    except Exception as e:
+        log.error("chart_utils.trend_line_error", error=str(e))
+
+
+def validate_chart_data_structure(chart_data: dict[str, Any]) -> bool:
+    """Validate chart data structure for compatibility.
+
+    Args:
+        chart_data: Dictionary containing chart data
+
+    Returns:
+        True if data structure is valid
+    """
+    required_keys = {"dates", "values"}
+    if not isinstance(chart_data, dict):
+        return False
+
+    if not all(key in chart_data for key in required_keys):
+        return False
+
+    dates = chart_data["dates"]
+    values = chart_data["values"]
+
+    if not isinstance(dates, list) or not isinstance(values, list):
+        return False
+
+    return len(dates) == len(values)
+
+
+def add_target_line(
+    fig: Figure,
+    target_value: float,
+    label: str = "Target",
+    color: str | None = None,
+) -> None:
+    """Add horizontal target line to chart.
+
+    Args:
+        fig: Plotly figure to add target line to
+        target_value: Y-value for target line
+        label: Label for target line
+        color: Color for target line
+    """
+    if color is None:
+        color = BRAND_COLORS["medium_gray"]
+
+    fig.add_hline(
+        y=target_value,
+        line_dash="dot",
+        line_color=color,
+        annotation_text=label,
+        annotation_position="bottom right",
+    )
+
+
+def add_trend_pattern_annotation(fig: Figure, values: list[float]) -> None:
+    """Add trend pattern annotation to chart.
+
+    Args:
+        fig: Plotly figure to add annotation to
+        values: List of values to analyze
+    """
+    try:
+        pattern = detect_trend_pattern(values)
+
+        fig.add_annotation(
+            text=pattern,
+            xref="paper",
+            yref="paper",
+            x=0.35,
+            y=1.08,  # Adjusted from 1.15 to avoid overlap with title
+            xanchor="center",  # Ensure horizontal centering
+            yanchor="bottom",  # Anchor to bottom of annotation box
+            showarrow=False,
+            font={
+                "size": 11,
+                "color": BRAND_COLORS["primary_navy"],
+            },  # Slightly smaller font
+            bgcolor="rgba(255,255,255,0.95)",  # Slightly more opaque
+            bordercolor=BRAND_COLORS["border"],
+            borderwidth=1,
+            borderpad=4,
+        )
+
+    except Exception as e:
+        log.error("chart_utils.pattern_annotation_error", error=str(e))
+
+
+def apply_alpha_to_color(color: str, alpha: float = 0.2) -> str:
+    """Convert a hex color to rgba with the provided alpha.
+
+    Args:
+        color: Hex (`#RRGGBB` or `#RRGGBBAA`) or rgba string.
+        alpha: Alpha component between 0 and 1.
+
+    Returns:
+        Color string in rgba format when conversion is possible.
+    """
+
+    if not color:
+        return color
+
+    normalized_alpha = min(max(alpha, 0.0), 1.0)
+
+    if color.startswith("rgba"):
+        return color
+
+    if color.startswith("#"):
+        hex_value = color.lstrip("#")
+
+        # Remove trailing alpha channel if present
+        if len(hex_value) == 8:
+            hex_value = hex_value[:6]
+
+        if len(hex_value) == 6:
+            try:
+                r = int(hex_value[0:2], 16)
+                g = int(hex_value[2:4], 16)
+                b = int(hex_value[4:6], 16)
+            except ValueError:
+                return color
+
+            return f"rgba({r}, {g}, {b}, {normalized_alpha:.3f})"
+
+    return color
+```
+
+## apps/frontend/chart_kpis.py (excerpt showing dispatcher)
+```python
+... (full file is ~500 lines; key dispatcher below) ...
+
+def create_chart_from_data(
+    chart_data: dict[str, Any],
+    metric_name: str | None = None,
+    **overrides: Any,
+) -> Figure:
+    """Create appropriate chart based on KPI type.
+
+    Args:
+        chart_data: Dictionary with time-series data and metadata
+        metric_name: Optional explicit metric identifier for dispatch
+        **overrides: Additional format overrides such as show_trend
+
+    Returns:
+        Plotly figure for the specified KPI type
+
+    Raises:
+        ValueError: If the metric type cannot be determined or supported
+    """
+
+    if not isinstance(chart_data, dict):
+        raise TypeError("chart_data must be a dictionary")
+
+    metric_candidates = [
+        metric_name,
+        chart_data.get("metric_key"),
+        chart_data.get("metric_name"),
+        chart_data.get("metadata", {}).get("metric_key"),
+        chart_data.get("metadata", {}).get("metric"),
+    ]
+
+    resolved_metric: str | None = None
+    for candidate in metric_candidates:
+        normalized = _normalize_metric_key(candidate)
+        if normalized:
+            resolved_metric = normalized
+            break
+
+    if resolved_metric is None:
+        raise ValueError("Unable to determine metric type for chart data")
+
+    show_trend_override = overrides.pop("show_trend", None)
+    timeframe_override = overrides.pop("timeframe", None)
+
+    if resolved_metric == "production_total":
+        production_kwargs: dict[str, Any] = {}
+        if show_trend_override is not None:
+            production_kwargs["show_trend"] = show_trend_override
+        if timeframe_override is not None:
+            production_kwargs["timeframe"] = timeframe_override
+
+        log.info("chart.dynamic_creation", metric=resolved_metric)
+        return create_production_chart(chart_data, **production_kwargs)
+
+    chart_creators: dict[str, Callable[[dict[str, Any], dict[str, Any]], Figure]] = {
+        "collection_rate": create_collection_rate_chart,
+        "new_patients": create_new_patients_chart,
+        "case_acceptance": create_case_acceptance_chart,
+        "hygiene_reappointment": create_hygiene_reappointment_chart,
+    }
+
+    creator = chart_creators.get(resolved_metric)
+    if creator is None:
+        available_types = sorted(list(chart_creators.keys()) + ["production_total"])
+        raise ValueError(
+            f"Unknown KPI type: {resolved_metric}. Available: {', '.join(available_types)}"
+        )
+
+    normalized_data = _prepare_series_lists(chart_data)
+    format_options = {**normalized_data.get("format_options", {})}
+
+    if show_trend_override is not None:
+        format_options["show_trend"] = show_trend_override
+    if timeframe_override is not None:
+        format_options["timeframe"] = timeframe_override
+
+    for key, value in overrides.items():
+        format_options[key] = value
+
+    log.info("chart.dynamic_creation", metric=resolved_metric)
+    return creator(normalized_data, format_options)
+```
+
+# Desired Outcome
+- Implement missing utilities in `chart_utils.py` (or adjust import signatures) so production chart can call them without errors.
+- Ensure all chart helper APIs align (e.g., `add_trend_line_to_figure` should probably wrap `add_trend_line`).
+- Verify charts render correctly for all tabs and timeframe selections.
+- Provide automated tests or add new ones if necessary (consider small unit tests around chart utilities or data formatting to guard regressions).
+- Document any new helper behavior if significant.
+
+# Acceptance Criteria
+1. `uv run streamlit run apps/frontend/app.py` loads without import errors; all five KPI tabs render Plotly charts for Baytown and Humble.
+2. No exceptions printed in Streamlit logs when switching locations or timeframes.
+3. `uv run pytest` passes (existing suite + any new tests).
+4. Code follows existing styling (Black, 88-char lines) and uses structured logging conventions if logging is added.
+5. Provide short summary of solution and mention any follow-up ideas.
+
+# Deliverables
+- Patched `chart_utils.py` (likely new helper implementations + docstrings/logging).
+- Updated `chart_production.py` if signature adjustments needed.
+- Optional targeted tests verifying new helpers (e.g., format_currency_hover outputs, add_pattern_annotation fallback).
+- Validation notes (commands run, outcomes).
+
+Please propose a concrete fix strategy and implementation steps. Focus on solving the import errors and ensuring charts are stable across daily/weekly/monthly aggregations.
+
+
+[Running in read-only mode - no modifications allowed]
+
+[2025-09-27T15:23:37] thinking
+
+**Proposing fix strategy in read-only mode**
+[2025-09-27T15:23:37] codex
+
+**Summary**
+- Confirmed all crashes trace back to missing helpers (`add_trend_line_to_figure`, `add_pattern_annotation`, `format_currency_hover`, `handle_empty_data`) that `chart_production.py` expects from `chart_utils.py`.
+- Repository is mounted read-only, so I couldn’t patch files or validate with Streamlit/pytest commands.
+
+**Fix Strategy**
+- Restore helper definitions inside `apps/frontend/chart_utils.py` so `chart_production.py` imports succeed.
+- Each helper should reuse existing utilities:
+  - `format_currency_hover`: wrap `format_currency` but ensure graceful handling of `None`, negatives, and custom text for zero values.
+  - `add_trend_line_to_figure`: thin wrapper calling existing `add_trend_line`, keeping backwards compatibility for other modules.
+  - `add_pattern_annotation`: delegate to `add_trend_pattern_annotation` while sanitizing empty input.
+  - `handle_empty_data`: return a fallback `Figure` with a branded “No data available” annotation.
+- Keep signatures identical to current imports to avoid further churn; add docstrings and structured logging (`structlog`) for parity.
+
+**Implementation Steps**
+1. Open `apps/frontend/chart_utils.py`; append helper implementations near related utilities.
+2. Ensure helpers leverage constants in `chart_base.py` (`BRAND_COLORS`) for styling consistency.
+3. Review `chart_production.py` to confirm no other missing imports; adjust only if additional helpers required.
+4. (Optional) Add focused tests in `tests/test_chart_utils.py` covering new helpers.
+5. When write access is available:
+   - Run `uv run streamlit run apps/frontend/app.py` and confirm all five tabs render for Baytown/Humble across timeframes with no console errors.
+   - Execute `uv run pytest` to ensure suite stays green.
+
+Happy to apply the patch and run validations as soon as write permissions are granted.
+[2025-09-27T15:23:43] tokens used: 29866

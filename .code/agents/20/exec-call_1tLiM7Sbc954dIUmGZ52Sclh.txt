@@ -1,0 +1,209 @@
+2025-09-28 19:32:41.241 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.242 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.280 WARNING streamlit: 
+  [33m[1mWarning:[0m to view a Streamlit app on a browser, use Streamlit in a file and
+  run it with the following command:
+
+    streamlit run [FILE_NAME] [ARGUMENTS]
+2025-09-28 19:32:41.280 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.280 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.280 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.280 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.280 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.280 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.280 WARNING streamlit.runtime.state.session_state_proxy: Session state does not function when running a script without `streamlit run`
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.281 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.282 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.786 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-1': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.786 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-1': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.786 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-1': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.787 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-2': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.787 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-2': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:41.787 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-2': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.251 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.251 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.251 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.251 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2025-09-28 19:32:42.251 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.251 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.251 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.251 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.756 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-3': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.756 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-3': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:42.756 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-3': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+{"event": "chart_data.formatting_all_metrics", "level": "info", "timestamp": "2025-09-29T00:32:43.087276Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/backend/chart_data.py", "lineno": 1485}
+{"value_column": "_production_total_story_2_1", "data_points": 48, "valid_values": 48, "event": "time_series.processed", "level": "info", "timestamp": "2025-09-29T00:32:43.090275Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/backend/chart_data.py", "lineno": 129}
+{"value_column": "collection_rate", "data_points": 48, "valid_values": 46, "event": "time_series.processed", "level": "info", "timestamp": "2025-09-29T00:32:43.092107Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/backend/chart_data.py", "lineno": 129}
+{"value_column": "_daily_new_patients", "data_points": 48, "valid_values": 48, "event": "time_series.processed", "level": "info", "timestamp": "2025-09-29T00:32:43.095234Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/backend/chart_data.py", "lineno": 129}
+{"value_column": "acceptance_rate", "data_points": 35, "valid_values": 35, "event": "time_series.processed", "level": "info", "timestamp": "2025-09-29T00:32:43.096303Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/backend/chart_data.py", "lineno": 129}
+{"value_column": "reappointment_rate", "data_points": 35, "valid_values": 35, "event": "time_series.processed", "level": "info", "timestamp": "2025-09-29T00:32:43.097274Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/backend/chart_data.py", "lineno": 129}
+{"metrics_count": 5, "eod_available": true, "front_kpi_available": true, "event": "chart_data.formatting_complete", "level": "info", "timestamp": "2025-09-29T00:32:43.097307Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/backend/chart_data.py", "lineno": 1506}
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.097 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.098 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+{"metric": "production_total", "event": "chart.dynamic_creation", "level": "info", "timestamp": "2025-09-29T00:32:43.098263Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 539}
+{"data_points": 48, "timeframe": "daily", "event": "chart.production_created", "level": "info", "timestamp": "2025-09-29T00:32:43.121833Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_production.py", "lineno": 136}
+2025-09-28 19:32:43.122 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.122 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.122 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.122 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.122 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+{"metric": "collection_rate", "event": "chart.dynamic_creation", "level": "info", "timestamp": "2025-09-29T00:32:43.122934Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 567}
+{"data_points": 48, "event": "chart.collection_rate_creation_started", "level": "info", "timestamp": "2025-09-29T00:32:43.122961Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 48}
+{"event": "chart_utils.no_trend_calculated", "level": "warning", "timestamp": "2025-09-29T00:32:43.124615Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_utils.py", "lineno": 199}
+{"data_points": 48, "avg_rate": 60.506756594468705, "event": "chart.collection_rate_completed", "level": "info", "timestamp": "2025-09-29T00:32:43.133240Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 135}
+2025-09-28 19:32:43.133 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.133 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.133 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.133 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.133 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+{"metric": "new_patients", "event": "chart.dynamic_creation", "level": "info", "timestamp": "2025-09-29T00:32:43.133845Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 567}
+{"data_points": 48, "event": "chart.new_patients_creation_started", "level": "info", "timestamp": "2025-09-29T00:32:43.133866Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 159}
+{"data_points": 48, "total_patients": 327, "event": "chart.new_patients_completed", "level": "info", "timestamp": "2025-09-29T00:32:43.143433Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 224}
+2025-09-28 19:32:43.143 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.143 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.143 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.143 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.143 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+{"metric": "case_acceptance", "event": "chart.dynamic_creation", "level": "info", "timestamp": "2025-09-29T00:32:43.143980Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 567}
+{"data_points": 35, "event": "chart.case_acceptance_creation_started", "level": "info", "timestamp": "2025-09-29T00:32:43.143998Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 248}
+{"data_points": 35, "avg_rate": 37.98434259659203, "event": "chart.case_acceptance_created", "level": "info", "timestamp": "2025-09-29T00:32:43.152794Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 321}
+2025-09-28 19:32:43.153 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.153 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.153 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.153 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-09-28 19:32:43.153 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+{"metric": "hygiene_reappointment", "event": "chart.dynamic_creation", "level": "info", "timestamp": "2025-09-29T00:32:43.153356Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 567}
+{"data_points": 35, "event": "chart.hygiene_reappointment_creation_started", "level": "info", "timestamp": "2025-09-29T00:32:43.153373Z", "pathname": "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", "lineno": 345}
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/app.py", line 343, in <module>
+    hygiene_chart = create_chart_from_data(
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", line 568, in create_chart_from_data
+    return creator(normalized_data, format_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/apps/frontend/chart_kpis.py", line 365, in create_hygiene_reappointment_chart
+    fig.add_scatter(
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/plotly/graph_objs/_figure.py", line 13355, in add_scatter
+    new_trace = Scatter(
+                ^^^^^^^^
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/plotly/graph_objs/_scatter.py", line 2684, in __init__
+    self._set_property("fillcolor", arg, fillcolor)
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/plotly/basedatatypes.py", line 4403, in _set_property
+    _set_property_provided_value(self, name, arg, provided)
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/plotly/basedatatypes.py", line 398, in _set_property_provided_value
+    obj[name] = val
+    ~~~^^^^^^
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/plotly/basedatatypes.py", line 4932, in __setitem__
+    self._set_prop(prop, value)
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/plotly/basedatatypes.py", line 5276, in _set_prop
+    raise err
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/plotly/basedatatypes.py", line 5271, in _set_prop
+    val = validator.validate_coerce(val)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_plotly_utils/basevalidators.py", line 1374, in validate_coerce
+    self.raise_invalid_val(v)
+  File "/Users/ossieirondi/Projects/unified-dental/dental-analytics/.venv/lib/python3.12/site-packages/_plotly_utils/basevalidators.py", line 298, in raise_invalid_val
+    raise ValueError(
+ValueError: 
+    Invalid value of type 'builtins.str' received for the 'fillcolor' property of scatter
+        Received value: '#007E9E20'
+
+    The 'fillcolor' property is a color and may be specified as:
+      - A hex string (e.g. '#ff0000')
+      - An rgb/rgba string (e.g. 'rgb(255,0,0)')
+      - An hsl/hsla string (e.g. 'hsl(0,100%,50%)')
+      - An hsv/hsva string (e.g. 'hsv(0,100%,100%)')
+      - A named CSS color: see https://plotly.com/python/css-colors/ for a list

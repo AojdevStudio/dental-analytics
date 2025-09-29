@@ -113,7 +113,9 @@ def process_time_series_data(
         return []
 
     time_series: list[dict[str, Any]] = []
-    conversion_func = safe_int_conversion if data_type == "int" else safe_float_conversion
+    conversion_func = (
+        safe_int_conversion if data_type == "int" else safe_float_conversion
+    )
 
     for _, row in df.iterrows():
         date = parse_datetime_string(row[date_column])
@@ -1129,9 +1131,9 @@ def calculate_chart_statistics(time_series: list[dict[str, Any]]) -> dict[str, A
         "total_points": len(time_series),
         "valid_points": len(valid_values),
         "missing_points": len(time_series) - len(valid_values),
-        "coverage_percentage": (len(valid_values) / len(time_series)) * 100
-        if time_series
-        else 0.0,
+        "coverage_percentage": (
+            (len(valid_values) / len(time_series)) * 100 if time_series else 0.0
+        ),
         "date_range": {
             "start": time_series[0]["date"],
             "end": time_series[-1]["date"],
@@ -1185,7 +1187,9 @@ def format_production_chart_data(
         df_copy = eod_df.copy()
         for column in [production_column, adjustments_column, writeoffs_column]:
             df_copy[column] = df_copy[column].apply(clean_currency_string)
-            df_copy[column] = pd.to_numeric(df_copy[column], errors="coerce").fillna(0.0)
+            df_copy[column] = pd.to_numeric(df_copy[column], errors="coerce").fillna(
+                0.0
+            )
 
         df_copy["_production_total_story_2_1"] = (
             df_copy[production_column]
@@ -1253,7 +1257,9 @@ def format_collection_rate_chart_data(
         total_collections = 0.0
         for column in income_columns:
             rate_df[column] = rate_df[column].apply(clean_currency_string)
-            rate_df[column] = pd.to_numeric(rate_df[column], errors="coerce").fillna(0.0)
+            rate_df[column] = pd.to_numeric(rate_df[column], errors="coerce").fillna(
+                0.0
+            )
             total_collections += rate_df[column]
 
         rate_df["_total_collections_story_2_1"] = total_collections
@@ -1507,7 +1513,9 @@ def format_all_chart_data(
         "chart_data.formatting_complete",
         metrics_count=chart_data["metadata"]["total_metrics"],
         eod_available=chart_data["metadata"]["data_sources"]["eod_available"],
-        front_kpi_available=chart_data["metadata"]["data_sources"]["front_kpi_available"],
+        front_kpi_available=chart_data["metadata"]["data_sources"][
+            "front_kpi_available"
+        ],
     )
 
     return chart_data
