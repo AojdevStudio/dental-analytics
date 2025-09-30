@@ -21,7 +21,6 @@ Functions handle missing data gracefully and return None for failed calculations
 import logging
 import sys
 from datetime import datetime
-from typing import Any
 
 try:
     from config.data_sources import COLUMN_MAPPINGS
@@ -34,6 +33,15 @@ import pandas as pd
 import structlog
 
 from .data_providers import build_sheets_provider
+from .types import (
+    HistoricalCountData,
+    HistoricalKPIData,
+    HistoricalMetricData,
+    HistoricalProductionData,
+    HistoricalRateData,
+    KPIData,
+    MultiLocationKPIData,
+)
 
 # Configure structured logging to stderr
 structlog.configure(
@@ -61,7 +69,7 @@ EOD_MAPPING = COLUMN_MAPPINGS.get("eod_billing", {})
 FRONT_MAPPING = COLUMN_MAPPINGS.get("front_kpis", {})
 
 
-def clean_currency_string(value: Any) -> Any:
+def clean_currency_string(value: object) -> object:
     """Clean currency formatting from a value.
 
     Args:
@@ -413,7 +421,7 @@ def calculate_hygiene_reappointment(df: pd.DataFrame | None) -> float | None:
     return float(reappointment_rate)
 
 
-def get_all_kpis(location: str = "baytown") -> dict[str, float | int | None]:
+def get_all_kpis(location: str = "baytown") -> KPIData:
     """
     Calculate all 5 KPIs from Google Sheets data for a specific location.
 
@@ -440,7 +448,7 @@ def get_all_kpis(location: str = "baytown") -> dict[str, float | int | None]:
         front_kpi_data = provider.fetch(front_alias) if front_alias else None
 
         # Calculate all KPIs
-        kpis = {
+        kpis: KPIData = {
             "production_total": calculate_production_total(eod_data),
             "collection_rate": calculate_collection_rate(eod_data),
             "new_patients": calculate_new_patients(eod_data),
@@ -462,7 +470,7 @@ def get_all_kpis(location: str = "baytown") -> dict[str, float | int | None]:
         }
 
 
-def get_combined_kpis() -> dict[str, dict[str, float | int | None]]:
+def get_combined_kpis() -> MultiLocationKPIData:
     """
     Get KPIs for both locations.
 
@@ -506,12 +514,34 @@ def safe_time_series_conversion(
     ):
         return []
 
+    def _parse_date(value: object) -> datetime | None:
+        """Parse raw date inputs using known formats before falling back."""
+
+        if value in (None, ""):
+            return None
+
+        text_value = str(value).strip()
+        if text_value == "":
+            return None
+
+        known_formats = ("%Y-%m-%d", "%m/%d/%Y", "%d-%m-%Y", "%Y/%m/%d")
+        for date_format in known_formats:
+            try:
+                return datetime.strptime(text_value, date_format)
+            except ValueError:
+                continue
+
+        parsed = pd.to_datetime(text_value, errors="coerce")
+        if pd.isna(parsed):
+            return None
+        return parsed.to_pydatetime()
+
     try:
         # Create a copy to avoid modifying original
         df_copy = df.copy()
 
         # Convert date column to datetime
-        df_copy[date_column] = pd.to_datetime(df_copy[date_column], errors="coerce")
+        df_copy[date_column] = df_copy[date_column].apply(_parse_date)
 
         # Convert value column to numeric
         df_copy[column] = pd.to_numeric(df_copy[column], errors="coerce")
@@ -539,7 +569,7 @@ def safe_time_series_conversion(
 
 def calculate_historical_production_total(
     df: pd.DataFrame | None, days: int = 30
-) -> dict[str, Any]:
+) -> HistoricalProductionData:
     """
     Calculate historical production total with time-series data.
 
@@ -623,7 +653,7 @@ def calculate_historical_production_total(
     daily_average = total_sum / len(values) if values else 0.0
     latest_value = values[-1] if values else None
 
-    result = {
+    result: HistoricalProductionData = {
         "time_series": time_series,
         "total_sum": float(total_sum),
         "daily_average": float(daily_average),
@@ -640,7 +670,7 @@ def calculate_historical_production_total(
 
 def calculate_historical_collection_rate(
     df: pd.DataFrame | None, days: int = 30
-) -> dict[str, Any]:
+) -> HistoricalRateData:
     """
     Calculate historical collection rate with time-series data.
 
@@ -790,7 +820,7 @@ def calculate_historical_collection_rate(
         average_rate = sum(rates) / len(rates) if rates else 0.0
         latest_value = rates[-1] if rates else None
 
-        result = {
+        result: HistoricalRateData = {
             "time_series": time_series,
             "average_rate": float(average_rate),
             "latest_value": float(latest_value) if latest_value is not None else None,
@@ -815,7 +845,7 @@ def calculate_historical_collection_rate(
 
 def calculate_historical_new_patients(
     df: pd.DataFrame | None, days: int = 30
-) -> dict[str, Any]:
+) -> HistoricalCountData:
     """
     Calculate historical new patient count with time-series data.
 
@@ -895,7 +925,7 @@ def calculate_historical_new_patients(
     daily_average = total_count / len(counts) if counts else 0.0
     latest_value = counts[-1] if counts else None
 
-    result = {
+    result: HistoricalCountData = {
         "time_series": time_series,
         "total_count": total_count,
         "daily_average": float(daily_average),
@@ -913,7 +943,7 @@ def calculate_historical_new_patients(
 def calculate_historical_case_acceptance(
     df: pd.DataFrame | None,
     days: int = 30,
-) -> dict[str, Any]:
+) -> HistoricalRateData:
     """
     Calculate historical case acceptance rate with time-series data.
     """
@@ -922,8 +952,7 @@ def calculate_historical_case_acceptance(
     if df is None or df.empty:
         return {
             "time_series": [],
-            "total_sum": 0.0,
-            "daily_average": 0.0,
+            "average_rate": 0.0,
             "latest_value": None,
             "data_points": 0,
         }
@@ -939,8 +968,7 @@ def calculate_historical_case_acceptance(
     if not date_col:
         return {
             "time_series": [],
-            "total_sum": 0.0,
-            "daily_average": 0.0,
+            "average_rate": 0.0,
             "latest_value": None,
             "data_points": 0,
         }
@@ -959,8 +987,7 @@ def calculate_historical_case_acceptance(
         )
         return {
             "time_series": [],
-            "total_sum": 0.0,
-            "daily_average": 0.0,
+            "average_rate": 0.0,
             "latest_value": None,
             "data_points": 0,
         }
@@ -987,37 +1014,22 @@ def calculate_historical_case_acceptance(
         # Sort by date
         df_copy = df_copy.sort_values(date_col)
 
-        # Create time series
-        time_series = []
-        for _, row in df_copy.iterrows():
-            if pd.notna(row["_case_acceptance_rate"]):
-                time_series.append(
-                    {
-                        "date": row[date_col].strftime("%Y-%m-%d"),
-                        "value": float(row["_case_acceptance_rate"]),
-                    }
-                )
+        # Create time series using safe helper function
+        time_series = safe_time_series_conversion(
+            df_copy, "_case_acceptance_rate", date_col
+        )
 
         # Calculate aggregates
-        total_presented = pd.to_numeric(df_copy[presented_col], errors="coerce").sum()
-        total_scheduled = pd.to_numeric(df_copy[scheduled_col], errors="coerce").sum()
-        total_same_day = pd.to_numeric(df_copy[same_day_col], errors="coerce").sum()
 
-        overall_rate = 0.0
-        if total_presented > 0:
-            overall_rate = ((total_scheduled + total_same_day) / total_presented) * 100
+        latest_value = time_series[-1][1] if time_series else None
 
-        daily_average = (
-            df_copy["_case_acceptance_rate"].mean()
-            if not df_copy["_case_acceptance_rate"].isna().all()
-            else 0.0
-        )
-        latest_value = time_series[-1]["value"] if time_series else None
-
-        result = {
+        result: HistoricalRateData = {
             "time_series": time_series,
-            "total_sum": float(overall_rate),
-            "daily_average": float(daily_average) if pd.notna(daily_average) else 0.0,
+            "average_rate": (
+                float(df_copy["_case_acceptance_rate"].mean())
+                if not df_copy["_case_acceptance_rate"].isna().all()
+                else 0.0
+            ),
             "latest_value": latest_value,
             "data_points": len(time_series),
         }
@@ -1032,8 +1044,7 @@ def calculate_historical_case_acceptance(
         log.error("metrics.historical_case_acceptance_failed", error=str(e))
         return {
             "time_series": [],
-            "total_sum": 0.0,
-            "daily_average": 0.0,
+            "average_rate": 0.0,
             "latest_value": None,
             "data_points": 0,
         }
@@ -1041,7 +1052,7 @@ def calculate_historical_case_acceptance(
 
 def calculate_historical_hygiene_reappointment(
     df: pd.DataFrame | None, days: int = 30
-) -> dict[str, Any]:
+) -> HistoricalRateData:
     """
     Calculate historical hygiene reappointment rate with time-series data.
     """
@@ -1101,7 +1112,7 @@ def calculate_historical_hygiene_reappointment(
         average_rate = sum(rates) / len(rates) if rates else 0.0
         latest_value = rates[-1] if rates else None
 
-        result = {
+        result: HistoricalRateData = {
             "time_series": time_series,
             "average_rate": float(average_rate),
             "latest_value": float(latest_value) if latest_value is not None else None,
@@ -1122,7 +1133,7 @@ def calculate_historical_hygiene_reappointment(
         }
 
 
-def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
+def get_all_historical_kpis(days: int = 30) -> HistoricalKPIData:
     """
     Calculate all historical KPIs with time-series data.
 
@@ -1150,7 +1161,7 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
         latest_data = historical_manager.get_latest_available_data()
 
         # Calculate historical metrics
-        historical_kpis = {
+        historical_kpis: dict[str, HistoricalMetricData] = {
             "production_total": calculate_historical_production_total(eod_data, days),
             "collection_rate": calculate_historical_collection_rate(eod_data, days),
             "new_patients": calculate_historical_new_patients(eod_data, days),
@@ -1172,7 +1183,7 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
             front_kpi_df if isinstance(front_kpi_df, pd.DataFrame) else None
         )
 
-        current_kpis = {
+        current_kpis: KPIData = {
             "production_total": calculate_production_total(eod_data_df),
             "collection_rate": calculate_collection_rate(eod_data_df),
             "new_patients": calculate_new_patients(eod_data_df),
@@ -1180,7 +1191,7 @@ def get_all_historical_kpis(days: int = 30) -> dict[str, Any]:
             "hygiene_reappointment": calculate_hygiene_reappointment(front_kpi_data_df),
         }
 
-        result = {
+        result: HistoricalKPIData = {
             "historical": historical_kpis,
             "current": current_kpis,
             "data_date": latest_data.get("data_date"),

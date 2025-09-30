@@ -1,21 +1,11 @@
-"""
-Historical Data Manager for Dental Analytics
+"""Historical data manager utilities for the dental analytics dashboard."""
 
-Provides access to historical KPI data with caching, date range filtering,
-and automatic fallback to latest operational data. Supports both EOD billing
-and Front KPI data sources with robust error handling and data validation.
-
-Key Features:
-- Automatic weekend/holiday fallback to latest operational day
-- Date range filtering for historical analysis
-- Caching with configurable TTL for performance
-- Comprehensive logging and error handling
-- Data validation and type safety
-"""
+from __future__ import annotations
 
 import logging
 import sys
 from datetime import datetime, timedelta
+from typing import Any
 
 import pandas as pd
 import structlog
@@ -42,37 +32,129 @@ structlog.configure(
 
 log = structlog.get_logger()
 
+# Preserve access to the real ``datetime`` class for parsing operations even when
+# tests patch ``apps.backend.historical_data.datetime``.
+REAL_DATETIME = datetime
+
 
 class HistoricalDataManager:
     """Manages historical dental practice data with caching and date filtering."""
 
-    def __init__(self) -> None:
-        """Initialize the historical data manager."""
-        self.provider = build_sheets_provider()
+    def __init__(self, data_provider: Any | None = None) -> None:
+        """Initialise the historical data manager with optional provider injection."""
+
+        self.data_provider = data_provider or build_sheets_provider()
+        # Maintain backward compatibility with previous attribute name
+        self.provider = self.data_provider
         log.info("historical_data.manager_initialized")
 
+    def _get_operational_date(self, reference_date: datetime) -> datetime:
+        """Return the nearest operational day (Mon-Sat) for a given reference."""
+
+        if reference_date.weekday() == 6:  # Sunday
+            return reference_date - timedelta(days=1)
+        return reference_date
+
     def get_latest_operational_date(self) -> datetime:
-        """
-        Get the latest operational date (Monday-Saturday).
-        Automatically falls back from Sunday to Saturday.
+        """Get the latest operational day based on the current timestamp."""
 
-        Returns:
-            Latest operational date as datetime object
-        """
         today = datetime.now()
-
-        # If today is Sunday (6), fall back to Saturday
-        if today.weekday() == 6:  # Sunday
-            latest_date = today - timedelta(days=1)
+        latest_date = self._get_operational_date(today)
+        if latest_date != today:
             log.info(
                 "historical_data.sunday_fallback",
                 original_date=today.date().isoformat(),
                 fallback_date=latest_date.date().isoformat(),
             )
-        else:
-            latest_date = today
-
         return latest_date
+
+    def _parse_date_string(self, value: Any) -> datetime | None:
+        """Parse a date string into a ``datetime`` instance if possible."""
+
+        if value in (None, ""):
+            return None
+
+        text_value = str(value).strip()
+        if text_value == "":
+            return None
+
+        formats = ["%Y-%m-%d", "%m/%d/%Y", "%d-%m-%Y", "%Y/%m/%d"]
+        for fmt in formats:
+            try:
+                return REAL_DATETIME.strptime(text_value, fmt)
+            except ValueError:
+                continue
+
+        parsed = pd.to_datetime(text_value, errors="coerce")
+        if pd.isna(parsed):
+            return None
+        return parsed.to_pydatetime()
+
+    def _convert_to_datetime_column(
+        self, df: pd.DataFrame, column: str
+    ) -> pd.DataFrame | None:
+        """Coerce a column to ``datetime`` and drop rows that cannot convert."""
+
+        if df is None or df.empty or column not in df.columns:
+            return None
+
+        df_copy = df.copy()
+        df_copy[column] = df_copy[column].apply(self._parse_date_string)
+        df_copy = df_copy.dropna(subset=[column])
+
+        if df_copy.empty:
+            return None
+
+        return df_copy
+
+    def _calculate_aggregations(self, df: pd.DataFrame) -> dict[str, Any]:
+        """Calculate summary statistics for production-oriented datasets."""
+
+        if df is None or df.empty:
+            return {
+                "total_sum": None,
+                "daily_average": None,
+                "latest_value": None,
+                "data_points": 0,
+            }
+
+        numeric_df = df.select_dtypes(include=["number", "float", "int"])
+        candidate_columns = [
+            "total_production",
+            "production_total",
+            "collections_total",
+        ]
+        target_column = next(
+            (col for col in candidate_columns if col in df.columns),
+            None,
+        )
+
+        if target_column is None:
+            if numeric_df.empty:
+                return {
+                    "total_sum": None,
+                    "daily_average": None,
+                    "latest_value": None,
+                    "data_points": 0,
+                }
+            target_column = numeric_df.columns[0]
+
+        series = pd.to_numeric(df[target_column], errors="coerce").dropna()
+
+        if series.empty:
+            return {
+                "total_sum": None,
+                "daily_average": None,
+                "latest_value": None,
+                "data_points": 0,
+            }
+
+        return {
+            "total_sum": float(series.sum()),
+            "daily_average": float(series.mean()),
+            "latest_value": float(series.iloc[-1]) if not series.empty else None,
+            "data_points": int(series.count()),
+        }
 
     def _filter_to_specific_date(
         self, df: pd.DataFrame, date_column: str, target_date: datetime
@@ -148,8 +230,8 @@ class HistoricalDataManager:
 
         try:
             # Get EOD data using new provider pattern
-            eod_alias = self.provider.get_location_aliases(location, "eod")
-            eod_df = self.provider.fetch(eod_alias) if eod_alias else None
+            eod_alias = self.data_provider.get_location_aliases(location, "eod")
+            eod_df = self.data_provider.fetch(eod_alias) if eod_alias else None
             if eod_df is None or eod_df.empty:
                 log.warning("historical_data.eod_data_empty", location=location)
                 return None
@@ -200,8 +282,10 @@ class HistoricalDataManager:
 
         try:
             # Get Front KPI data using new provider pattern
-            front_alias = self.provider.get_location_aliases(location, "front")
-            front_kpi_df = self.provider.fetch(front_alias) if front_alias else None
+            front_alias = self.data_provider.get_location_aliases(location, "front")
+            front_kpi_df = (
+                self.data_provider.fetch(front_alias) if front_alias else None
+            )
             if front_kpi_df is None or front_kpi_df.empty:
                 log.warning("historical_data.front_kpi_data_empty", location=location)
                 return None
@@ -262,8 +346,8 @@ class HistoricalDataManager:
 
         try:
             # Get EOD data and filter to latest operational day
-            eod_alias = self.provider.get_location_aliases(location, "eod")
-            eod_df = self.provider.fetch(eod_alias) if eod_alias else None
+            eod_alias = self.data_provider.get_location_aliases(location, "eod")
+            eod_df = self.data_provider.fetch(eod_alias) if eod_alias else None
             if (
                 eod_df is not None
                 and not eod_df.empty
@@ -274,8 +358,10 @@ class HistoricalDataManager:
                 )
 
             # Get Front KPI data and filter to latest operational day
-            front_alias = self.provider.get_location_aliases(location, "front")
-            front_kpi_df = self.provider.fetch(front_alias) if front_alias else None
+            front_alias = self.data_provider.get_location_aliases(location, "front")
+            front_kpi_df = (
+                self.data_provider.fetch(front_alias) if front_alias else None
+            )
             if (
                 front_kpi_df is not None
                 and not front_kpi_df.empty
@@ -390,3 +476,81 @@ class HistoricalDataManager:
             DataFrame with EOD data or None if retrieval fails
         """
         return self.get_recent_eod_data(days)
+
+    def get_historical_data(
+        self, sheet_alias: str, date_column: str, days: int
+    ) -> dict[str, Any] | None:
+        """Retrieve historical data for an arbitrary sheet alias."""
+
+        try:
+            raw_df = self.data_provider.fetch(sheet_alias)
+        except Exception as error:  # pragma: no cover - defensive logging
+            log.error(
+                "historical_data.provider_fetch_failed",
+                alias=sheet_alias,
+                error=str(error),
+            )
+            return None
+
+        if raw_df is None or raw_df.empty:
+            log.warning(
+                "historical_data.empty_dataset",
+                alias=sheet_alias,
+                days=days,
+            )
+            return None
+
+        converted = self._convert_to_datetime_column(raw_df, date_column)
+        if converted is None:
+            log.warning(
+                "historical_data.unusable_date_column",
+                alias=sheet_alias,
+                column=date_column,
+            )
+            return None
+
+        filtered = self._filter_by_date_range(converted, date_column, days)
+        if filtered is None:
+            return None
+
+        aggregations = self._calculate_aggregations(filtered)
+        return aggregations
+
+    def get_latest_data(
+        self, sheet_alias: str, date_column: str
+    ) -> pd.DataFrame | None:
+        """Retrieve the records for the latest operational day."""
+
+        try:
+            raw_df = self.data_provider.fetch(sheet_alias)
+        except Exception as error:  # pragma: no cover - defensive logging
+            log.error(
+                "historical_data.provider_fetch_failed",
+                alias=sheet_alias,
+                error=str(error),
+            )
+            return None
+
+        converted = self._convert_to_datetime_column(raw_df, date_column)
+        if converted is None:
+            return None
+
+        latest_date = self.get_latest_operational_date()
+        latest_records = self._filter_to_specific_date(
+            converted, date_column, latest_date
+        )
+
+        if latest_records is not None and not latest_records.empty:
+            return latest_records
+
+        # Fallback to most recent available row within a one-week window
+        sorted_df = converted.sort_values(date_column)
+        most_recent_date = sorted_df[date_column].max()
+
+        if most_recent_date is None:
+            return None
+
+        if (latest_date.date() - most_recent_date.date()).days <= 7:
+            return sorted_df[sorted_df[date_column] == most_recent_date]
+
+        return None

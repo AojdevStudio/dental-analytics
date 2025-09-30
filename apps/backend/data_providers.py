@@ -7,13 +7,15 @@ interface for future SQLite provider integration.
 
 import logging
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 import pandas as pd
 import yaml
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
+from apps.backend.types import ConfigData, LocationConfig, SheetConfig
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +72,7 @@ class SheetsProvider:
         # Validate all aliases on startup
         self._validate_configuration()
 
-    def _load_config(self, config_path: Path | str | None) -> dict[str, Any]:
+    def _load_config(self, config_path: Path | str | None) -> ConfigData:
         """Load and validate sheets configuration."""
         if config_path is None:
             config_path = "config/sheets.yml"
@@ -81,18 +83,20 @@ class SheetsProvider:
 
         try:
             with config_file.open() as f:
-                config = yaml.safe_load(f)
+                # YAML ingestion - OK to use dict[str, Any] for external source
+                raw_config: dict[str, Any] = yaml.safe_load(f)
 
             # Validate required sections
             required_sections = ["sheets", "locations", "provider_config"]
             for section in required_sections:
-                if section not in config:
+                if section not in raw_config:
                     raise ConfigurationError(f"Missing required section: {section}")
 
             logger.info(
-                f"Loaded configuration with {len(config['sheets'])} sheet aliases"
+                f"Loaded configuration with {len(raw_config['sheets'])} sheet aliases"
             )
-            return config
+            # After validation, return as ConfigData
+            return cast(ConfigData, raw_config)
 
         except yaml.YAMLError as e:
             raise ConfigurationError(f"Invalid YAML configuration: {e}") from e
@@ -196,22 +200,24 @@ class SheetsProvider:
             Alias string or None if not found
         """
         locations_config = self.config.get("locations", {})
-        location_config = locations_config.get(location.lower())
+        location_config_raw = locations_config.get(location.lower())
 
-        if not location_config:
+        if not location_config_raw:
             logger.warning(f"Location not configured: {location}")
             return None
 
-        alias = location_config.get(data_type)
-        if not alias:
+        # Use dict[str, Any] for runtime dynamic key access
+        location_dict = cast(dict[str, Any], location_config_raw)
+
+        if data_type not in location_dict:
             logger.warning(
                 f"Data type '{data_type}' not configured for location '{location}'"
             )
             return None
 
-        return alias
+        return str(location_dict[data_type])
 
-    def get_location_info(self, location: str) -> dict[str, Any] | None:
+    def get_location_info(self, location: str) -> LocationConfig | None:
         """Get location configuration details.
 
         Args:
@@ -220,11 +226,14 @@ class SheetsProvider:
         Returns:
             Location configuration or None if not found
         """
-        locations_config: dict[str, Any] = self.config.get("locations", {})
+        locations_config = self.config.get("locations", {})
         location_info = locations_config.get(location.lower())
-        return location_info if location_info is not None else None
+        if location_info is None:
+            return None
+        # Cast to LocationConfig for return type
+        return location_info
 
-    def get_spreadsheet_info(self, alias: str) -> dict[str, str] | None:
+    def get_spreadsheet_info(self, alias: str) -> SheetConfig | None:
         """Get spreadsheet details for an alias.
 
         Args:
@@ -237,10 +246,12 @@ class SheetsProvider:
             return None
 
         sheet_config = self.config["sheets"][alias]
-        return {
+        # Construct SheetConfig explicitly
+        result: SheetConfig = {
             "spreadsheet_id": sheet_config["spreadsheet_id"],
             "range": sheet_config["range"],
         }
+        return result
 
 
 def build_sheets_provider(config_path: Path | str | None = None) -> SheetsProvider:
