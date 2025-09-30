@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import time
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -375,6 +376,152 @@ def get_claude_session_id():
     return session_id
 
 
+# -----------------------------
+# SAFE TRASH (ultra-conservative)
+# -----------------------------
+REPO_ROOT = Path.cwd().resolve()
+MAX_TRASH_BYTES = 20 * 1024 * 1024  # 20MB cap
+TRASH_DIR = REPO_ROOT / ".trash"
+
+def _is_simple_relpath(p: str) -> bool:
+    # disallow globs and backrefs; must not be absolute
+    if not p or p.startswith("-"):
+        return False
+    bad_tokens = ["*", "?", "[", "]", ".."]
+    if any(b in p for b in bad_tokens):
+        return False
+    return not os.path.isabs(p)
+
+def _resolve_inside_repo(raw_path: str) -> Path | None:
+    try:
+        candidate = (Path.cwd() / raw_path).resolve()
+    except Exception:
+        return None
+    try:
+        # Python 3.12+: Path.is_relative_to
+        if str(candidate).startswith(str(REPO_ROOT) + os.sep) or str(candidate) == str(REPO_ROOT):
+            return candidate
+        return None
+    except Exception:
+        return None
+
+def _is_denied_path(p: Path) -> bool:
+    try:
+        rel = p.resolve().relative_to(REPO_ROOT)
+    except Exception:
+        return True
+    s = str(rel)
+    if s == ".env" or s.endswith(os.sep + ".env"):
+        return True
+    parts = set(s.split(os.sep))
+    # Never touch these; also forbids any nested target within these dirs
+    denied_dirs = {".git", "node_modules", "venv", "dist", "build", ".trash", "logs"}
+    if parts.intersection(denied_dirs):
+        return True
+    return False
+
+def _is_regular_and_small(p: Path, max_bytes: int = MAX_TRASH_BYTES) -> bool:
+    try:
+        st = p.stat()
+        # regular file only, not dir, not symlink, and below cap
+        return p.is_file() and not p.is_symlink() and st.st_size <= max_bytes
+    except Exception:
+        return False
+
+def _trash_destination_for(p: Path) -> Path:
+    # timestamped bucket to keep history
+    ts = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    bucket = TRASH_DIR / ts
+    # mirror the relative path inside the bucket for easier restore
+    rel = p.resolve().relative_to(REPO_ROOT)
+    dest = bucket / rel
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    return dest
+
+def _append_trash_log(original: Path, moved_to: Path, session_id: str):
+    try:
+        log_dir = REPO_ROOT / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / "pre_tool_use.json"
+
+        entry = {
+            "tool_name": "Bash",
+            "tool_input": {"command": f"safe_trash {original}"},
+            "session_id": session_id,
+            "hook_event_name": "PreToolUse",
+            "decision": "approved",
+            "working_directory": str(Path.cwd()),
+            "reason": "allowed_trash_command",
+            "timestamp": datetime.now().strftime("%b %d, %I:%M%p").lower(),
+            "moved_from": str(original),
+            "moved_to": str(moved_to),
+        }
+
+        if log_path.exists():
+            try:
+                with open(log_path) as f:
+                    existing = json.load(f)
+            except Exception:
+                existing = []
+        else:
+            existing = []
+        existing.append(entry)
+        with open(log_path, "w") as f:
+            json.dump(existing, f, indent=2)
+    except Exception:
+        # logging failures must never block file move
+        pass
+
+def is_allowed_trash_command(command: str) -> tuple[bool, str | None]:
+    """
+    Allow exactly one ultra-safe pattern:
+      safe_trash <relative-file>
+    We intentionally DO NOT allow multi-args, globs, or directories.
+    Returns (allowed, resolved_absolute_path | None).
+    """
+    if not command:
+        return (False, None)
+    normalized = " ".join(command.strip().split())
+    m = re.match(r"^safe_trash\s+([^\s]+)$", normalized)
+    if not m:
+        return (False, None)
+    raw_path = m.group(1)
+    if not _is_simple_relpath(raw_path):
+        return (False, None)
+    target = _resolve_inside_repo(raw_path)
+    if target is None:
+        return (False, None)
+    if _is_denied_path(target):
+        return (False, None)
+    if not _is_regular_and_small(target):
+        return (False, None)
+    return (True, str(target))
+
+def handle_safe_trash(command: str, session_id: str) -> bool:
+    """
+    If command matches safe_trash policy, move the file into ./.trash/<timestamp>/...
+    Returns True if we handled it here (and external command should be blocked).
+    """
+    allowed, target_s = is_allowed_trash_command(command)
+    if not allowed:
+        return False
+    target = Path(target_s)
+    dest = _trash_destination_for(target)
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(target), str(dest))
+        _append_trash_log(target, dest, session_id)
+        # Also mirror to the standard log flow
+        log_tool_call("Bash", {"command": command}, "approved", "allowed_trash_command", f"target={target}")
+        # Inform via stderr so the IDE shows it prominently
+        print(f"✅ safe_trash moved file:\n   from: {target}\n   to:   {dest}", file=sys.stderr)
+        print("ℹ️ External command was intercepted by pre_tool_use hook (no shell execution).", file=sys.stderr)
+        return True
+    except Exception as e:
+        print(f"safe_trash error: {e}", file=sys.stderr)
+        return False
+
+
 def log_tool_call(tool_name, tool_input, decision, reason=None, block_message=None):
     """Log all tool calls with their decisions to a structured JSON file."""
     try:
@@ -444,6 +591,14 @@ def main():
         sys.exit(1)
 
     try:
+        # Early-intercept: handle ultra-safe trash command inline to avoid any shell-side surprises
+        if tool_name == "Bash":
+            command = tool_input.get("command", "")
+            # If we handled a safe_trash request here, block the actual tool call (we already moved the file)
+            if handle_safe_trash(command, get_claude_session_id()):
+                # Exit code 2 -> block the downstream tool call, but we've performed the action safely
+                sys.exit(2)
+
         # Check for .env file access violations
         if is_env_file_access(tool_name, tool_input):
             block_message = (
@@ -463,6 +618,8 @@ def main():
         # Check for ANY destructive/deletion commands - ULTRA STRICT PROTECTION
         if tool_name == "Bash":
             command = tool_input.get("command", "")
+            # If handle_safe_trash already ran, we would have exited with code 2 above.
+            # Continue with standard destructive command detection.
 
             # Block ALL forms of deletion and destructive operations
             if is_dangerous_deletion_command(command):

@@ -37,16 +37,23 @@ def verify_imports():
         formatted = format_currency_hover(1500)
         empty_fig = handle_empty_data("Test")
 
-        print("✅ All wrapper functions executed successfully")
+        if formatted != "$1.5K":
+            raise AssertionError("Unexpected currency formatting result")
+        if empty_fig.layout.title.text != "Test - No Data":
+            raise AssertionError("Empty figure title mismatch")
+
+        print(f"✅ Wrapper functions executed (sample format: {formatted})")
 
         # Test chart_production imports
         from apps.frontend.chart_production import create_production_chart
 
+        assert callable(create_production_chart)
         print("✅ chart_production imported successfully")
 
         # Test chart_kpis imports
         from apps.frontend.chart_kpis import create_chart_from_data
 
+        assert callable(create_chart_from_data)
         print("✅ chart_kpis imported successfully")
 
         return True
