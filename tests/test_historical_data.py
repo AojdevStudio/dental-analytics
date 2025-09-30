@@ -1,6 +1,6 @@
 # Unit tests for historical data functionality
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -82,7 +82,6 @@ class TestHistoricalDataManager:
             with patch("apps.backend.historical_data.datetime") as mock_datetime:
                 mock_datetime.now.return_value = today
                 result = self.manager.get_latest_operational_date()
-            expected_date = today - timedelta(days=1)
             assert result.date() == expected_date.date()
 
     @pytest.mark.unit
@@ -277,7 +276,11 @@ class TestHistoricalDataManager:
         )
 
         # Use _filter_by_date_range directly with days parameter
-        result = self.manager._filter_by_date_range(test_data, "Submission Date", 10)
+        with patch("apps.backend.historical_data.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2025, 9, 25)
+            result = self.manager._filter_by_date_range(
+                test_data, "Submission Date", 10
+            )
 
         # Should include dates within last 10 days: 2025-09-20 and 2025-09-25
         assert result is not None

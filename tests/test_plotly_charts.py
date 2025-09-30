@@ -9,19 +9,21 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pytest
+
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 # Import after path setup (required for module resolution)
-from apps.frontend.chart_components import (  # noqa: E402
+from apps.frontend.chart_kpis import (  # noqa: E402
     create_case_acceptance_chart,
     create_chart_from_data,
     create_collection_rate_chart,
     create_hygiene_reappointment_chart,
     create_new_patients_chart,
-    create_production_chart,
 )
+from apps.frontend.chart_production import create_production_chart  # noqa: E402
 
 
 def create_sample_time_series_data(
@@ -81,9 +83,8 @@ def test_production_charts():
         create_chart_from_data(sample_data)
         print("   ✅ Generic chart creator works")
 
-    except Exception as e:
-        print(f"   ❌ Production chart failed: {e}")
-        return False
+    except Exception as exc:
+        pytest.fail(f"Production chart failed: {exc}")
 
     # Test monthly production chart
     monthly_data = create_sample_time_series_data("production", "bar", "monthly", 12)
@@ -91,11 +92,8 @@ def test_production_charts():
     try:
         create_production_chart(monthly_data)
         print("   ✅ Monthly production chart works")
-    except Exception as e:
-        print(f"   ❌ Monthly production chart failed: {e}")
-        return False
-
-    return True
+    except Exception as exc:
+        pytest.fail(f"Monthly production chart failed: {exc}")
 
 
 def test_collection_rate_charts():
@@ -107,10 +105,8 @@ def test_collection_rate_charts():
     try:
         create_collection_rate_chart(sample_data)
         print("   ✅ Collection rate chart works")
-        return True
-    except Exception as e:
-        print(f"   ❌ Collection rate chart failed: {e}")
-        return False
+    except Exception as exc:
+        pytest.fail(f"Collection rate chart failed: {exc}")
 
 
 def test_new_patients_charts():
@@ -122,10 +118,8 @@ def test_new_patients_charts():
     try:
         create_new_patients_chart(sample_data)
         print("   ✅ New patients chart works")
-        return True
-    except Exception as e:
-        print(f"   ❌ New patients chart failed: {e}")
-        return False
+    except Exception as exc:
+        pytest.fail(f"New patients chart failed: {exc}")
 
 
 def test_case_acceptance_charts():
@@ -137,10 +131,8 @@ def test_case_acceptance_charts():
     try:
         create_case_acceptance_chart(sample_data)
         print("   ✅ Case acceptance chart works")
-        return True
-    except Exception as e:
-        print(f"   ❌ Case acceptance chart failed: {e}")
-        return False
+    except Exception as exc:
+        pytest.fail(f"Case acceptance chart failed: {exc}")
 
 
 def test_hygiene_reappointment_charts():
@@ -154,10 +146,8 @@ def test_hygiene_reappointment_charts():
     try:
         create_hygiene_reappointment_chart(sample_data)
         print("   ✅ Hygiene reappointment chart works")
-        return True
-    except Exception as e:
-        print(f"   ❌ Hygiene reappointment chart failed: {e}")
-        return False
+    except Exception as exc:
+        pytest.fail(f"Hygiene reappointment chart failed: {exc}")
 
 
 def test_edge_cases():
@@ -177,8 +167,8 @@ def test_edge_cases():
     try:
         create_production_chart(empty_data)
         print("✅ Empty data handling works")
-    except Exception as e:
-        print(f"⚠️  Empty data handled with error: {e}")
+    except Exception as exc:
+        pytest.fail(f"Empty data handling failed: {exc}")
 
     # Test with null values
     data_with_nulls = create_sample_time_series_data("production", "line", "daily", 5)
@@ -187,8 +177,8 @@ def test_edge_cases():
     try:
         create_production_chart(data_with_nulls)
         print("✅ Null values handling works")
-    except Exception as e:
-        print(f"⚠️  Null values handled with error: {e}")
+    except Exception as exc:
+        pytest.fail(f"Null values handling failed: {exc}")
 
     # Test with large dataset
     large_data = create_sample_time_series_data("production", "line", "daily", 365)
@@ -199,10 +189,8 @@ def test_edge_cases():
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
         print(f"✅ Large dataset (365 days) rendered in {duration:.2f}s")
-    except Exception as e:
-        print(f"❌ Large dataset failed: {e}")
-
-    return True
+    except Exception as exc:
+        pytest.fail(f"Large dataset rendering failed: {exc}")
 
 
 def test_chart_interactivity():
@@ -222,10 +210,8 @@ def test_chart_interactivity():
             print("   ✅ Chart data populated")
 
         print("✅ Chart interactivity works")
-        return True
-    except Exception as e:
-        print(f"❌ Chart interactivity failed: {e}")
-        return False
+    except Exception as exc:
+        pytest.fail(f"Chart interactivity failed: {exc}")
 
 
 def test_all_chart_types():
@@ -241,7 +227,6 @@ def test_all_chart_types():
         ("hygiene_reappointment", "line", "daily"),
     ]
 
-    success_count = 0
     for metric, chart_type, data_type in chart_configs:
         try:
             sample_data = create_sample_time_series_data(metric, chart_type, data_type)
@@ -259,13 +244,11 @@ def test_all_chart_types():
                 create_hygiene_reappointment_chart(sample_data)
 
             print(f"   ✅ {metric} {chart_type} {data_type} works")
-            success_count += 1
 
-        except Exception as e:
-            print(f"   ❌ {metric} {chart_type} {data_type} failed: {e}")
+        except Exception as exc:
+            pytest.fail(f"{metric} {chart_type} {data_type} failed: {exc}")
 
-    print(f"✅ {success_count}/{len(chart_configs)} chart combinations work")
-    return success_count == len(chart_configs)
+    print(f"✅ {len(chart_configs)}/{len(chart_configs)} chart combinations work")
 
 
 def main():
@@ -288,12 +271,10 @@ def main():
 
     for test in tests:
         try:
-            if test():
-                passed += 1
-            else:
-                failed += 1
-        except Exception as e:
-            print(f"❌ Test {test.__name__} crashed: {e}")
+            test()
+            passed += 1
+        except Exception as exc:
+            print(f"❌ Test {test.__name__} crashed: {exc}")
             failed += 1
         print()  # Add spacing between tests
 

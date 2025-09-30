@@ -11,6 +11,7 @@ import time
 from datetime import datetime, timedelta
 
 import pandas as pd
+from plotly.graph_objects import Figure
 
 # Import chart functions from the refactored modules
 from apps.backend.chart_data import aggregate_to_monthly, aggregate_to_weekly
@@ -51,8 +52,9 @@ def test_time_aggregation():
 
     # Test weekly aggregation
     weekly_data = aggregate_to_weekly(test_data)
-    assert "aggregation" in weekly_data
-    assert weekly_data["aggregation"] == "weekly"
+    weekly_metadata = weekly_data["metadata"]
+    assert weekly_metadata["aggregation"] == "weekly"
+    assert weekly_metadata["business_days_only"] is True
     assert len(weekly_data["dates"]) < len(
         test_data["dates"]
     )  # Should have fewer data points
@@ -63,15 +65,15 @@ def test_time_aggregation():
 
     # Test monthly aggregation
     monthly_data = aggregate_to_monthly(test_data)
-    assert "aggregation" in monthly_data
-    assert monthly_data["aggregation"] == "monthly"
+    monthly_metadata = monthly_data["metadata"]
+    assert monthly_metadata["aggregation"] == "monthly"
     assert len(monthly_data["dates"]) <= 2  # Should have 1-2 months for 30 days
     print(
         f"✅ Monthly aggregation: {len(test_data['dates'])} days → "
         f"{len(monthly_data['dates'])} months"
     )
 
-    return True
+    # No explicit return to keep pytest happy
 
 
 def test_trend_analysis():
@@ -98,7 +100,6 @@ def test_trend_analysis():
     assert len(trend_annotations) > 0, "No trend annotations found"
 
     print("✅ Trend analysis working: R² calculation and trend lines")
-    return True
 
 
 def format_production_chart_data(df: pd.DataFrame) -> dict:
@@ -150,8 +151,6 @@ def test_performance_benchmarks():
         assert load_time < 3.0, f"{timeframe} chart exceeded 3s: {load_time:.2f}s"
         print(f"✅ {timeframe.capitalize()} chart loaded in {load_time:.2f} seconds")
 
-    return True
-
 
 def test_chart_interactions():
     """Test interactive chart features and controls."""
@@ -160,9 +159,7 @@ def test_chart_interactions():
     test_data = create_test_data(14)  # 2 weeks
 
     # Create chart with all interactive features
-    chart = create_production_chart(
-        test_data, show_trend=True, show_range_selector=True
-    )
+    chart = create_production_chart(test_data, show_trend=True)
 
     # Verify range selector is present
     x_axis = chart.layout.xaxis
@@ -176,7 +173,6 @@ def test_chart_interactions():
     assert chart.layout.hovermode == "x unified", "Hover mode not optimized"
 
     print("✅ Interactive features verified: range selector, zoom, hover")
-    return True
 
 
 def test_visual_styling():
@@ -203,7 +199,6 @@ def test_visual_styling():
     assert "Production" in layout.title.text, "Chart title missing or incorrect"
 
     print("✅ Visual styling verified: brand colors, fonts, layout")
-    return True
 
 
 def test_error_handling():
@@ -222,10 +217,9 @@ def test_error_handling():
 
     # Test with None data
     chart = create_production_chart(None)
-    assert chart is not None, "Chart creation failed with None data"
+    assert isinstance(chart, Figure), "Chart creation failed with None data"
 
     print("✅ Error handling verified: graceful degradation")
-    return True
 
 
 def run_all_tests():

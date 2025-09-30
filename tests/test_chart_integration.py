@@ -5,21 +5,22 @@ from __future__ import annotations
 import pytest
 
 from apps.backend.chart_data import format_all_chart_data
-from apps.frontend.chart_components import (
+from apps.frontend.chart_kpis import (
     create_case_acceptance_chart,
     create_chart_from_data,
     create_collection_rate_chart,
     create_hygiene_reappointment_chart,
     create_new_patients_chart,
-    create_production_chart,
-    validate_chart_data_structure,
 )
+from apps.frontend.chart_production import create_production_chart
+from apps.frontend.chart_utils import validate_chart_data_structure
 
 
 @pytest.fixture()
 def empty_chart_data() -> dict[str, object]:
     return {
-        "metric_name": "Test Metric",
+        "metric_name": "Production Total",
+        "metric_key": "production_total",
         "chart_type": "line",
         "data_type": "float",
         "time_series": [],

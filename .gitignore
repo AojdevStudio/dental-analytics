@@ -104,6 +104,7 @@ Thumbs.db
 .project
 .settings/
 .classpath
+.old-files/
 
 # ============================================================================
 # Operating System Files
