@@ -1,0 +1,45 @@
+# <type>: <subject> (50 chars max)
+
+# <body> (72 chars per line)
+# What changed and why?
+
+# <footer>
+# Breaking changes or issues closed
+
+# Types: feat, fix, docs, style, refactor, test, chore, BREAKING
+#
+# Examples:
+#
+# refactor: rename add_trend_line to add_trend_line_to_figure
+#
+# Updated all imports and function calls in:
+# - apps/frontend/chart_kpis.py
+# - apps/frontend/chart_production.py
+#
+# Closes #123
+#
+# ---
+#
+# fix: correct collection rate calculation for edge cases
+#
+# Handle division by zero when production is zero
+# Add proper error handling for null values
+#
+# Fixes #456
+#
+# ---
+#
+# feat: add trend line statistics to chart exports
+#
+# Include slope and r-squared values in exported data
+# Update chart_utils to return tuple with statistics
+#
+# ---
+#
+# BREAKING: rename get_kpi_data to fetch_kpi_metrics
+#
+# This change updates the public API. All callers must update:
+# - Old: get_kpi_data(date_range)
+# - New: fetch_kpi_metrics(date_range)
+#
+# Migration guide in docs/migrations/2025-09-29-api-rename.md

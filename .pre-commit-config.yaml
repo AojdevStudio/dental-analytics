@@ -45,17 +45,26 @@ repos:
       - id: debug-statements
         exclude: '^(\.venv/|\.claude/|logs/).*'
 
-  # Pytest testing (optional, can be resource intensive)
+  # Import validation hook
+  - repo: local
+    hooks:
+      - id: validate-imports
+        name: Validate Python Imports
+        entry: python3 scripts/validate-imports.py
+        language: system
+        files: '\.py$'
+        pass_filenames: false
+
+  # Pytest testing - now automatic
   - repo: local
     hooks:
       - id: pytest
         name: pytest
         entry: uv run pytest
         language: system
-        files: '^(backend/|tests/).*\.py$'
+        files: '^(apps/backend/|apps/frontend/|tests/).*\.py$'
         pass_filenames: false
         args: [--maxfail=1, -x]
-        stages: [manual]  # Only run manually with --hook-stage manual
 
 # Configuration
 default_stages: [pre-commit]
