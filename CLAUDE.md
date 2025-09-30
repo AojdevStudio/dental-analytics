@@ -131,6 +131,35 @@ except Exception as e:
 import logging
 logger = logging.getLogger(__name__)
 ```
+### Strict Typing with Narrow Expectations
+- ALWAYS yse TypedDicts for:
+    - Chart data structures
+    - KPI response structures
+    - Any function returning structured dicts
+- ALWAYS use Plotly types:
+    - go.Layout instead of dict[str, Any]
+    - layout.XAxism layout.YAxis for axis configs
+    - Import from plotly.graph_objects.layout submodules
+- ONLY allow Any for:
+    - YAML ingestion: config: dict[str, Any] = yaml.safe_load(f)
+    - Reason: YAML is external, untyped data source we don't control
+- NEVER use Any for:
+    - Function return types (use TypedDict)
+    - Plotly configurations (use Plotly-stubs types)
+    - Internal data structions (define explicit types)
+Example:
+```python
+# Bad:
+def get_data() -> dict[str, Any]:
+    return {"values": [1, 2, 3]}
+
+# Good:
+class ChartData(TypedDict):
+    values: list[int]
+
+def get_data() -> ChartData:
+    return {"values": [1, 2, 3]}
+```
 
 ### Coverage Goals
 - **90%+ coverage** for backend business logic
@@ -206,7 +235,7 @@ exclude_lines = [
 > If you need compatibility, the request must say so explicitly. Otherwise, assume **out with the old, in with the new**.
 
 ## Current Project Status
-- **Story Location**: @docs/stories 
+- **Story Location**: @docs/stories
 
 ### Dashboard Access
 - **Local URL**: http://localhost:8501
