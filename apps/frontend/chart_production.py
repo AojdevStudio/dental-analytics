@@ -16,8 +16,8 @@ from apps.frontend.chart_base import (
     create_base_figure,
 )
 from apps.frontend.chart_utils import (
-    add_pattern_annotation,
     add_trend_line_to_figure,
+    add_trend_pattern_annotation,
     format_currency_hover,
     handle_empty_data,
 )
@@ -26,7 +26,9 @@ log = structlog.get_logger()
 
 
 def create_production_chart(
-    chart_data: dict[str, Any], show_trend: bool = True, timeframe: str = "daily"
+    chart_data: dict[str, Any] | None,
+    show_trend: bool = True,
+    timeframe: str = "daily",
 ) -> Figure:
     """Create interactive production total chart with trend analysis.
 
@@ -38,8 +40,15 @@ def create_production_chart(
     Returns:
         Configured Plotly figure for production data
     """
-    time_series = chart_data.get("time_series")
+    if chart_data is None:
+        return handle_empty_data("Production Total")
+
+    if not isinstance(chart_data, dict):
+        raise TypeError("chart_data must be a dictionary or None")
+
+    metadata = chart_data.get("metadata", {})
     format_options = chart_data.get("format_options", {})
+    time_series = chart_data.get("time_series")
 
     # Fallback for legacy data shape that uses separate lists
     if not time_series and chart_data.get("dates") and chart_data.get("values"):
@@ -55,7 +64,9 @@ def create_production_chart(
     if not time_series:
         return handle_empty_data("Production Total")
 
-    if timeframe != "daily" and not chart_data.get("aggregation"):
+    aggregation_value = chart_data.get("aggregation") or metadata.get("aggregation")
+
+    if timeframe != "daily" and not aggregation_value:
         log.warning(
             "chart.production_aggregation_unavailable",
             timeframe=timeframe,
@@ -107,12 +118,11 @@ def create_production_chart(
         )
 
     # Add pattern identification annotation
-    add_pattern_annotation(fig, values)
+    add_trend_pattern_annotation(fig, values)
 
     # Update layout with timeframe info
     title_text = f"{timeframe.capitalize()} Production Total"
-    aggregation = chart_data.get("aggregation")
-    if aggregation:
+    if aggregation_value:
         title_text += (
             f" ({chart_data.get('data_points', len(time_series))} data points)"
         )

@@ -19,6 +19,7 @@ Features:
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Literal
 
 import streamlit as st
 
@@ -30,6 +31,7 @@ if str(project_root) not in sys.path:
 from apps.backend.chart_data import format_all_chart_data  # noqa: E402
 from apps.backend.data_providers import SheetsProvider  # noqa: E402
 from apps.backend.metrics import get_all_kpis  # noqa: E402
+from apps.backend.types import KPIData  # noqa: E402
 from apps.frontend.chart_kpis import create_chart_from_data  # noqa: E402
 
 # Configure Streamlit page settings
@@ -145,7 +147,7 @@ st.markdown("---")
 
 # Cache function for chart data (Story 2.3: Performance Optimization)
 @st.cache_data(ttl=300)  # 5 minute cache
-def load_chart_data(location: str):
+def load_chart_data(location: str) -> dict[str, Any] | None:
     """Load chart data with caching for performance."""
     try:
         provider = SheetsProvider()
@@ -170,7 +172,7 @@ def load_chart_data(location: str):
 
 # Cache KPI data separately for faster updates
 @st.cache_data(ttl=300)  # 5 minute cache
-def load_kpi_data(location: str):
+def load_kpi_data(location: str) -> KPIData:
     """Load KPI data with caching."""
     return get_all_kpis(location=location)
 
@@ -188,7 +190,14 @@ with st.spinner(f"Loading {location.title()} KPI data from Google Sheets..."):
     except Exception as e:
         st.error(f"❌ Error loading data: {e}")
         st.info("Please check your internet connection and try refreshing the page.")
-        kpis = {}
+        # Create empty KPIData with all required keys
+        kpis = {
+            "production_total": None,
+            "collection_rate": None,
+            "new_patients": None,
+            "case_acceptance": None,
+            "hygiene_reappointment": None,
+        }
         chart_data = None
 
 # Primary KPIs Row (2 columns)
@@ -196,24 +205,27 @@ st.markdown("## 💰 **Primary Financial Metrics**")
 col1, col2 = st.columns(2)
 
 with col1:
-    if kpis.get("production_total") is not None:
+    production_total = kpis.get("production_total")
+    if production_total is not None:
         st.metric(
             label="📈 **Production Total**",
-            value=f"${kpis['production_total']:,.0f}",
+            value=f"${production_total:,.0f}",
             help="Total production (revenue) for the selected time period",
         )
     else:
         st.metric(label="📈 **Production Total**", value="Data Unavailable")
 
 with col2:
-    if kpis.get("collection_rate") is not None:
-        collection_rate = kpis["collection_rate"]
-        delta_color = "normal" if collection_rate >= 95 else "inverse"
+    collection_rate_value = kpis.get("collection_rate")
+    if collection_rate_value is not None:
+        collection_delta_color: Literal["normal", "inverse", "off"] = (
+            "normal" if collection_rate_value >= 95 else "inverse"
+        )
         st.metric(
             label="💳 **Collection Rate**",
-            value=f"{collection_rate:.1f}%",
+            value=f"{collection_rate_value:.1f}%",
             delta="Target: 95%",
-            delta_color=delta_color,
+            delta_color=collection_delta_color,
             help="Percentage of production successfully collected (Target: 95%+)",
         )
     else:
@@ -225,42 +237,47 @@ st.markdown("## 📊 **Operational Metrics**")
 col3, col4, col5 = st.columns(3)
 
 with col3:
-    if kpis.get("new_patients") is not None:
+    new_patients_value = kpis.get("new_patients")
+    if new_patients_value is not None:
         st.metric(
             label="👥 **New Patients**",
-            value=f"{kpis['new_patients']:,}",
+            value=f"{new_patients_value:,}",
             help="Total new patients for the month to date",
         )
     else:
         st.metric(label="👥 **New Patients**", value="Data Unavailable")
 
 with col4:
-    if kpis.get("case_acceptance") is not None:
-        case_acceptance = kpis["case_acceptance"]
-        delta_color = "normal" if case_acceptance >= 80 else "inverse"
+    case_acceptance_value = kpis.get("case_acceptance")
+    if case_acceptance_value is not None:
+        acceptance_delta_color: Literal["normal", "inverse", "off"] = (
+            "normal" if case_acceptance_value >= 80 else "inverse"
+        )
         st.metric(
             label="✅ **Case Acceptance**",
-            value=f"{case_acceptance:.1f}%",
+            value=f"{case_acceptance_value:.1f}%",
             delta="Target: 80%",
-            delta_color=delta_color,
+            delta_color=acceptance_delta_color,
             help="Percentage of presented treatments that were accepted (Target: 80%+)",
         )
     else:
         st.metric(label="✅ **Case Acceptance**", value="Data Unavailable")
 
 with col5:
-    if kpis.get("hygiene_reappointment") is not None:
-        hygiene_rate = kpis["hygiene_reappointment"]
-        delta_color = "normal" if hygiene_rate >= 90 else "inverse"
+    hygiene_rate_value = kpis.get("hygiene_reappointment")
+    if hygiene_rate_value is not None:
+        hygiene_delta_color: Literal["normal", "inverse", "off"] = (
+            "normal" if hygiene_rate_value >= 90 else "inverse"
+        )
         hygiene_help = (
             "Percentage of hygiene patients who scheduled "
             "next appointment (Target: 90%+)"
         )
         st.metric(
             label="🔄 **Hygiene Reappointment**",
-            value=f"{hygiene_rate:.1f}%",
+            value=f"{hygiene_rate_value:.1f}%",
             delta="Target: 90%",
-            delta_color=delta_color,
+            delta_color=hygiene_delta_color,
             help=hygiene_help,
         )
     else:

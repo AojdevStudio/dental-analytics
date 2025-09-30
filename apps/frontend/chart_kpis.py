@@ -21,7 +21,6 @@ from .chart_base import (
 )
 from .chart_production import create_production_chart
 from .chart_utils import (
-    add_pattern_annotation,
     add_trend_line_to_figure,
     add_trend_pattern_annotation,
     apply_alpha_to_color,
@@ -92,9 +91,7 @@ def create_collection_rate_chart(
 
     # Add trend line if requested
     if format_options.get("show_trend", False):
-        trend_values, slope, r_squared = add_trend_line_to_figure(
-            fig, dates, clean_values, "Collection Rate Trend"
-        )
+        add_trend_line_to_figure(fig, dates, clean_values, "Collection Rate Trend")
 
     # Add target line at 95% (industry standard)
     target_rate = format_options.get("target_rate", 95)
@@ -133,7 +130,7 @@ def create_collection_rate_chart(
 
     # Add trend pattern annotation if enabled
     if format_options.get("show_trend_pattern", True):
-        add_pattern_annotation(fig, clean_values)
+        add_trend_pattern_annotation(fig, clean_values)
 
     log.info(
         "chart.collection_rate_completed",
@@ -189,9 +186,7 @@ def create_new_patients_chart(
 
     # Add trend line if requested
     if format_options.get("show_trend", False):
-        trend_values, slope, r_squared = add_trend_line_to_figure(
-            fig, dates, values, "New Patients Trend"
-        )
+        add_trend_line_to_figure(fig, dates, values, "New Patients Trend")
 
     # Add target line if specified
     target_patients = format_options.get("target_patients")
@@ -291,9 +286,7 @@ def create_case_acceptance_chart(
 
     # Add trend line if requested
     if format_options.get("show_trend", False):
-        trend_values, slope, r_squared = add_trend_line_to_figure(
-            fig, dates, values, "Acceptance Trend"
-        )
+        add_trend_line_to_figure(fig, dates, values, "Acceptance Trend")
 
     # Add target line (typically 80-90% for dental practices)
     target_rate = format_options.get("target_acceptance", 85)
@@ -390,9 +383,7 @@ def create_hygiene_reappointment_chart(
 
     # Add trend line if requested
     if format_options.get("show_trend", False):
-        trend_values, slope, r_squared = add_trend_line_to_figure(
-            fig, dates, values, "Reappointment Trend"
-        )
+        add_trend_line_to_figure(fig, dates, values, "Reappointment Trend")
 
     # Add target line (typically 90%+ for good practices)
     target_rate = format_options.get("target_reappointment", 90)

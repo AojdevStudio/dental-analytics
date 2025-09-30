@@ -119,7 +119,8 @@ def parse_currency_string(value: str | float | int | None) -> float | None:
         except ValueError:
             return None
 
-    return None
+    # All type cases handled above
+    return None  # type: ignore[unreachable]  # pragma: no cover
 
 
 def calculate_trend_line(
@@ -182,7 +183,14 @@ def calculate_trend_line(
 
 
 def add_trend_line_to_figure(
-    fig: go.Figure, dates: list[str], values: list[float], name: str = "Trend"
+    fig: go.Figure,
+    dates: list[str],
+    values: list[float],
+    name: str = "Trend",
+    *,
+    color: str | None = None,
+    line_style: dict[str, Any] | None = None,
+    trace_kwargs: dict[str, Any] | None = None,
 ) -> tuple[list[float], float, float]:
     """
     Add trend line to existing figure and return trend statistics.
@@ -200,13 +208,22 @@ def add_trend_line_to_figure(
 
     if trend_values:
         # Add trend line to the figure
+        line_config: dict[str, Any] = {"dash": "dash", "color": "rgba(255,0,0,0.7)"}
+        if color:
+            line_config["color"] = color
+        if line_style:
+            line_config.update(line_style)
+
+        scatter_overrides = trace_kwargs.copy() if trace_kwargs else {}
+
         fig.add_trace(
             go.Scatter(
                 x=dates,
                 y=trend_values,
                 mode="lines",
                 name=name,
-                line={"dash": "dash", "color": "rgba(255,0,0,0.7)"},
+                line=line_config,
+                **scatter_overrides,
             )
         )
 
@@ -268,9 +285,29 @@ def detect_data_patterns(values: list[float]) -> str:
         return f"Downward trend ({change_percent:.1f}%)"
 
 
+def add_trend_pattern_annotation(
+    fig: go.Figure,
+    values: list[float],
+    *,
+    x_position: float = 0.02,
+    y_position: float = 0.98,
+) -> str:
+    """Analyse values and add an annotation describing the detected pattern."""
+
+    pattern_text = detect_data_patterns(values)
+    if pattern_text:
+        add_pattern_annotation(
+            fig,
+            pattern_text,
+            x_position=x_position,
+            y_position=y_position,
+        )
+    return pattern_text
+
+
 def format_chart_data_for_display(
     time_series: list[dict[str, Any]], chart_type: str = "line"
-) -> dict[str, list[Any]]:
+) -> dict[str, Any]:
     """Format time series data for chart display."""
     if not time_series:
         return {"dates": [], "values": []}
@@ -299,7 +336,7 @@ def validate_chart_data_structure(chart_data: dict[str, Any]) -> bool:
         True if data structure is valid
     """
     if not isinstance(chart_data, dict):
-        return False
+        return False  # type: ignore[unreachable]  # Runtime safety check
 
     # Handle new format with time_series
     if "time_series" in chart_data:
@@ -402,7 +439,7 @@ def create_empty_chart_placeholder(
     return fig
 
 
-def calculate_chart_summary_stats(values: list[float]) -> dict[str, float]:
+def calculate_chart_summary_stats(values: list[float]) -> dict[str, float | int]:
     """Calculate summary statistics for chart data."""
     # Filter out None and NaN values
     clean_values = [v for v in values if v is not None and not pd.isna(v)]
@@ -415,7 +452,7 @@ def calculate_chart_summary_stats(values: list[float]) -> dict[str, float]:
         "max": max(clean_values),
         "mean": sum(clean_values) / len(clean_values),
         "median": sorted(clean_values)[len(clean_values) // 2],
-        "std": np.std(clean_values),
+        "std": float(np.std(clean_values)),
         "count": len(clean_values),
     }
 
@@ -438,6 +475,50 @@ def format_number_for_display(
         return f"{value:.{decimals}f}%"
     else:
         return f"{value:,.{decimals}f}"
+
+
+def apply_alpha_to_color(color: str, alpha: float) -> str:
+    """Convert a hex or rgb color into an rgba string with the given alpha."""
+
+    try:
+        normalized_alpha = max(0.0, min(1.0, float(alpha)))
+    except (TypeError, ValueError):
+        normalized_alpha = 1.0
+
+    if not isinstance(color, str):
+        logger.warning("Invalid color type supplied to apply_alpha_to_color")  # type: ignore[unreachable]
+        return f"rgba(0,0,0,{normalized_alpha:.3f})"
+
+    stripped = color.strip()
+
+    if stripped.startswith("#"):
+        hex_value = stripped[1:]
+        if len(hex_value) == 3:
+            hex_value = "".join(ch * 2 for ch in hex_value)
+        if len(hex_value) == 6:
+            try:
+                r = int(hex_value[0:2], 16)
+                g = int(hex_value[2:4], 16)
+                b = int(hex_value[4:6], 16)
+                return f"rgba({r},{g},{b},{normalized_alpha:.3f})"
+            except ValueError:
+                logger.warning("Unable to parse hex color '%s'", color)
+
+    if stripped.lower().startswith("rgb"):
+        # Handle existing rgb/rgba strings by replacing/adding alpha component
+        try:
+            prefix, values = stripped.split("(", 1)
+            components = values.rstrip(")").split(",")
+            rgb_components = [int(float(c)) for c in components[:3]]
+            return (
+                f"rgba({rgb_components[0]},{rgb_components[1]},"
+                f"{rgb_components[2]},{normalized_alpha:.3f})"
+            )
+        except (ValueError, IndexError):
+            logger.warning("Unable to parse rgb color '%s'", color)
+
+    # Fall back to supplying the original color string without modification
+    return stripped
 
 
 def add_chart_annotations(fig: go.Figure, annotations: list[dict[str, Any]]) -> None:
