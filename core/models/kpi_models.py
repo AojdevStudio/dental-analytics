@@ -36,6 +36,22 @@ class ValidationSeverity(str, Enum):
     ERROR = "error"
 
 
+class CalculationResult(BaseModel):
+    """Standardized output for pure KPI calculator functions."""
+
+    value: float | int | None = None
+    can_calculate: bool = Field(default=False)
+    reason: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+    @field_validator("warnings", mode="after")
+    @classmethod
+    def _strip_empty_warnings(cls, warnings: list[str]) -> list[str]:
+        """Remove empty warning messages to keep payload tidy."""
+
+        return [warning.strip() for warning in warnings if warning.strip()]
+
+
 class ValidationIssue(BaseModel):
     """Captures a single validation finding surfaced during KPI evaluation.
 

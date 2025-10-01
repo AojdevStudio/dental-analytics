@@ -136,47 +136,47 @@ Draft
     - [x] Test Saturday alternating logic for Baytown (reference date: 2025-01-04)
     - [x] Test Sunday is closed for both locations
 
-- [ ] **Pure Calculation Functions** (AC: 1, 11)
-  - [ ] Create `core/calculators/kpi_calculator.py`
-  - [ ] Implement `compute_production_total(production, adjustments, writeoffs)` → `CalculationResult`
-  - [ ] Implement `compute_collection_rate(production, adjustments, writeoffs, patient_income, unearned_income, insurance_income)` → `CalculationResult`
-  - [ ] Implement `compute_new_patients(new_patients_mtd)` → `CalculationResult`
-  - [ ] Implement `compute_case_acceptance(treatments_presented, treatments_scheduled, same_day_treatment)` → `CalculationResult`
-  - [ ] Implement `compute_hygiene_reappointment(total_hygiene, not_reappointed)` → `CalculationResult`
-  - [ ] Add comprehensive docstrings to all functions
+- [x] **Pure Calculation Functions** (AC: 1, 11)
+  - [x] Create `core/calculators/kpi_calculator.py`
+  - [x] Implement `compute_production_total(production, adjustments, writeoffs)` → `CalculationResult`
+  - [x] Implement `compute_collection_rate(production, adjustments, writeoffs, patient_income, unearned_income, insurance_income)` → `CalculationResult`
+  - [x] Implement `compute_new_patients(new_patients_mtd)` → `CalculationResult`
+  - [x] Implement `compute_case_acceptance(treatments_presented, treatments_scheduled, same_day_treatment)` → `CalculationResult`
+  - [x] Implement `compute_hygiene_reappointment(total_hygiene, not_reappointed)` → `CalculationResult`
+  - [x] Add comprehensive docstrings to all functions
 
-- [ ] **Calculator Unit Tests** (AC: 4, 5, 6)
-  - [ ] Create `tests/unit/calculators/test_kpi_calculator.py`
-  - [ ] Test `compute_production_total`:
-    - [ ] Happy path (positive production)
-    - [ ] With adjustments and writeoffs
-    - [ ] Zero production edge case
-  - [ ] Test `compute_collection_rate`:
-    - [ ] Happy path (normal rate ~95%)
-    - [ ] Zero production (should return `can_calculate=False`)
-    - [ ] Outlier rate (>110% warning scenario)
-  - [ ] Test `compute_new_patients`:
-    - [ ] Happy path (positive count)
-    - [ ] Negative count (invalid, should fail)
-  - [ ] Test `compute_case_acceptance`:
-    - [ ] Happy path (normal acceptance ~85%)
-    - [ ] Zero treatments presented (should return N/A)
-    - [ ] Acceptance rate > 100% (valid but warning)
-  - [ ] Test `compute_hygiene_reappointment`:
-    - [ ] Happy path (normal rate ~95%)
-    - [ ] Zero total hygiene (should return N/A)
-    - [ ] `not_reappointed > total_hygiene` (should cap to total)
-  - [ ] Run coverage: `uv run pytest tests/unit/calculators/ --cov=core/calculators --cov-report=term-missing`
-  - [ ] Verify 90%+ coverage achieved
+- [x] **Calculator Unit Tests** (AC: 4, 5, 6)
+  - [x] Create `tests/unit/calculators/test_kpi_calculator.py`
+  - [x] Test `compute_production_total`:
+    - [x] Happy path (positive production)
+    - [x] With adjustments and writeoffs
+    - [x] Zero production edge case
+  - [x] Test `compute_collection_rate`:
+    - [x] Happy path (normal rate ~95%)
+    - [x] Zero production (should return `can_calculate=False`)
+    - [x] Outlier rate (>110% warning scenario)
+  - [x] Test `compute_new_patients`:
+    - [x] Happy path (positive count)
+    - [x] Negative count (invalid, should fail)
+  - [x] Test `compute_case_acceptance`:
+    - [x] Happy path (normal acceptance ~85%)
+    - [x] Zero treatments presented (should return N/A)
+    - [x] Acceptance rate > 100% (valid but warning)
+  - [x] Test `compute_hygiene_reappointment`:
+    - [x] Happy path (normal rate ~95%)
+    - [x] Zero total hygiene (should return N/A)
+    - [x] `not_reappointed > total_hygiene` (should cap to total)
+  - [x] Run coverage: `uv run pytest tests/unit/calculators/ --cov=core/calculators --cov-report=term-missing`
+  - [x] Verify 90%+ coverage achieved
 
-- [ ] **Verify Clean Break Compliance** (AC: 8)
-  - [ ] Run: `git diff --name-only | grep 'apps/backend/types.py'` → expect empty output
-  - [ ] Run: `git diff --name-only | grep 'apps/backend/metrics.py'` → expect empty output
-  - [ ] Run: `git diff --name-only | grep 'apps/backend/chart_data.py'` → expect empty output
-  - [ ] Run: `grep -r "from apps.backend.types" core/ services/` → expect no results
-  - [ ] Run: `grep -r "from .types import" core/ services/` → expect no results
-  - [ ] Confirm zero modifications to legacy code (types.py, metrics.py, chart_data.py, historical_data.py)
-  - [ ] Confirm all new files only in core/, services/, config/business_rules/, tests/unit/
+- [x] **Verify Clean Break Compliance** (AC: 8)
+  - [x] Run: `git diff --name-only | grep 'apps/backend/types.py'` → expect empty output
+  - [x] Run: `git diff --name-only | grep 'apps/backend/metrics.py'` → expect empty output
+  - [x] Run: `git diff --name-only | grep 'apps/backend/chart_data.py'` → expect empty output
+  - [x] Run: `grep -r "from apps.backend.types" core/ services/` → expect no results
+  - [x] Run: `grep -r "from .types import" core/ services/` → expect no results
+  - [x] Confirm zero modifications to legacy code (types.py, metrics.py, chart_data.py, historical_data.py)
+  - [x] Confirm all new files only in core/, services/, config/business_rules/, tests/unit/
 
 ### **CHECKPOINT 2: Transformers & Service (Hour 3 - Optional)**
 
