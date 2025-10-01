@@ -125,16 +125,16 @@ Draft
   - [x] Create `core/models/exceptions.py` for custom exceptions
   - [x] Test imports work without errors
 
-- [ ] **Business Calendar Implementation** (AC: 2, 7)
-  - [ ] Create `core/business_rules/calendar.py` with `BusinessCalendar` class
-  - [ ] Implement `is_business_day(location, date)` method
-  - [ ] Implement `_is_open_saturday(location, date)` for alternating Baytown Saturdays
-  - [ ] Implement `get_expected_closure_reason(location, date)` method
-  - [ ] Write unit tests:
-    - [ ] Test Monday is open for both locations
-    - [ ] Test Friday is closed for Humble
-    - [ ] Test Saturday alternating logic for Baytown (reference date: 2025-01-04)
-    - [ ] Test Sunday is closed for both locations
+- [x] **Business Calendar Implementation** (AC: 2, 7)
+  - [x] Create `core/business_rules/calendar.py` with `BusinessCalendar` class
+  - [x] Implement `is_business_day(location, date)` method
+  - [x] Implement `_is_open_saturday(location, date)` for alternating Baytown Saturdays
+  - [x] Implement `get_expected_closure_reason(location, date)` method
+  - [x] Write unit tests:
+    - [x] Test Monday is open for both locations
+    - [x] Test Friday is closed for Humble
+    - [x] Test Saturday alternating logic for Baytown (reference date: 2025-01-04)
+    - [x] Test Sunday is closed for both locations
 
 - [ ] **Pure Calculation Functions** (AC: 1, 11)
   - [ ] Create `core/calculators/kpi_calculator.py`
