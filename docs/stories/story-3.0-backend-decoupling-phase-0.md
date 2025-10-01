@@ -105,25 +105,25 @@ Draft
 
 ### **CHECKPOINT 1: Foundation (Hours 0-2)**
 
-- [ ] **Setup & Configuration** (AC: 9, 10)
-  - [ ] Create feature branch: `git checkout -b feature/dan-1`
-  - [ ] Create directory structure: `core/models/`, `core/calculators/`, `core/business_rules/`, `core/transformers/`, `services/`
-  - [ ] Create `__init__.py` files in all new directories
-  - [ ] Create `config/business_rules/calendar.yml` with Baytown/Humble schedules
-  - [ ] Create `config/business_rules/goals.yml` with daily production goals
+- [x] **Setup & Configuration** (AC: 9, 10)
+  - [x] Create feature branch: `git checkout -b feature/dan-1`
+  - [x] Create directory structure: `core/models/`, `core/calculators/`, `core/business_rules/`, `core/transformers/`, `services/`
+  - [x] Create `__init__.py` files in all new directories
+  - [x] Create `config/business_rules/calendar.yml` with Baytown/Humble schedules
+  - [x] Create `config/business_rules/goals.yml` with daily production goals
 
-- [ ] **Data Contracts & Models** (AC: 3, 8)
-  - [ ] Create `core/models/kpi_models.py` with Pydantic models:
-    - [ ] `Location = Literal["baytown", "humble"]`
-    - [ ] `DataAvailabilityStatus` enum
-    - [ ] `ValidationSeverity` enum
-    - [ ] `ValidationIssue` model
-    - [ ] `KPIValue` model (value, available, unavailable_reason, validation_issues)
-    - [ ] `KPIValues` container model
-    - [ ] `DataFreshness` model
-    - [ ] `KPIResponse` top-level response model
-  - [ ] Create `core/models/exceptions.py` for custom exceptions
-  - [ ] Test imports work without errors
+- [x] **Data Contracts & Models** (AC: 3, 8)
+  - [x] Create `core/models/kpi_models.py` with Pydantic models:
+    - [x] `Location = Literal["baytown", "humble"]`
+    - [x] `DataAvailabilityStatus` enum
+    - [x] `ValidationSeverity` enum
+    - [x] `ValidationIssue` model
+    - [x] `KPIValue` model (value, available, unavailable_reason, validation_issues)
+    - [x] `KPIValues` container model
+    - [x] `DataFreshness` model
+    - [x] `KPIResponse` top-level response model
+  - [x] Create `core/models/exceptions.py` for custom exceptions
+  - [x] Test imports work without errors
 
 - [ ] **Business Calendar Implementation** (AC: 2, 7)
   - [ ] Create `core/business_rules/calendar.py` with `BusinessCalendar` class

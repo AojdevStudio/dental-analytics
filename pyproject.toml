@@ -18,6 +18,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "pydantic>=2.6",
     "google-auth>=2.23",
     "google-api-python-client>=2.103",
     "pandas>=2.1",
