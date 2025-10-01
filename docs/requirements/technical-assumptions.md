@@ -29,7 +29,7 @@ Single repository containing all frontend, backend, and configuration files for 
 
 **Critical Architecture Decision - Separation of Concerns:**
 - **backend/** directory: Pure Python modules with no Streamlit dependencies
-  - `sheets_reader.py`: Google Sheets API connection and data fetching
+  - `data_providers.py`: Google Sheets API connection and data fetching
   - `metrics.py`: KPI calculation logic returning structured data
 - **frontend/** directory: Presentation layer (Streamlit for MVP)
   - `app.py`: UI components that call backend modules

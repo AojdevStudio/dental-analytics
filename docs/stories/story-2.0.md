@@ -82,7 +82,7 @@ dental-analytics/
 │   ├── app.py (80 lines - Streamlit dashboard)
 │   └── .streamlit/config.toml (brand theme)
 ├── backend/
-│   ├── sheets_reader.py (77 lines - Google Sheets API)
+│   ├── data_providers.py (77 lines - Google Sheets API)
 │   └── metrics.py (92 lines - KPI calculations)
 ├── tests/
 └── pyproject.toml
@@ -96,14 +96,14 @@ dental-analytics/
 │   │   ├── app.py
 │   │   └── .streamlit/config.toml
 │   └── backend/
-│       ├── sheets_reader.py
+│       ├── data_providers.py
 │       └── metrics.py
 ├── tests/
 └── pyproject.toml
 ```
 
 **Critical Integration Points:**
-- `frontend/app.py` imports from `backend.metrics` and `backend.sheets_reader`
+- `frontend/app.py` imports from `backend.metrics` and `apps.backend.data_providers`
 - Tests import from both frontend and backend modules
 - Streamlit configuration in `.streamlit/config.toml` must remain functional
 - Google API credentials path references may need updates
@@ -175,7 +175,7 @@ Full Stack Developer (James) - Expert Senior Software Engineer & Implementation 
 ### File List
 **Modified Files:**
 - `apps/frontend/app.py` - Updated import from `backend.metrics` to `apps.backend.metrics`
-- `tests/test_sheets_reader.py` - Updated import from `backend.sheets_reader` to `apps.backend.sheets_reader`
+- `tests/test_data_providers.py` - Updated import from `apps.backend.data_providers` to `apps.backend.data_providers`
 - `tests/test_metrics.py` - Updated import from `backend.metrics` to `apps.backend.metrics`
 - `tests/test_gdrive_validation.py` - Updated imports from `backend.*` to `apps.backend.*`
 - `tests/integration/test_full_flow.py` - Updated import from `backend.metrics` to `apps.backend.metrics`
@@ -196,7 +196,7 @@ Full Stack Developer (James) - Expert Senior Software Engineer & Implementation 
 - `frontend/.streamlit/config.toml` → `apps/frontend/.streamlit/config.toml`
 - `backend/__init__.py` → `apps/backend/__init__.py`
 - `backend/metrics.py` → `apps/backend/metrics.py`
-- `backend/sheets_reader.py` → `apps/backend/sheets_reader.py`
+- `apps/backend/data_providers.py` → `apps/backend/data_providers.py`
 
 ### Debug Log References
 - All Python imports updated successfully without syntax errors
@@ -226,13 +226,13 @@ Comprehensive review of directory restructuring from `frontend/backend/` to `app
 
 During quality review, the following critical fixes were implemented:
 
-- **File**: tests/test_sheets_reader.py
+- **File**: tests/test_data_providers.py
   - **Change**: Fixed all patch statements from `backend.*` to `apps.backend.*`
   - **Why**: Original refactoring missed updating mock patch paths, causing 16 test failures
   - **How**: Updated import references in 15+ patch statements throughout test file
 
 - **File**: tests/integration/test_full_flow.py
-  - **Change**: Fixed SheetsReader patch reference from `backend.metrics.SheetsReader` to `apps.backend.metrics.SheetsReader`
+  - **Change**: Fixed SheetsProvider patch reference from `backend.metrics.SheetsProvider` to `apps.backend.metrics.SheetsProvider`
   - **Why**: Integration tests were failing due to incorrect patch path
   - **How**: Updated 6 patch statements across all integration test methods
 
@@ -250,7 +250,7 @@ During quality review, the following critical fixes were implemented:
 
 ### Improvements Checklist
 
-- [x] Fixed critical test import path failures (tests/test_sheets_reader.py, tests/integration/test_full_flow.py)
+- [x] Fixed critical test import path failures (tests/test_data_providers.py, tests/integration/test_full_flow.py)
 - [x] Resolved MyPy type checking violations (apps/frontend/app.py)
 - [x] Verified Streamlit application starts successfully with new structure
 - [x] Confirmed all quality tools (Ruff, MyPy, Black) pass
@@ -267,7 +267,7 @@ No performance impact detected. Directory restructuring does not affect runtime 
 ### Files Modified During Review
 
 The following files were modified during QA review to resolve critical issues:
-- tests/test_sheets_reader.py (15 patch path fixes)
+- tests/test_data_providers.py (15 patch path fixes)
 - tests/integration/test_full_flow.py (6 patch path fixes)
 - apps/frontend/app.py (Type safety improvements)
 

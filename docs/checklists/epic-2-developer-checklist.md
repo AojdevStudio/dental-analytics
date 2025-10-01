@@ -10,7 +10,7 @@
 - [ ] Review PRD and acceptance criteria for Analytics Enhancement Epic
 - [ ] Set up epic branch: `epic/ENG-200-analytics-enhancement`
 - [ ] Review existing codebase patterns:
-  - [ ] `/backend/sheets_reader.py` - Google Sheets integration patterns
+  - [ ] `/apps/backend/data_providers.py` - Google Sheets integration patterns
   - [ ] `/backend/metrics.py` - KPI calculation structure
   - [ ] `/frontend/app.py` - Streamlit dashboard organization
   - [ ] `/tests/` - Testing patterns and coverage standards
@@ -58,8 +58,8 @@
 
 ### Concurrent Google Sheets Reading
 
-- [ ] **Enhanced Sheets Reader**
-  - [ ] Extend `backend/sheets_reader.py` for multi-location support
+- [ ] **Enhanced Sheets Provider**
+  - [ ] Extend `apps/backend/data_providers.py` for multi-location support
   - [ ] Implement concurrent API calls with connection pooling
   - [ ] Add rate limiting and retry logic
   - [ ] Create location-aware caching mechanism

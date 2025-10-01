@@ -18,16 +18,16 @@ tags:
 # Multi-Sheet Reader
 
 ## Problem Statement
-Current `SheetsReader` is hard-wired to a single Google Sheets spreadsheet via the module-level `SPREADSHEET_ID`, so every consumer assumes one canonical sheet. This blocks the immediate need to read from multiple spreadsheets (e.g., separate EOD, KPI, or location-specific workbooks) and leaves no seam for the longer-term goal of migrating to SQLite or other data backends without rewriting the callers.
+Current `SheetsProvider` is hard-wired to a single Google Sheets spreadsheet via the module-level `SPREADSHEET_ID`, so every consumer assumes one canonical sheet. This blocks the immediate need to read from multiple spreadsheets (e.g., separate EOD, KPI, or location-specific workbooks) and leaves no seam for the longer-term goal of migrating to SQLite or other data backends without rewriting the callers.
 
 ## Goals
-- Replace the legacy `SheetsReader` contract with a multi-spreadsheet design that uses aliases instead of a global ID.
+- Replace the legacy `SheetsProvider` contract with a multi-spreadsheet design that uses aliases instead of a global ID.
 - Provide a configuration-driven approach so spreadsheet IDs, ranges, and metadata can be updated without redeploying code.
 - Introduce an interface for data access that can be reused when a SQLite provider replaces or augments Google Sheets.
 - Allow downstream modules to depend on the new provider abstraction only; the old single-sheet API will be removed.
 
 ## Non-Goals
-- Maintain backward compatibility with the existing `SheetsReader()` constructor or module-level constants.
+- Maintain backward compatibility with the existing `SheetsProvider()` constructor or module-level constants.
 - Implement the SQLite backend immediately (tracked as a future milestone).
 - Change KPI calculation formulas or frontend rendering.
 - Rework authentication or credential storage.
@@ -45,7 +45,7 @@ Current `SheetsReader` is hard-wired to a single Google Sheets spreadsheet via t
 
 ## Constraints & Dependencies
 - Production still relies on Google Sheets service accounts stored at `config/credentials.json`.
-- Tests rely heavily on patching `SheetsReader`; they must be updated to target the new abstraction instead of expecting legacy behavior.
+- Tests rely heavily on patching `SheetsProvider`; they must be updated to target the new abstraction instead of expecting legacy behavior.
 
 ## Proposed Architecture
 1. **Config Schema**
@@ -90,13 +90,13 @@ Current `SheetsReader` is hard-wired to a single Google Sheets spreadsheet via t
 2. **Introduce New Provider**
    - Create `SheetsProvider` implementing `DataProvider` with alias-based fetching.
    - Delete module-level `SPREADSHEET_ID` and any helper relying on it.
-   - Provide a clear migration error for any attempted `SheetsReader()` import (e.g., raise `RuntimeError` instructing to use new provider).
+   - Provide a clear migration error for any attempted `SheetsProvider()` import (e.g., raise `RuntimeError` instructing to use new provider).
 
 3. **Update Call Sites**
    - `apps/backend/metrics.py`: request provider, map location → alias inside metrics module, remove references to legacy helpers.
    - `apps/backend/historical_data.py`: obtain provider and resolve required aliases explicitly.
    - `scripts/print_kpis.py`: pass aliases or allow CLI to select alias per dataset; remove old override flag tied to constants.
-   - Remove or rewrite any remaining usage of `SheetsReader` in docs, stories, and scripts.
+   - Remove or rewrite any remaining usage of `SheetsProvider` in docs, stories, and scripts.
 
 4. **Testing & Quality**
    - Update unit tests to construct provider with minimal config dictionaries; add tests for alias resolution, missing config, and error messages.

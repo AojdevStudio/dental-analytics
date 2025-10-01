@@ -8,20 +8,20 @@ sequenceDiagram
     participant Browser
     participant Streamlit
     participant Metrics
-    participant SheetsReader
+    participant SheetsProvider
     participant GoogleAPI
 
     User->>Browser: Open Dashboard
     Browser->>Streamlit: HTTP Request
     Streamlit->>Metrics: get_all_kpis()
-    Metrics->>SheetsReader: get_sheet_data("EOD")
-    SheetsReader->>GoogleAPI: Authenticate & Fetch
-    GoogleAPI-->>SheetsReader: Raw Data
-    SheetsReader-->>Metrics: DataFrame
-    Metrics->>SheetsReader: get_sheet_data("Front KPI")
-    SheetsReader->>GoogleAPI: Fetch
-    GoogleAPI-->>SheetsReader: Raw Data
-    SheetsReader-->>Metrics: DataFrame
+    Metrics->>SheetsProvider: get_sheet_data("EOD")
+    SheetsProvider->>GoogleAPI: Authenticate & Fetch
+    GoogleAPI-->>SheetsProvider: Raw Data
+    SheetsProvider-->>Metrics: DataFrame
+    Metrics->>SheetsProvider: get_sheet_data("Front KPI")
+    SheetsProvider->>GoogleAPI: Fetch
+    GoogleAPI-->>SheetsProvider: Raw Data
+    SheetsProvider-->>Metrics: DataFrame
     Metrics-->>Streamlit: KPI Dictionary
     Streamlit-->>Browser: Rendered HTML
     Browser-->>User: Display Dashboard

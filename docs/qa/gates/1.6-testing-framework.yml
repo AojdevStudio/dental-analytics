@@ -69,7 +69,7 @@ design_validation:
 
 test_coverage:
   backend_metrics: 95
-  backend_sheets_reader: 92
+  backend_data_providers: 92
   overall_backend: 94
 
 acceptance_criteria_validation:

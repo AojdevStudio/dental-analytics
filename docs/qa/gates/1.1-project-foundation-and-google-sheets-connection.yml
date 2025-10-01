@@ -52,6 +52,6 @@ recommendations:
   immediate: []  # None - all critical items addressed
   future:
     - action: "Consider implementing exponential backoff for API rate limits"
-      refs: ["backend/sheets_reader.py"]
+      refs: ["backend/data_providers.py"]
     - action: "Add data validation for numerical columns in future stories"
-      refs: ["backend/sheets_reader.py:63"]
+      refs: ["backend/data_providers.py:63"]

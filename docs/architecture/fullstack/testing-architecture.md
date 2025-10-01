@@ -31,7 +31,7 @@ def test_collection_rate_calculation():
 **Integration Tests:**
 ```python
 def test_google_sheets_connection():
-    reader = SheetsReader()
+    reader = SheetsProvider()
     data = reader.get_sheet_data('A1:A1')
     assert data is not None
 ```

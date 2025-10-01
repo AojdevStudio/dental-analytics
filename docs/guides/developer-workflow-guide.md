@@ -117,7 +117,7 @@ def test_calculate_production_total():
 **Integration Testing**
 ```python
 # Example: Google Sheets integration
-@mock.patch('backend.sheets_reader.build')
+@mock.patch('apps.backend.data_providers.build_sheets_provider')
 def test_sheets_connection(mock_build):
     # Mock external dependencies
     # Test integration points
@@ -165,7 +165,7 @@ Every development session should include continuous quality validation:
 Name                           Stmts   Miss  Cover   Missing
 ----------------------------------------------------------
 backend/metrics.py                25      0   100%
-backend/sheets_reader.py          30      2    93%   45-46
+apps/backend/data_providers.py    30      2    93%   45-46
 frontend/app.py                   50      5    90%   78-82
 ----------------------------------------------------------
 TOTAL                            105      7    93%

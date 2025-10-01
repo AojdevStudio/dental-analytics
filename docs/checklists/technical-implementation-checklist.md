@@ -26,7 +26,7 @@
   - [ ] streamlit>=1.30
 - [ ] Run `uv sync` to install dependencies
 - [ ] Create `backend/__init__.py`
-- [ ] Create `backend/sheets_reader.py` (50 lines max)
+- [ ] Create `apps/backend/data_providers.py` (50 lines max)
 
 ### Connection Testing
 - [ ] Implement Google Sheets authentication
@@ -46,7 +46,7 @@
 
 ### Metrics Module Setup
 - [ ] Create `backend/metrics.py` (50 lines max)
-- [ ] Import pandas and sheets_reader module
+- [ ] Import pandas and data_providers module
 - [ ] Set up CSV storage directory
 
 ### KPI Implementations
@@ -140,7 +140,7 @@
 - [ ] Count total lines of production code
 - [ ] Verify under 200 lines total:
   - [ ] frontend/app.py ≤ 100 lines
-  - [ ] backend/sheets_reader.py ≤ 50 lines
+  - [ ] apps/backend/data_providers.py ≤ 50 lines
   - [ ] backend/metrics.py ≤ 50 lines
 - [ ] Remove any commented code
 - [ ] Remove debug print statements

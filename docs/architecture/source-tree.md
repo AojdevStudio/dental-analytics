@@ -57,7 +57,7 @@ dental-analytics/
 ```
 apps/backend/
 ├── __init__.py              # Module initialization
-├── sheets_reader.py         # Google Sheets API interface
+├── data_providers.py         # Google Sheets API interface
 ├── metrics.py               # KPI calculation logic
 ├── chart_data.py            # Chart data processing (Story 2.0+)
 └── historical_data.py       # Historical data management (Story 2.0+)
@@ -108,7 +108,7 @@ tests/
 ├── __init__.py              # Test module initialization
 ├── conftest.py              # Shared pytest fixtures
 ├── test_metrics.py          # KPI calculation tests
-├── test_sheets_reader.py    # Data retrieval tests
+├── test_data_providers.py    # Data retrieval tests
 ├── fixtures/                # Test data fixtures
 │   ├── __init__.py
 │   ├── sample_eod_data.py
@@ -205,7 +205,7 @@ htmlcov/                    # Coverage reports
 ## File Naming Conventions
 
 ### Python Files
-- Use snake_case: `sheets_reader.py`, `test_metrics.py`, `app.py`
+- Use snake_case: `data_providers.py`, `test_metrics.py`, `app.py`
 - Test files prefix with `test_`: `test_*.py`
 - Configuration: `conftest.py`, `pytest.ini`
 - Max 50 lines for backend modules (constraint)
@@ -235,7 +235,7 @@ graph TD
     A[apps/frontend/app.py] --> B[apps/backend/metrics.py]
     A --> H[apps/backend/chart_data.py]
     A --> I[apps/backend/historical_data.py]
-    B --> C[apps/backend/sheets_reader.py]
+    B --> C[apps/backend/data_providers.py]
     H --> C
     I --> C
     C --> D[Google Sheets API]
@@ -243,7 +243,7 @@ graph TD
     A --> F[.streamlit/config.toml]
 
     T1[tests/test_metrics.py] --> B
-    T2[tests/test_sheets_reader.py] --> C
+    T2[tests/test_data_providers.py] --> C
     T4[tests/test_chart_data.py] --> H
     T5[tests/test_historical_data.py] --> I
     T3[tests/integration/] --> A
@@ -259,7 +259,7 @@ Current file sizes after Story 2.0 refactoring:
 
 | File | Max Lines | Current | Purpose |
 |------|-----------|---------|---------|
-| apps/backend/sheets_reader.py | - | ~77 | Data retrieval |
+| apps/backend/data_providers.py | - | ~77 | Data retrieval |
 | apps/backend/metrics.py | - | ~92 | KPI calculations |
 | apps/backend/chart_data.py | - | ~50 | Chart data processing |
 | apps/backend/historical_data.py | - | ~60 | Historical data management |
@@ -270,7 +270,7 @@ Current file sizes after Story 2.0 refactoring:
 
 ### Backend Modules
 ```python
-# sheets_reader.py
+# data_providers.py
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import pandas as pd
@@ -295,7 +295,7 @@ import pytest
 import pandas as pd
 from unittest.mock import Mock, patch
 from apps.backend.metrics import get_all_kpis
-from apps.backend.sheets_reader import SheetsReader
+from apps.backend.data_providers import SheetsProvider
 from apps.backend.chart_data import get_chart_data
 from apps.backend.historical_data import get_historical_data
 ```
@@ -325,7 +325,7 @@ uv (NOT pip, poetry, or conda)
 2. **Business Logic:** `apps/backend/metrics.py`
 3. **Chart Processing:** `apps/backend/chart_data.py`
 4. **Historical Analysis:** `apps/backend/historical_data.py`
-5. **Data Access:** `apps/backend/sheets_reader.py`
+5. **Data Access:** `apps/backend/data_providers.py`
 6. **External Data:** Google Sheets API
 7. **Configuration:** `config/credentials.json`
 8. **Display:** Streamlit components
@@ -390,7 +390,7 @@ For new developers, create files in this sequence:
 2. **Backend Implementation**
    - apps/__init__.py
    - apps/backend/__init__.py
-   - apps/backend/sheets_reader.py
+   - apps/backend/data_providers.py
    - apps/backend/metrics.py
    - apps/backend/chart_data.py (Story 2.0+)
    - apps/backend/historical_data.py (Story 2.0+)

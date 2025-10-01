@@ -90,7 +90,7 @@ dental-analytics/
 │   ├── __init__.py
 │   ├── conftest.py           # Shared fixtures
 │   ├── test_metrics.py       # KPI calculation tests
-│   ├── test_sheets_reader.py # Data retrieval tests
+│   ├── test_data_providers.py # Data retrieval tests
 │   ├── fixtures/             # Test data files
 │   │   ├── __init__.py
 │   │   ├── sample_eod_data.py
@@ -368,32 +368,32 @@ class TestKPIThresholds:
             return "needs_improvement"
 ```
 
-### Step 6: Create Sheets Reader Tests
+### Step 6: Create Sheets Provider Tests
 ```python
-# tests/test_sheets_reader.py
+# tests/test_data_providers.py
 import pytest
 from unittest.mock import Mock, patch
 import pandas as pd
-from backend.sheets_reader import SheetsReader
+from apps.backend.data_providers import SheetsProvider
 
-class TestSheetsReader:
+class TestSheetsProvider:
     """Test suite for Google Sheets data retrieval."""
 
     @pytest.mark.unit
-    def test_sheets_reader_initialization(self):
-        """Test SheetsReader initialization."""
-        with patch('backend.sheets_reader.service_account.Credentials') as mock_creds:
-            reader = SheetsReader('config/credentials.json')
+    def test_data_providers_initialization(self):
+        """Test SheetsProvider initialization."""
+        with patch('apps.backend.data_providers.service_account.Credentials') as mock_creds:
+            reader = SheetsProvider('config/credentials.json')
             assert reader.SPREADSHEET_ID == '1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8'
             mock_creds.from_service_account_file.assert_called_once()
 
     @pytest.mark.unit
     def test_get_sheet_data_success(self, mock_sheets_service):
         """Test successful data retrieval from sheets."""
-        with patch('backend.sheets_reader.build') as mock_build:
+        with patch('apps.backend.data_providers.build_sheets_provider') as mock_build:
             mock_build.return_value = mock_sheets_service
 
-            reader = SheetsReader()
+            reader = SheetsProvider()
             result = reader.get_sheet_data('TestRange')
 
             assert isinstance(result, pd.DataFrame)
@@ -402,26 +402,26 @@ class TestSheetsReader:
     @pytest.mark.unit
     def test_get_sheet_data_empty_response(self):
         """Test handling of empty sheet response."""
-        with patch('backend.sheets_reader.build') as mock_build:
+        with patch('apps.backend.data_providers.build_sheets_provider') as mock_build:
             mock_service = Mock()
             mock_service.spreadsheets().values().get().execute.return_value = {
                 'values': []
             }
             mock_build.return_value = mock_service
 
-            reader = SheetsReader()
+            reader = SheetsProvider()
             result = reader.get_sheet_data('EmptyRange')
             assert result is None
 
     @pytest.mark.unit
     def test_get_sheet_data_api_error(self):
         """Test handling of API errors."""
-        with patch('backend.sheets_reader.build') as mock_build:
+        with patch('apps.backend.data_providers.build_sheets_provider') as mock_build:
             mock_service = Mock()
             mock_service.spreadsheets().values().get().execute.side_effect = Exception("API Error")
             mock_build.return_value = mock_service
 
-            reader = SheetsReader()
+            reader = SheetsProvider()
             result = reader.get_sheet_data('ErrorRange')
             assert result is None
 
@@ -437,10 +437,10 @@ class TestSheetsReader:
         }
         mock_sheets_service.spreadsheets().values().get().execute.return_value = test_data
 
-        with patch('backend.sheets_reader.build') as mock_build:
+        with patch('apps.backend.data_providers.build_sheets_provider') as mock_build:
             mock_build.return_value = mock_sheets_service
 
-            reader = SheetsReader()
+            reader = SheetsProvider()
             result = reader.get_sheet_data('TestRange')
 
             assert list(result.columns) == ['col1', 'col2', 'col3']
@@ -461,7 +461,7 @@ class TestFullIntegration:
     @pytest.mark.integration
     def test_complete_kpi_flow(self, sample_eod_data, sample_front_kpi_data):
         """Test end-to-end KPI calculation."""
-        with patch('backend.sheets_reader.SheetsReader') as MockReader:
+        with patch('apps.backend.data_providers.SheetsProvider') as MockReader:
             mock_instance = Mock()
             MockReader.return_value = mock_instance
 
@@ -495,7 +495,7 @@ class TestFullIntegration:
     @pytest.mark.integration
     def test_partial_data_failure(self, sample_eod_data):
         """Test handling when some data sources fail."""
-        with patch('backend.sheets_reader.SheetsReader') as MockReader:
+        with patch('apps.backend.data_providers.SheetsProvider') as MockReader:
             mock_instance = Mock()
             MockReader.return_value = mock_instance
 
@@ -524,7 +524,7 @@ class TestFullIntegration:
         """Test that KPI calculation completes within 1 second."""
         import time
 
-        with patch('backend.sheets_reader.SheetsReader') as MockReader:
+        with patch('apps.backend.data_providers.SheetsProvider') as MockReader:
             mock_instance = Mock()
             MockReader.return_value = mock_instance
             mock_instance.get_sheet_data.return_value = sample_eod_data
@@ -656,7 +656,7 @@ This story addresses the critical risk of calculation errors by:
 ### Previous Story Insights
 - Story 1.5 completed with Streamlit dashboard successfully displaying all 5 KPIs
 - Current implementation has manual test_calculations.py for verification
-- Backend modules (sheets_reader.py: 77 lines, metrics.py: 92 lines) need comprehensive test coverage
+- Backend modules (data_providers.py: 77 lines, metrics.py: 92 lines) need comprehensive test coverage
 - Frontend app.py (80 lines) displays metrics with error handling for None values
 - All KPI calculations currently working but lack automated test coverage
 
@@ -665,7 +665,7 @@ This story addresses the critical risk of calculation errors by:
 #### Testing Standards
 [Source: architecture/backend/testing-strategy.md]
 - **Manual Validation Points Currently Exist:**
-  - Connection test for SheetsReader
+  - Connection test for SheetsProvider
   - Calculation test for collection_rate
   - Integration test for get_all_kpis()
 - **Testing Pyramid Approach:**
@@ -686,7 +686,7 @@ tests/
 ├── __init__.py              # Test module initialization
 ├── conftest.py              # Shared pytest fixtures
 ├── test_metrics.py          # KPI calculation tests
-├── test_sheets_reader.py    # Data retrieval tests
+├── test_data_providers.py    # Data retrieval tests
 ├── fixtures/                # Test data fixtures
 │   ├── __init__.py
 │   ├── sample_eod_data.py
@@ -716,9 +716,9 @@ tests/
 #### Current Module Structure to Test
 [Source: Story 1.1-1.5 implementations]
 
-**backend/sheets_reader.py (77 lines):**
-- `SheetsReader.__init__()` - Credentials initialization
-- `SheetsReader.get_sheet_data()` - Returns DataFrame or None
+**apps/backend/data_providers.py (77 lines):**
+- `SheetsProvider.__init__()` - Credentials initialization
+- `SheetsProvider.get_sheet_data()` - Returns DataFrame or None
 - Error handling for API failures
 - SPREADSHEET_ID = '1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8'
 
@@ -825,9 +825,9 @@ tests/
   - [x] Verify all calculations match expected values within 0.01% tolerance
   - [x] Add tests for column name mismatches and missing data
 
-- [x] **Task 5: Write Sheets Reader Unit Tests** (AC: 3, 4)
-  - [x] Create tests/test_sheets_reader.py with TestSheetsReader class
-  - [x] Test SheetsReader initialization with mocked credentials
+- [x] **Task 5: Write Sheets Provider Unit Tests** (AC: 3, 4)
+  - [x] Create tests/test_data_providers.py with TestSheetsProvider class
+  - [x] Test SheetsProvider initialization with mocked credentials
   - [x] Test successful data retrieval with mocked API response
   - [x] Test empty sheet response handling
   - [x] Test API error handling (connection failures, auth errors)
@@ -885,7 +885,7 @@ uv run pytest --cov=backend --cov-report=html
 
 ### Expected Test Coverage
 - backend/metrics.py: 95%+ coverage
-- backend/sheets_reader.py: 90%+ coverage
+- apps/backend/data_providers.py: 90%+ coverage
 - Overall backend/: 90%+ coverage
 
 ## Dev Agent Record
@@ -908,7 +908,7 @@ claude-opus-4-1-20250805
 - `/.coveragerc` - Created: coverage settings
 - `/tests/conftest.py` - Created: shared test fixtures
 - `/tests/test_metrics.py` - Modified: KPI calculation tests
-- `/tests/test_sheets_reader.py` - Existing: data retrieval tests
+- `/tests/test_data_providers.py` - Existing: data retrieval tests
 - `/tests/test_gdrive_validation.py` - Created: spreadsheet validation
 - `/tests/fixtures/__init__.py` - Created: fixtures module init
 - `/tests/fixtures/edge_cases.py` - Created: edge case test data

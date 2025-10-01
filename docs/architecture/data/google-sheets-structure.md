@@ -224,4 +224,4 @@ mcp__gdrive__readSheet(
 
 - `/docs/stories/story-1.6-testing-framework.md` - Testing implementation using this structure
 - `/apps/backend/metrics.py` - KPI calculation implementation
-- `/apps/backend/sheets_reader.py` - Google Sheets data retrieval
+- `/apps/backend/data_providers.py` - Google Sheets data retrieval

@@ -74,7 +74,7 @@ Done
 - **MetricsCalculator Class Available:** Successfully implemented with static method pattern (33 lines)
 - **Existing Functions:** calculate_production_total() and calculate_collection_rate() working
 - **Error Handling Pattern:** Returns None on failure, uses pd.to_numeric(errors='coerce')
-- **Current Backend Status:** 76 lines total (sheets_reader.py: 43 + metrics.py: 33)
+- **Current Backend Status:** 76 lines total (data_providers.py: 43 + metrics.py: 33)
 - **Available Lines:** 24 lines remaining to stay under 100-line backend constraint
 
 ### Module Architecture Requirements
@@ -118,8 +118,8 @@ class MetricsCalculator:
     @staticmethod
     def get_all_kpis() -> Dict[str, Optional[float]]:
         """Orchestrate all KPI calculations."""
-        from apps.backend.sheets_reader import SheetsReader
-        reader = SheetsReader()
+        from apps.backend.data_providers import SheetsProvider
+        reader = SheetsProvider()
 
         # Get EOD data for production, collections, and new patients
         eod_data = reader.get_sheet_data('EOD - Baytown Billing!A:N')
@@ -189,8 +189,8 @@ return (scheduled / presented) * 100
 [Source: backend/metrics.py current implementation]
 - **Import Pattern:** Already established in get_all_kpis() function
 - **Data Sources:**
-  - EOD data: Use existing SheetsReader call for EOD sheets
-  - Front KPI data: Add new SheetsReader call for Front KPI sheets
+  - EOD data: Use existing SheetsProvider call for EOD sheets
+  - Front KPI data: Add new SheetsProvider call for Front KPI sheets
 - **Return Structure:** Extend existing dictionary with new keys
 - **Backward Compatibility:** Ensure existing production_total and collection_rate still work
 
@@ -268,7 +268,7 @@ Claude Opus 4.1 (claude-opus-4-1-20250805) via BMAD dev agent framework
 **New Files Created:**
 - None (extended existing files)
 
-**Total Backend Code**: 144 lines (sheets_reader.py: 77 + metrics.py: 67)
+**Total Backend Code**: 144 lines (data_providers.py: 77 + metrics.py: 67)
 
 ## QA Results
 

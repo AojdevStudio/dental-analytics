@@ -63,7 +63,7 @@ uv run python
 uv run jupyter notebook
 
 # Test Google Sheets connection (when implemented)
-uv run python -c "from backend.sheets_reader import test_connection; test_connection()"
+uv run python -c "from backend.data_providers import test_connection; test_connection()"
 ```
 
 ## Git Commands (Darwin/macOS)

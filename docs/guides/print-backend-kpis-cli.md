@@ -28,7 +28,7 @@ This guide shows how to print the exact KPI values the Streamlit app displays, d
 - Google Sheets credentials at `config/credentials.json`
 - Service account has Viewer access to the target spreadsheet
 
-Optional: Verify or change the spreadsheet ID in `backend/sheets_reader.py` (`SPREADSHEET_ID`).
+Optional: Verify Google Sheets aliases in `config/sheets.yml` (e.g., `baytown_eod`, `baytown_front`).
 
 ## One-Command Script (recommended)
 
@@ -53,14 +53,14 @@ Options:
 Return all KPIs as JSON (zsh-safe quoting):
 
 ```bash
-uv run python -c 'import json; from backend.metrics import get_all_kpis; print(json.dumps(get_all_kpis(), indent=2))'
+uv run python -c 'import json; from apps.backend.metrics import get_all_kpis; print(json.dumps(get_all_kpis(), indent=2))'
 ```
 
 Pretty print with labels:
 
 ```bash
 uv run python - <<'PY'
-from backend.metrics import get_all_kpis
+from apps.backend.metrics import get_all_kpis
 kpis = get_all_kpis()
 for name, value in kpis.items():
     print(f"{name:22} -> {value}")
@@ -69,48 +69,42 @@ PY
 
 ## Individual KPIs
 
-Daily Production (EOD sheet):
+Run targeted calculations using the alias-based provider:
 
 ```bash
-uv run python -c 'from backend.sheets_reader import SheetsReader; from backend.metrics import calculate_production_total as f; r=SheetsReader(); df=r.get_sheet_data("EOD - Baytown Billing!A:N"); print(f(df))'
+uv run python - <<'PY'
+from apps.backend.data_providers import build_sheets_provider
+from apps.backend.metrics import (
+    calculate_production_total,
+    calculate_collection_rate,
+    calculate_case_acceptance,
+    calculate_hygiene_reappointment,
+    calculate_new_patients,
+)
+
+provider = build_sheets_provider()
+
+eod_df = provider.fetch("baytown_eod")
+front_df = provider.fetch("baytown_front")
+
+print("Production:", calculate_production_total(eod_df))
+print("Collection Rate:", calculate_collection_rate(eod_df))
+print("New Patients:", calculate_new_patients(eod_df))
+print("Case Acceptance:", calculate_case_acceptance(front_df))
+print("Hygiene Reappointment:", calculate_hygiene_reappointment(front_df))
+PY
 ```
-
-Collection Rate % (EOD sheet):
-
-```bash
-uv run python -c 'from backend.sheets_reader import SheetsReader; from backend.metrics import calculate_collection_rate as f; r=SheetsReader(); df=r.get_sheet_data("EOD - Baytown Billing!A:N"); print(f(df))'
-```
-
-Treatment Acceptance % (Front KPI sheet):
-
-```bash
-uv run python -c 'from backend.sheets_reader import SheetsReader; from backend.metrics import calculate_case_acceptance as f; r=SheetsReader(); df=r.get_sheet_data("Baytown Front KPIs Form responses!A:N"); print(f(df))'
-```
-
-Hygiene Reappointment % (Front KPI sheet):
-
-```bash
-uv run python -c 'from backend.sheets_reader import SheetsReader; from backend.metrics import calculate_hygiene_reappointment as f; r=SheetsReader(); df=r.get_sheet_data("Baytown Front KPIs Form responses!A:N"); print(f(df))'
-```
-
-New Patients (currently placeholder):
-
-```bash
-uv run python -c 'from backend.sheets_reader import SheetsReader; from backend.metrics import calculate_new_patients as f; r=SheetsReader(); df=r.get_sheet_data("EOD - Baytown Billing!A:N"); print(f(df))' 
-```
-
-Note: `calculate_new_patients` returns `None` until the correct column is confirmed and implemented.
 
 ## Inspect Raw Data
 
 Quickly preview the first rows of each sheet range:
 
 ```bash
-uv run python -c 'from backend.sheets_reader import SheetsReader; r=SheetsReader(); print(r.get_sheet_data("EOD - Baytown Billing!A:N").head())'
+uv run python -c 'from apps.backend.data_providers import build_sheets_provider; r=build_sheets_provider(); print(r.fetch("baytown_eod").head())'
 ```
 
 ```bash
-uv run python -c 'from backend.sheets_reader import SheetsReader; r=SheetsReader(); print(r.get_sheet_data("Baytown Front KPIs Form responses!A:N").head())'
+uv run python -c 'from apps.backend.data_providers import build_sheets_provider; r=build_sheets_provider(); print(r.fetch("baytown_front").head())'
 ```
 
 ## Troubleshooting
@@ -124,14 +118,16 @@ uv run python -c 'from backend.sheets_reader import SheetsReader; r=SheetsReader
 
 ```bash
 uv run python - <<'PY'
-from backend.sheets_reader import SheetsReader
-SheetsReader.SPREADSHEET_ID = 'YOUR_SHEET_ID'
-print(SheetsReader().get_sheet_data('EOD - Baytown Billing!A:N').shape)
+from apps.backend.data_providers import build_sheets_provider
+
+provider = build_sheets_provider()
+provider.config['sheets']["baytown_eod"]["spreadsheet_id"] = 'YOUR_SHEET_ID'
+print(provider.fetch('baytown_eod').shape)
 PY
 ```
 
 ## How It Connects to the Frontend
 
-- The Streamlit app imports the backend directly: `from backend.metrics import get_all_kpis`
+- The Streamlit app imports the backend directly: `from apps.backend.metrics import get_all_kpis`
 - There is no separate API server; values come from Python calls in‑process
-- Google Sheets data is read via `backend/sheets_reader.SheetsReader` and passed to KPI functions in `backend/metrics`
+- Google Sheets data is read via `apps/backend/data_providers.py` and passed to KPI functions in `apps/backend/metrics.py`

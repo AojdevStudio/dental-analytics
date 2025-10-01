@@ -65,7 +65,7 @@ A complete, production-ready architecture for a dental analytics dashboard that 
 │  └──────────────────┬──────────────────────────────────┘  │
 │                     │                                      │
 │  ┌──────────────────▼──────────────────────────────────┐  │
-│  │      apps/backend/sheets_reader.py (~77 lines)      │  │
+│  │      apps/backend/data_providers.py (~77 lines)      │  │
 │  │  • Service Account Authentication                   │  │
 │  │  • Google Sheets API Connection                     │  │
 │  │  • Data Retrieval & DataFrame Conversion            │  │
@@ -146,7 +146,7 @@ kpis = get_all_kpis()
 ```
 apps/backend/
 ├── __init__.py           # Module initialization
-├── sheets_reader.py      # Google Sheets API interface
+├── data_providers.py      # Google Sheets API interface
 ├── metrics.py            # KPI calculations
 ├── chart_data.py         # Chart data processing
 ├── historical_data.py    # Historical data management
@@ -185,20 +185,20 @@ sequenceDiagram
     participant Browser
     participant Streamlit
     participant Metrics
-    participant SheetsReader
+    participant SheetsProvider
     participant GoogleAPI
 
     User->>Browser: Open Dashboard
     Browser->>Streamlit: HTTP Request
     Streamlit->>Metrics: get_all_kpis()
-    Metrics->>SheetsReader: get_sheet_data("EOD")
-    SheetsReader->>GoogleAPI: Authenticate & Fetch
-    GoogleAPI-->>SheetsReader: Raw Data
-    SheetsReader-->>Metrics: DataFrame
-    Metrics->>SheetsReader: get_sheet_data("Front KPI")
-    SheetsReader->>GoogleAPI: Fetch
-    GoogleAPI-->>SheetsReader: Raw Data
-    SheetsReader-->>Metrics: DataFrame
+    Metrics->>SheetsProvider: get_sheet_data("EOD")
+    SheetsProvider->>GoogleAPI: Authenticate & Fetch
+    GoogleAPI-->>SheetsProvider: Raw Data
+    SheetsProvider-->>Metrics: DataFrame
+    Metrics->>SheetsProvider: get_sheet_data("Front KPI")
+    SheetsProvider->>GoogleAPI: Fetch
+    GoogleAPI-->>SheetsProvider: Raw Data
+    SheetsProvider-->>Metrics: DataFrame
     Metrics-->>Streamlit: KPI Dictionary
     Streamlit-->>Browser: Rendered HTML
     Browser-->>User: Display Dashboard
@@ -241,7 +241,7 @@ dental-analytics/
 │   │   └── app.py
 │   └── backend/
 │       ├── __init__.py
-│       ├── sheets_reader.py
+│       ├── data_providers.py
 │       ├── metrics.py
 │       ├── chart_data.py
 │       └── historical_data.py
@@ -570,7 +570,7 @@ def test_collection_rate_calculation():
 **Integration Tests:**
 ```python
 def test_google_sheets_connection():
-    reader = SheetsReader()
+    reader = SheetsProvider()
     data = reader.get_sheet_data('A1:A1')
     assert data is not None
 ```

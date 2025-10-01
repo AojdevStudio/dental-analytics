@@ -65,7 +65,7 @@ Done 
 - **MetricsCalculator Class Available:** Successfully implemented with static method pattern (67 lines)
 - **Existing Functions:** calculate_production_total(), calculate_collection_rate(), calculate_new_patients(), calculate_case_acceptance() working
 - **Error Handling Pattern:** Returns None on failure, uses pd.to_numeric(errors='coerce')
-- **Current Backend Status:** 144 lines total (sheets_reader.py: 77 + metrics.py: 67)
+- **Current Backend Status:** 144 lines total (data_providers.py: 77 + metrics.py: 67)
 - **Available Lines:** Limited - already over 50-line target for metrics.py
 - **Front KPI Sheet Access:** Already established in Story 1.3 - same data source as case_acceptance
 
@@ -99,8 +99,8 @@ class MetricsCalculator:
     @staticmethod
     def get_all_kpis() -> Dict[str, Optional[float]]:
         """Orchestrate all KPI calculations."""
-        from apps.backend.sheets_reader import SheetsReader
-        reader = SheetsReader()
+        from apps.backend.data_providers import SheetsProvider
+        reader = SheetsProvider()
 
         # Get EOD data for production, collections, and new patients
         eod_data = reader.get_sheet_data('EOD - Baytown Billing!A:N')
@@ -167,7 +167,7 @@ return ((total_hygiene - not_reappointed) / total_hygiene) * 100
 [Source: backend/metrics.py current implementation from Story 1.3]
 - **Import Pattern:** Already established in get_all_kpis() function
 - **Data Source:**
-  - Front KPI data: Use existing SheetsReader call for Front KPI sheets (same as case_acceptance)
+  - Front KPI data: Use existing SheetsProvider call for Front KPI sheets (same as case_acceptance)
 - **Return Structure:** Extend existing dictionary with hygiene_reappointment key
 - **Backward Compatibility:** Ensure existing 4 KPIs still work unchanged
 

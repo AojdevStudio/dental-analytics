@@ -35,7 +35,7 @@ def get_sheet_data(spreadsheet_id: str, range_name: str) -> Optional[pd.DataFram
 - Handle errors gracefully with try/except blocks
 
 ## File Naming Conventions
-- Python files: **snake_case** (e.g., `sheets_reader.py`, `test_metrics.py`)
+- Python files: **snake_case** (e.g., `data_providers.py`, `test_metrics.py`)
 - Directories: **lowercase** (e.g., `backend/`, `frontend/`, `tests/`)
 - Configuration files: **lowercase with extension** (e.g., `pyproject.toml`)
 - Special markdown files: **ALL_CAPS** (README.md, CHANGELOG.md, CLAUDE.md)

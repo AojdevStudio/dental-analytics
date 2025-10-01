@@ -13,7 +13,7 @@
 2. pyproject.toml configured with all required dependencies using uv
 3. Google Cloud project created with Sheets API enabled
 4. Service account credentials generated and stored in config/credentials.json
-5. Backend module sheets_reader.py successfully connects to spreadsheet ID `1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8`
+5. Backend module data_providers.py successfully connects to spreadsheet ID `1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8`
 6. Function can read and return raw data from "EOD - Baytown Billing" sheet as pandas DataFrame
 7. Basic error handling returns None with logged error message if connection fails
 

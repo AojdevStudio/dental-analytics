@@ -103,7 +103,7 @@ dental-analytics/
 │   └── app.py             # Streamlit app (100 lines max)
 ├── backend/
 │   ├── __init__.py
-│   ├── sheets_reader.py   # Google Sheets connection (50 lines)
+│   ├── data_providers.py   # Google Sheets connection (50 lines)
 │   └── metrics.py         # Calculate KPIs (50 lines)
 ├── config/
 │   └── credentials.json   # Google API credentials

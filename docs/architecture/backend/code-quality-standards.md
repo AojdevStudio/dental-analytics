@@ -1,7 +1,7 @@
 # Code Quality Standards
 
 ## Line Count Compliance
-- sheets_reader.py: 45 lines (under 50 limit)
+- data_providers.py: 45 lines (under 50 limit)
 - metrics.py: 48 lines (under 50 limit)
 - Total backend: 93 lines (under 100 limit)
 
@@ -46,7 +46,7 @@ def get_sheet_data(spreadsheet_id: str, range_name: str) -> Optional[pd.DataFram
 - Handle errors gracefully with try/except blocks
 
 ## File Naming Conventions
-- Python files: **snake_case** (e.g., `sheets_reader.py`, `test_metrics.py`)
+- Python files: **snake_case** (e.g., `data_providers.py`, `test_metrics.py`)
 - Directories: **lowercase** (e.g., `backend/`, `frontend/`, `tests/`)
 - Configuration files: **lowercase with extension** (e.g., `pyproject.toml`)
 - Special markdown files: **ALL_CAPS** (README.md, CHANGELOG.md, CLAUDE.md)

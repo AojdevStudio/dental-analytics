@@ -13,7 +13,7 @@ Done
 2. pyproject.toml configured with all required dependencies using uv
 3. Google Cloud project created with Sheets API enabled
 4. Service account credentials generated and stored in config/credentials.json
-5. Backend module sheets_reader.py successfully connects to spreadsheet ID `1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8`
+5. Backend module data_providers.py successfully connects to spreadsheet ID `1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8`
 6. Function can read and return raw data from "EOD - Baytown Billing" sheet as pandas DataFrame
 7. Basic error handling returns None with logged error message if connection fails
 
@@ -51,9 +51,9 @@ Done
   - [x] Set file permissions to 600 (Unix/Mac)
   - [x] Add service account email to spreadsheet with Viewer permission
 
-- [x] **Task 4: Implement SheetsReader Module** (AC: 5, 6, 7)
+- [x] **Task 4: Implement SheetsProvider Module** (AC: 5, 6, 7)
   - [x] Create backend/__init__.py (empty file)
-  - [x] Create backend/sheets_reader.py with SheetsReader class
+  - [x] Create apps/backend/data_providers.py with SheetsProvider class
   - [x] Implement __init__ method with credentials loading
   - [x] Implement get_sheet_data() method returning pandas DataFrame
   - [x] Add proper error handling and logging
@@ -85,7 +85,7 @@ Done
 dental-analytics/
 ├── backend/           # Python modules for data processing
 │   ├── __init__.py
-│   └── sheets_reader.py
+│   └── data_providers.py
 ├── frontend/          # Streamlit UI code
 │   └── app.py (future story)
 ├── config/           # Configuration and credentials
@@ -98,10 +98,10 @@ dental-analytics/
 └── README.md        # Project documentation
 ```
 
-### SheetsReader Implementation Details
+### SheetsProvider Implementation Details
 [Source: architecture/backend/core-components.md#google-sheets-reader-module]
 ```python
-class SheetsReader:
+class SheetsProvider:
     """Handles all Google Sheets API interactions."""
 
     SPREADSHEET_ID = '1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8'
@@ -183,16 +183,16 @@ claude-opus-4-1-20250805 (BMad dev agent)
 - **Project Structure**: Successfully created all required directories (backend/, frontend/, config/, tests/)
 - **Dependencies**: pyproject.toml configured with all required packages, uv.lock generated
 - **Google Cloud**: Credentials already configured and working (test shows successful connection)
-- **SheetsReader Module**: Implemented with proper error handling, logging, and pandas DataFrame return
+- **SheetsProvider Module**: Implemented with proper error handling, logging, and pandas DataFrame return
 - **Testing**: Comprehensive test suite with 7 unit tests covering all scenarios, 100% code coverage
 - **Connection Verified**: Successfully reading 25 rows from "EOD - Baytown Billing" sheet with 33 columns
 
 ### File List
 **Created Files:**
 - `backend/__init__.py` - Backend module initialization
-- `backend/sheets_reader.py` - Google Sheets API reader (34 lines, under 50 limit)
+- `apps/backend/data_providers.py` - Google Sheets API reader (34 lines, under 50 limit)
 - `tests/__init__.py` - Test module initialization
-- `tests/test_sheets_reader.py` - Comprehensive unit tests (7 test cases)
+- `tests/test_data_providers.py` - Comprehensive unit tests (7 test cases)
 - `test_connection.py` - Integration test script for manual validation
 - `pyproject.toml` - Project configuration with dependencies and build settings
 - `README.md` - Project documentation and quick start guide
@@ -221,27 +221,27 @@ The implementation demonstrates high-quality foundational development with:
 
 ### Refactoring Performed
 
-**File**: `backend/sheets_reader.py`
+**File**: `apps/backend/data_providers.py`
 - **Change**: Added specific HttpError exception handling for Google API errors
 - **Why**: Provides more granular error information for debugging and monitoring
 - **How**: Import HttpError and catch separately before generic Exception
 
-**File**: `backend/sheets_reader.py`
+**File**: `apps/backend/data_providers.py`
 - **Change**: Enhanced input validation for range_name parameter
 - **Why**: Prevents API calls with invalid inputs, improves error messages
 - **How**: Added empty/whitespace validation before API call
 
-**File**: `backend/sheets_reader.py`
+**File**: `apps/backend/data_providers.py`
 - **Change**: Added handling for headers-only scenario
 - **Why**: Returns proper empty DataFrame structure when only headers present
 - **How**: Check for single-row result and return DataFrame with columns set
 
-**File**: `backend/sheets_reader.py`
+**File**: `apps/backend/data_providers.py`
 - **Change**: Improved function documentation with Args and Returns sections
 - **Why**: Better developer experience and maintainability
 - **How**: Added comprehensive docstring following Python conventions
 
-**File**: `tests/test_sheets_reader.py`
+**File**: `tests/test_data_providers.py`
 - **Change**: Added 2 new test cases for edge scenarios
 - **Why**: Ensures comprehensive coverage of new input validation logic
 - **How**: Added tests for empty range names and headers-only responses
@@ -291,15 +291,15 @@ The implementation demonstrates high-quality foundational development with:
 - AC2 (pyproject.toml): ✓ Verified by successful dependency installation
 - AC3 (Google Cloud setup): ✓ Verified by successful API authentication
 - AC4 (Credentials storage): ✓ Verified by working connection test
-- AC5 (SheetsReader connection): ✓ Unit tests + integration test
+- AC5 (SheetsProvider connection): ✓ Unit tests + integration test
 - AC6 (DataFrame return): ✓ test_get_sheet_data_success validates DataFrame
 - AC7 (Error handling): ✓ Multiple error scenario tests return None
 
 ### Files Modified During Review
 
 **Enhanced Files:**
-- `backend/sheets_reader.py` - Added error handling, validation, documentation
-- `tests/test_sheets_reader.py` - Added 2 new test cases for edge scenarios
+- `apps/backend/data_providers.py` - Added error handling, validation, documentation
+- `tests/test_data_providers.py` - Added 2 new test cases for edge scenarios
 
 *Note: Dev should update File List to include these enhancements*
 

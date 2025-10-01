@@ -1,6 +1,6 @@
 # Core Components
 
-## 1. Google Sheets Reader Module (`apps/backend/sheets_reader.py`)
+## 1. Google Sheets Provider Module (`apps/backend/data_providers.py`)
 
 **Purpose:** Single responsibility - retrieve data from Google Sheets and return pandas DataFrames.
 
@@ -11,7 +11,7 @@ from googleapiclient.discovery import build
 import pandas as pd
 from typing import Optional, Dict, Any
 
-class SheetsReader:
+class SheetsProvider:
     """Handles all Google Sheets API interactions."""
 
     SPREADSHEET_ID = '1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8'
@@ -134,7 +134,7 @@ class MetricsCalculator:
 
 def get_all_kpis() -> Dict[str, Optional[float]]:
     """Orchestrator function to fetch and calculate all KPIs."""
-    reader = SheetsReader()
+    reader = SheetsProvider()
     calculator = MetricsCalculator()
 
     # Fetch data from appropriate sheets

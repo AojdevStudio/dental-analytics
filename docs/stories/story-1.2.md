@@ -65,7 +65,7 @@ Done
 
 ### Previous Story Context
 [Source: docs/stories/story-1.1.md - Dev Agent Record]
-- **SheetsReader Module Available:** Successfully implemented and tested (43/50 lines)
+- **SheetsProvider Module Available:** Successfully implemented and tested (43/50 lines)
 - **Google Sheets Connection:** Verified working with 25 rows from "EOD - Baytown Billing"
 - **DataFrame Structure:** Confirmed data returns as pandas DataFrame with proper column headers
 - **Error Handling Pattern:** Returns None on failure, logs errors (established in Story 1.1)
@@ -120,14 +120,14 @@ class MetricsCalculator:
 ### File Location Requirements
 [Source: architecture/source-tree.md#backend-directory]
 - **File:** `backend/metrics.py`
-- **Max Lines:** 50 lines (current backend: sheets_reader.py = 43 lines)
+- **Max Lines:** 50 lines (current backend: data_providers.py = 43 lines)
 - **Pattern:** Static methods in MetricsCalculator class
 - **Imports:** pandas, typing only (minimal dependencies)
 
 ### Error Handling Philosophy
 [Source: architecture/backend-architecture.md#error-handling-philosophy]
 - **Never crash the application**
-- **Return None for calculation errors** (consistent with SheetsReader)
+- **Return None for calculation errors** (consistent with SheetsProvider)
 - **Use pd.to_numeric(errors='coerce')** for safe type conversion
 - **Division by zero → return None**
 - **Missing columns → KeyError → return None**
@@ -179,14 +179,14 @@ except KeyError:
 
 ### Line Count Compliance
 [Source: architecture/backend/code-quality-standards.md]
-- **Current Backend Total:** 43 lines (sheets_reader.py)
+- **Current Backend Total:** 43 lines (data_providers.py)
 - **Target for metrics.py:** 48 lines (under 50 limit)
 - **Total Backend Limit:** 100 lines (will be 91 total after Story 1.2)
 - **Single Responsibility:** One calculation per static method
 
 ### Integration with Existing Code
-[Source: backend/sheets_reader.py implementation]
-- **Import Pattern:** `from backend.sheets_reader import SheetsReader`
+[Source: apps/backend/data_providers.py implementation]
+- **Import Pattern:** `from apps.backend.data_providers import SheetsProvider`
 - **Data Source:** Use `reader.get_sheet_data('EOD - Baytown Billing!A:N')`
 - **DataFrame Structure:** First row headers, data rows follow (established pattern)
 - **Connection Testing:** Already verified working with 25 data rows
@@ -265,7 +265,7 @@ Claude Opus 4.1 (claude-opus-4-1-20250805) via BMAD dev agent framework
 **Modified Files:**
 - None (no existing files modified)
 
-**Total Backend Code**: 76 lines (sheets_reader.py: 43 + metrics.py: 33)
+**Total Backend Code**: 76 lines (data_providers.py: 43 + metrics.py: 33)
 
 ## QA Results
 

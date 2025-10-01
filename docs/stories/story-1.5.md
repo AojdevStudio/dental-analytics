@@ -68,7 +68,7 @@
 - **Backend Implementation Complete:** 5 KPI calculation functions ready in MetricsCalculator class
 - **get_all_kpis() Function Available:** Returns dictionary with all 5 metrics or None for failures
 - **Error Handling Established:** Backend returns None for failed calculations, frontend must handle gracefully
-- **Backend Line Count:** 144 lines total (sheets_reader.py: 77 + metrics.py: 67)
+- **Backend Line Count:** 144 lines total (data_providers.py: 77 + metrics.py: 67)
 - **Available Lines:** 56 lines remaining for frontend (200 total - 144 backend = 56 remaining)
 
 ### Technology Stack Context
@@ -82,7 +82,7 @@
 ### File Location Requirements
 [Source: architecture/source-tree.md]
 - **Frontend File:** `frontend/app.py` (100 lines maximum)
-- **Streamlit Config:** `frontend/.streamlit/config.toml`  
+- **Streamlit Config:** `frontend/.streamlit/config.toml`
 - **Current Project Structure:** backend/ and config/ directories already established
 - **Line Constraint:** Total project must remain under 200 lines (currently 144, so 56 lines available)
 - **Streamlit Dependencies:** No backend dependencies allowed - pure presentation layer
@@ -100,7 +100,7 @@ col1, col2 = st.columns(2)
 # - Daily Production (left)
 # - Collection Rate (right)
 
-# Secondary metrics (3 columns)  
+# Secondary metrics (3 columns)
 col3, col4, col5 = st.columns(3)
 # - New Patients (left)
 # - Treatment Acceptance (middle)
@@ -119,7 +119,7 @@ st.caption(f"Last Updated: {datetime.now().strftime('%I:%M %p')}")
 ### Brand Guidelines Implementation
 [Source: docs/rules/brand-guidelines.md]
 - **Primary Navy:** #142D54 (headers, navigation, text)
-- **Teal Blue:** #007E9E (good metrics, accents, hover states)  
+- **Teal Blue:** #007E9E (good metrics, accents, hover states)
 - **Emergency Red:** #BB0A0A (poor metrics, alerts)
 - **White:** #FFFFFF (backgrounds)
 - **Dark Gray:** #565554 (body text, timestamps)
@@ -178,7 +178,7 @@ gatherUsageStats = false
 [Source: docs/specs/dental-dashboard-ui-spec.md#component-specifications]
 - **Daily Production:** `f"${value:,.0f}"` (thousands separator, no decimals)
 - **Collection Rate:** `f"{value:.1f}%"` (one decimal place)
-- **New Patients:** `str(value)` (integer, no decimals)  
+- **New Patients:** `str(value)` (integer, no decimals)
 - **Treatment Acceptance:** `f"{value:.1f}%"` (one decimal place)
 - **Hygiene Reappointment:** `f"{value:.1f}%"` (one decimal place)
 
@@ -189,7 +189,7 @@ gatherUsageStats = false
   - **Unit Tests:** Individual metric display functions
   - **Integration Tests:** Complete data flow from backend to frontend
   - **E2E Tests:** Full dashboard load with all metrics
-- **Success Criteria:** 
+- **Success Criteria:**
   - Dashboard loads in under 3 seconds
   - All 5 KPIs display correctly
   - Error states handled gracefully
@@ -226,7 +226,7 @@ Claude Code (Opus 4.1) - Full Stack Developer Agent
 
 **Modified Files:**
 - `backend/metrics.py` - Added get_all_kpis() wrapper function (QA fix), optimized to 67 lines
-- `backend/sheets_reader.py` - Added connection validation, optimized to 57 lines
+- `apps/backend/data_providers.py` - Added connection validation, optimized to 57 lines
 
 ### Status
 Ready for Review

@@ -27,7 +27,7 @@ top_issues:
     suggested_owner: dev
     notes: 'Acceptable given dual-location requirement added mid-sprint'
 
-waiver: 
+waiver:
   active: false
 
 quality_score: 95
@@ -64,8 +64,8 @@ recommendations:
   immediate: []
   future:
     - action: 'Extract spreadsheet ID to configuration file'
-      refs: ['backend/sheets_reader.py']
+      refs: ['backend/data_providers.py']
     - action: 'Add automated testing with pytest in Story 1.6'
       refs: ['tests/']
     - action: 'Consider caching layer for API calls'
-      refs: ['backend/sheets_reader.py']
+      refs: ['backend/data_providers.py']

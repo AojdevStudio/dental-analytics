@@ -174,7 +174,7 @@ jobs:
 
 ### ✅ Achievements
 - **metrics.py**: 100% test coverage (24/24 statements)
-- **sheets_reader.py**: 95% test coverage (41/43 statements)
+- **data_providers.py**: 95% test coverage (41/43 statements)
 - **Type Safety**: All functions properly typed
 - **Error Handling**: Comprehensive exception handling implemented
 - **Line Limits**: All modules under 50-line limit

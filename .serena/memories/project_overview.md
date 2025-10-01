@@ -26,12 +26,12 @@ dental-analytics/
 │   └── app.py             # Streamlit UI (100 lines max)
 ├── backend/
 │   ├── __init__.py
-│   ├── sheets_reader.py   # Google Sheets API (50 lines)
+│   ├── data_providers.py   # Google Sheets API (50 lines)
 │   └── metrics.py         # KPI calculations (50 lines)
 ├── config/
 │   └── credentials.json   # Google API credentials
 ├── tests/
-│   ├── test_sheets_reader.py
+│   ├── test_data_providers.py
 │   └── test_metrics.py
 ├── pyproject.toml         # Project configuration
 └── uv.lock               # Dependency lockfile

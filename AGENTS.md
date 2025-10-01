@@ -77,7 +77,7 @@ uv run python
 uv run jupyter notebook
 
 # Test Google Sheets connection
-uv run python -c "from backend.sheets_reader import test_connection; test_connection()"
+uv run python -c "from apps.backend.data_providers import build_sheets_provider; print(build_sheets_provider().list_available_aliases())"
 ```
 ### Memory & Knowledge System
 
@@ -116,17 +116,22 @@ uv run python -c "from backend.sheets_reader import test_connection; test_connec
 ### File Organization
 ```
 dental-analytics/
-├── frontend/
-│   └── app.py             # Streamlit UI (100 lines max)
-├── backend/
-│   ├── __init__.py
-│   ├── sheets_reader.py   # Google Sheets API (50 lines)
-│   └── metrics.py         # KPI calculations (50 lines)
+├── apps/
+│   ├── frontend/
+│   │   └── app.py             # Streamlit UI entrypoint
+│   └── backend/
+│       ├── __init__.py
+│       ├── data_providers.py   # Google Sheets provider (SheetsProvider)
+│       ├── metrics.py         # KPI calculations
+│       ├── chart_data.py      # Dashboard chart shaping
+│       ├── historical_data.py # Historical KPI orchestration
+│       └── types.py           # TypedDicts and enums
 ├── config/
 │   └── credentials.json   # Google API credentials
 ├── tests/                 # Test files (mirror backend structure)
-│   ├── test_sheets_reader.py
-│   └── test_metrics.py
+│   ├── test_data_sources.py
+│   ├── test_metrics.py
+│   └── ...
 ├── pyproject.toml         # Project configuration
 └── uv.lock               # Dependency lockfile
 ```

@@ -36,7 +36,7 @@ A minimalist, framework-agnostic backend architecture delivering 5 critical dent
 │               BACKEND LAYER (100 lines)              │
 ├──────────────────────────────────────────────────────┤
 │  ┌────────────────────────────────────────────────┐  │
-│  │          sheets_reader.py (50 lines)           │  │
+│  │          data_providers.py (50 lines)           │  │
 │  │  - Service Account Authentication              │  │
 │  │  - Spreadsheet Connection                      │  │
 │  │  - Data Retrieval & DataFrame Conversion       │  │
@@ -59,7 +59,7 @@ A minimalist, framework-agnostic backend architecture delivering 5 critical dent
 
 ## Core Components
 
-### 1. Google Sheets Reader Module (`apps/backend/sheets_reader.py`)
+### 1. Google Sheets Provider Module (`apps/backend/data_providers.py`)
 
 **Purpose:** Single responsibility - retrieve data from Google Sheets and return pandas DataFrames.
 
@@ -70,7 +70,7 @@ from googleapiclient.discovery import build
 import pandas as pd
 from typing import Optional, Dict, Any
 
-class SheetsReader:
+class SheetsProvider:
     """Handles all Google Sheets API interactions."""
 
     SPREADSHEET_ID = '1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8'
@@ -193,7 +193,7 @@ class MetricsCalculator:
 
 def get_all_kpis() -> Dict[str, Optional[float]]:
     """Orchestrator function to fetch and calculate all KPIs."""
-    reader = SheetsReader()
+    reader = SheetsProvider()
     calculator = MetricsCalculator()
 
     # Fetch data from appropriate sheets
@@ -245,7 +245,7 @@ apps/backend/:
   __init__.py:
     - Empty file for module initialization
 
-  sheets_reader.py:
+  data_providers.py:
     external:
       - google-auth >= 2.23
       - google-api-python-client >= 2.103
@@ -257,7 +257,7 @@ apps/backend/:
     external:
       - pandas >= 2.1
     internal:
-      - sheets_reader (for get_all_kpis only)
+      - data_providers (for get_all_kpis only)
 ```
 
 ## Configuration Management
@@ -353,7 +353,7 @@ if denominator == 0:
 ### Manual Validation Points
 1. **Connection Test:**
    ```python
-   reader = SheetsReader()
+   reader = SheetsProvider()
    df = reader.get_sheet_data('EOD - Baytown Billing!A1:N10')
    assert df is not None
    ```
@@ -386,7 +386,7 @@ if denominator == 0:
 uv sync
 
 # Test connection
-uv run python -c "from backend.sheets_reader import SheetsReader; print(SheetsReader().get_sheet_data('A1:A1'))"
+uv run python -c "from apps.backend.data_providers import SheetsProvider; print(SheetsProvider().get_sheet_data('A1:A1'))"
 
 # Run calculations
 uv run python -c "from backend.metrics import get_all_kpis; print(get_all_kpis())"
@@ -406,7 +406,7 @@ uv run python -c "from backend.metrics import get_all_kpis; print(get_all_kpis()
 3. No other changes required
 
 ### Switching Data Sources
-- Replace SheetsReader with new data source class
+- Replace SheetsProvider with new data source class
 - Keep same DataFrame output format
 - Metrics module remains unchanged
 
@@ -423,7 +423,7 @@ def save_daily_metrics(kpis: Dict):
 ## Code Quality Standards
 
 ### Line Count Compliance
-- sheets_reader.py: 45 lines (under 50 limit)
+- data_providers.py: 45 lines (under 50 limit)
 - metrics.py: 48 lines (under 50 limit)
 - Total backend: 93 lines (under 100 limit)
 

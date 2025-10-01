@@ -30,10 +30,10 @@ Successfully implemented comprehensive quality automation for the dental analyti
 **Current Codebase Status:**
 - **Backend modules**: All pass quality checks
   - `backend/metrics.py` (35 lines): ✅ Black, Ruff, MyPy passed
-  - `backend/sheets_reader.py` (78 lines): ✅ Black, Ruff, MyPy passed
+  - `apps/backend/data_providers.py` (78 lines): ✅ Black, Ruff, MyPy passed
 - **Test files**: Fixed type annotations and formatting
   - `test_calculations.py`: ✅ Added return type hints
-  - `tests/test_sheets_reader.py`: ✅ Fixed MyPy union type issues
+  - `tests/test_data_providers.py`: ✅ Fixed MyPy union type issues
 
 **Quality Metrics:**
 - **Test Coverage**: 97% (65/67 statements covered)

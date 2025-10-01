@@ -68,7 +68,7 @@ Ready for QA Re-Review (Currency Parsing Fixed)
 #### Backend Architecture Framework
 [Source: docs/architecture/backend-architecture.md]
 - **Framework-Agnostic Design**: Backend modules have zero framework dependencies to allow frontend technology changes
-- **Current Structure**: Two main modules - `sheets_reader.py` (45 lines) and `metrics.py` (48 lines)
+- **Current Structure**: Two main modules - `data_providers.py` (45 lines) and `metrics.py` (48 lines)
 - **Design Pattern**: Static methods for pure functions with defensive programming and None checks
 - **Error Handling Philosophy**: Never crash application, return None for errors, log for debugging
 
@@ -77,7 +77,7 @@ Ready for QA Re-Review (Currency Parsing Fixed)
 ```
 apps/backend/
 ├── __init__.py              # Module initialization
-├── sheets_reader.py         # Google Sheets API interface (existing)
+├── data_providers.py         # Google Sheets API interface (existing)
 ├── metrics.py               # KPI calculation logic (existing)
 ├── historical_data.py       # NEW: Time-series data management
 └── chart_data.py            # NEW: Frontend-agnostic data formatting
@@ -91,8 +91,8 @@ apps/backend/
 - **Error Handling Flow**: Exception → Log Error → Return None → Frontend Shows "Data Unavailable"
 
 #### Current Module Dependencies
-- `sheets_reader.py`: google-auth >= 2.23, google-api-python-client >= 2.103, pandas >= 2.1
-- `metrics.py`: pandas >= 2.1, internal dependency on sheets_reader for orchestrator function
+- `data_providers.py`: google-auth >= 2.23, google-api-python-client >= 2.103, pandas >= 2.1
+- `metrics.py`: pandas >= 2.1, internal dependency on data_providers for orchestrator function
 - New modules must maintain same dependency pattern with no framework requirements
 
 #### Technical Constraints
@@ -104,7 +104,7 @@ apps/backend/
 ### Implementation-Specific Details
 
 #### Current Data Sources and Ranges
-[Source: backend/sheets_reader.py implementation]
+[Source: apps/backend/data_providers.py implementation]
 - **Spreadsheet ID**: '1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E_FKFTxQ8'
 - **EOD Range**: 'EOD - Baytown Billing!A:N'
 - **Front KPI Range**: 'Baytown Front KPIs Form responses!A:N'

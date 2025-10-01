@@ -11,7 +11,7 @@
 │               BACKEND LAYER (100 lines)              │
 ├──────────────────────────────────────────────────────┤
 │  ┌────────────────────────────────────────────────┐  │
-│  │          sheets_reader.py (50 lines)           │  │
+│  │          data_providers.py (50 lines)           │  │
 │  │  - Service Account Authentication              │  │
 │  │  - Spreadsheet Connection                      │  │
 │  │  - Data Retrieval & DataFrame Conversion       │  │

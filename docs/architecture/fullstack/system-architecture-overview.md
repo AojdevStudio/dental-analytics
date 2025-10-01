@@ -40,7 +40,7 @@
 │  └──────────────────┬──────────────────────────────────┘  │
 │                     │                                      │
 │  ┌──────────────────▼──────────────────────────────────┐  │
-│  │      apps/backend/sheets_reader.py (~77 lines)      │  │
+│  │      apps/backend/data_providers.py (~77 lines)      │  │
 │  │  • Service Account Authentication                   │  │
 │  │  • Google Sheets API Connection                     │  │
 │  │  • Data Retrieval & DataFrame Conversion            │  │

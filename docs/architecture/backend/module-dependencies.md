@@ -5,7 +5,7 @@ backend/:
   __init__.py:
     - Empty file for module initialization
 
-  sheets_reader.py:
+  data_providers.py:
     external:
       - google-auth >= 2.23
       - google-api-python-client >= 2.103
@@ -17,5 +17,5 @@ backend/:
     external:
       - pandas >= 2.1
     internal:
-      - sheets_reader (for get_all_kpis only)
+      - data_providers (for get_all_kpis only)
 ```

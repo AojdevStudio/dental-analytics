@@ -6,7 +6,7 @@
 3. No other changes required
 
 ## Switching Data Sources
-- Replace SheetsReader with new data source class
+- Replace SheetsProvider with new data source class
 - Keep same DataFrame output format
 - Metrics module remains unchanged
 
