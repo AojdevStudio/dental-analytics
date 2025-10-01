@@ -30,9 +30,17 @@ if str(project_root) not in sys.path:
 
 from apps.backend.chart_data import format_all_chart_data  # noqa: E402
 from apps.backend.data_providers import SheetsProvider  # noqa: E402
-from apps.backend.metrics import get_all_kpis  # noqa: E402
-from apps.backend.types import KPIData  # noqa: E402
 from apps.frontend.chart_kpis import create_chart_from_data  # noqa: E402
+from core.business_rules.calendar import BusinessCalendar  # noqa: E402
+from core.business_rules.validation_rules import KPIValidationRules  # noqa: E402
+from core.models.kpi_models import (  # noqa: E402
+    DataAvailabilityStatus,
+    KPIResponse,
+)
+from core.transformers.sheets_transformer import SheetsToKPIInputs  # noqa: E402
+
+# New KPIService and dependencies (Story 3.0: Checkpoint 3)
+from services.kpi_service import KPIService  # noqa: E402
 
 # Configure Streamlit page settings
 st.set_page_config(
@@ -172,32 +180,100 @@ def load_chart_data(location: str) -> dict[str, Any] | None:
 
 # Cache KPI data separately for faster updates
 @st.cache_data(ttl=300)  # 5 minute cache
-def load_kpi_data(location: str) -> KPIData:
-    """Load KPI data with caching."""
-    return get_all_kpis(location=location)
+def load_kpi_data(location: str) -> KPIResponse:
+    """Load KPI data using new KPIService with caching."""
+    # Initialize dependencies
+    provider = SheetsProvider()
+    calendar = BusinessCalendar()
+    validation_rules = KPIValidationRules()
+    transformer = SheetsToKPIInputs()
+
+    # Create service with dependency injection
+    service = KPIService(
+        data_provider=provider,
+        calendar=calendar,
+        validation_rules=validation_rules,
+        transformer=transformer,
+    )
+
+    # Get KPIs for today
+    from datetime import date
+    from typing import cast
+
+    from core.models.kpi_models import Location
+
+    return service.get_kpis(cast(Location, location), date.today())
 
 
 # Load KPI data and chart data (Task 3: Location-aware data calls)
 with st.spinner(f"Loading {location.title()} KPI data from Google Sheets..."):
     try:
         # Use cached functions for better performance
-        kpis = load_kpi_data(location)
+        kpi_response = load_kpi_data(location)
 
         # Load chart data for interactive visualizations
         chart_data = load_chart_data(location)
 
-        st.success(f"✅ {location.title()} data loaded successfully")
+        # Check if location is closed
+        if kpi_response.availability == DataAvailabilityStatus.EXPECTED_CLOSURE:
+            st.warning(f"⚠️ {location.title()} Practice: {kpi_response.closure_reason}")
+        elif kpi_response.availability == DataAvailabilityStatus.INFRASTRUCTURE_ERROR:
+            reason = kpi_response.values.production_total.unavailable_reason
+            st.error(f"❌ Infrastructure error: {reason}")
+        elif kpi_response.availability == DataAvailabilityStatus.DATA_NOT_READY:
+            st.info("ℹ️ Data not yet available for today")
+        elif kpi_response.availability == DataAvailabilityStatus.PARTIAL:
+            st.warning("⚠️ Partial data available - some KPIs may be unavailable")
+        else:
+            st.success(f"✅ {location.title()} data loaded successfully")
+
+        # Display data freshness information
+        if kpi_response.data_freshness:
+            with st.expander("📅 Data Freshness", expanded=False):
+                for freshness in kpi_response.data_freshness:
+                    timestamp = freshness.as_of.strftime("%Y-%m-%d %I:%M %p")
+                    st.caption(f"**{freshness.source_alias}**: {timestamp}")
+
+        # Display validation warnings if any
+        if kpi_response.validation_summary:
+            with st.expander("⚠️ Validation Warnings", expanded=False):
+                for issue in kpi_response.validation_summary:
+                    severity_emoji = {"info": "ℹ️", "warning": "⚠️", "error": "❌"}
+                    emoji = severity_emoji.get(issue.severity.value, "•")
+                    st.write(f"{emoji} {issue.message}")
+
     except Exception as e:
         st.error(f"❌ Error loading data: {e}")
         st.info("Please check your internet connection and try refreshing the page.")
-        # Create empty KPIData with all required keys
-        kpis = {
-            "production_total": None,
-            "collection_rate": None,
-            "new_patients": None,
-            "case_acceptance": None,
-            "hygiene_reappointment": None,
-        }
+        # Create minimal error response
+        from typing import cast
+
+        from core.models.kpi_models import KPIValue, KPIValues, Location
+
+        unavailable_kpi = KPIValue(
+            value=None,
+            available=False,
+            availability_status=DataAvailabilityStatus.INFRASTRUCTURE_ERROR,
+            unavailable_reason=str(e),
+            validation_issues=[],
+        )
+        from datetime import date
+
+        kpi_response = KPIResponse(
+            location=cast(Location, location),
+            business_date=date.today(),
+            availability=DataAvailabilityStatus.INFRASTRUCTURE_ERROR,
+            values=KPIValues(
+                production_total=unavailable_kpi,
+                collection_rate=unavailable_kpi,
+                new_patients=unavailable_kpi,
+                case_acceptance=unavailable_kpi,
+                hygiene_reappointment=unavailable_kpi,
+            ),
+            data_freshness=[],
+            closure_reason=None,
+            validation_summary=[],
+        )
         chart_data = None
 
 # Primary KPIs Row (2 columns)
@@ -205,31 +281,33 @@ st.markdown("## 💰 **Primary Financial Metrics**")
 col1, col2 = st.columns(2)
 
 with col1:
-    production_total = kpis.get("production_total")
-    if production_total is not None:
+    production_kpi = kpi_response.values.production_total
+    if production_kpi.available and production_kpi.value is not None:
         st.metric(
             label="📈 **Production Total**",
-            value=f"${production_total:,.0f}",
+            value=f"${production_kpi.value:,.0f}",
             help="Total production (revenue) for the selected time period",
         )
     else:
-        st.metric(label="📈 **Production Total**", value="Data Unavailable")
+        unavailable_reason = production_kpi.unavailable_reason or "Data Unavailable"
+        st.metric(label="📈 **Production Total**", value=unavailable_reason)
 
 with col2:
-    collection_rate_value = kpis.get("collection_rate")
-    if collection_rate_value is not None:
+    collection_kpi = kpi_response.values.collection_rate
+    if collection_kpi.available and collection_kpi.value is not None:
         collection_delta_color: Literal["normal", "inverse", "off"] = (
-            "normal" if collection_rate_value >= 95 else "inverse"
+            "normal" if collection_kpi.value >= 95 else "inverse"
         )
         st.metric(
             label="💳 **Collection Rate**",
-            value=f"{collection_rate_value:.1f}%",
+            value=f"{collection_kpi.value:.1f}%",
             delta="Target: 95%",
             delta_color=collection_delta_color,
             help="Percentage of production successfully collected (Target: 95%+)",
         )
     else:
-        st.metric(label="💳 **Collection Rate**", value="Data Unavailable")
+        unavailable_reason = collection_kpi.unavailable_reason or "Data Unavailable"
+        st.metric(label="💳 **Collection Rate**", value=unavailable_reason)
 
 # Secondary KPIs Row (3 columns)
 st.markdown("---")
@@ -237,37 +315,41 @@ st.markdown("## 📊 **Operational Metrics**")
 col3, col4, col5 = st.columns(3)
 
 with col3:
-    new_patients_value = kpis.get("new_patients")
-    if new_patients_value is not None:
+    new_patients_kpi = kpi_response.values.new_patients
+    if new_patients_kpi.available and new_patients_kpi.value is not None:
         st.metric(
             label="👥 **New Patients**",
-            value=f"{new_patients_value:,}",
+            value=f"{int(new_patients_kpi.value):,}",
             help="Total new patients for the month to date",
         )
     else:
-        st.metric(label="👥 **New Patients**", value="Data Unavailable")
+        unavailable_reason = new_patients_kpi.unavailable_reason or "Data Unavailable"
+        st.metric(label="👥 **New Patients**", value=unavailable_reason)
 
 with col4:
-    case_acceptance_value = kpis.get("case_acceptance")
-    if case_acceptance_value is not None:
+    case_acceptance_kpi = kpi_response.values.case_acceptance
+    if case_acceptance_kpi.available and case_acceptance_kpi.value is not None:
         acceptance_delta_color: Literal["normal", "inverse", "off"] = (
-            "normal" if case_acceptance_value >= 80 else "inverse"
+            "normal" if case_acceptance_kpi.value >= 80 else "inverse"
         )
         st.metric(
             label="✅ **Case Acceptance**",
-            value=f"{case_acceptance_value:.1f}%",
+            value=f"{case_acceptance_kpi.value:.1f}%",
             delta="Target: 80%",
             delta_color=acceptance_delta_color,
             help="Percentage of presented treatments that were accepted (Target: 80%+)",
         )
     else:
-        st.metric(label="✅ **Case Acceptance**", value="Data Unavailable")
+        unavailable_reason = (
+            case_acceptance_kpi.unavailable_reason or "Data Unavailable"
+        )
+        st.metric(label="✅ **Case Acceptance**", value=unavailable_reason)
 
 with col5:
-    hygiene_rate_value = kpis.get("hygiene_reappointment")
-    if hygiene_rate_value is not None:
+    hygiene_kpi = kpi_response.values.hygiene_reappointment
+    if hygiene_kpi.available and hygiene_kpi.value is not None:
         hygiene_delta_color: Literal["normal", "inverse", "off"] = (
-            "normal" if hygiene_rate_value >= 90 else "inverse"
+            "normal" if hygiene_kpi.value >= 90 else "inverse"
         )
         hygiene_help = (
             "Percentage of hygiene patients who scheduled "
@@ -275,13 +357,14 @@ with col5:
         )
         st.metric(
             label="🔄 **Hygiene Reappointment**",
-            value=f"{hygiene_rate_value:.1f}%",
+            value=f"{hygiene_kpi.value:.1f}%",
             delta="Target: 90%",
             delta_color=hygiene_delta_color,
             help=hygiene_help,
         )
     else:
-        st.metric(label="🔄 **Hygiene Reappointment**", value="Data Unavailable")
+        unavailable_reason = hygiene_kpi.unavailable_reason or "Data Unavailable"
+        st.metric(label="🔄 **Hygiene Reappointment**", value=unavailable_reason)
 
 # Interactive Charts Section
 st.markdown("---")

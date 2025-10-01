@@ -56,11 +56,6 @@ class TestLocationSwitching:
         mock_provider = Mock()
         mock_build_provider.return_value = mock_provider
 
-        # Configure alias mapping
-        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
-            f"{location}_{data_type}"
-        )
-
         # Configure data fetching
         def mock_fetch(alias: str) -> pd.DataFrame:
             if "eod" in alias:
@@ -75,8 +70,6 @@ class TestLocationSwitching:
         kpis = get_all_kpis("baytown")
 
         # Verify provider interactions
-        mock_provider.get_location_aliases.assert_any_call("baytown", "eod")
-        mock_provider.get_location_aliases.assert_any_call("baytown", "front")
         mock_provider.fetch.assert_any_call("baytown_eod")
         mock_provider.fetch.assert_any_call("baytown_front")
 
@@ -93,11 +86,6 @@ class TestLocationSwitching:
         # Setup mock provider
         mock_provider = Mock()
         mock_build_provider.return_value = mock_provider
-
-        # Configure alias mapping
-        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
-            f"{location}_{data_type}"
-        )
 
         # Setup different data for Humble
         humble_eod = pd.DataFrame(
@@ -126,8 +114,6 @@ class TestLocationSwitching:
         kpis = get_all_kpis("humble")
 
         # Verify provider interactions
-        mock_provider.get_location_aliases.assert_any_call("humble", "eod")
-        mock_provider.get_location_aliases.assert_any_call("humble", "front")
         mock_provider.fetch.assert_any_call("humble_eod")
         mock_provider.fetch.assert_any_call("humble_front")
 
@@ -144,11 +130,6 @@ class TestLocationSwitching:
         # Setup mock provider
         mock_provider = Mock()
         mock_build_provider.return_value = mock_provider
-
-        # Configure alias mapping
-        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
-            f"{location}_{data_type}"
-        )
 
         # Setup different data for each location
         baytown_eod = get_simple_eod_data()
@@ -200,9 +181,7 @@ class TestLocationSwitching:
         assert humble_kpis["collection_rate"] == pytest.approx(111.91, rel=1e-2)
 
         # Verify provider was called for both locations
-        assert (
-            mock_provider.get_location_aliases.call_count >= 4
-        )  # 2 locations × 2 data types
+        assert mock_provider.fetch.call_count >= 4  # 2 locations × 2 data types
 
     def test_calculate_production_with_location_data(self) -> None:
         """Test production calculation with location-specific column structure."""
@@ -257,11 +236,6 @@ class TestLocationSwitching:
         mock_provider = Mock()
         mock_build_provider.return_value = mock_provider
 
-        # Configure alias mapping
-        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
-            f"{location}_{data_type}"
-        )
-
         # Configure data fetching
         def mock_fetch(alias: str) -> pd.DataFrame:
             if "eod" in alias:
@@ -275,9 +249,8 @@ class TestLocationSwitching:
         # Test with specific location
         get_all_kpis("humble")
 
-        # Verify the location was passed correctly to alias resolution
-        mock_provider.get_location_aliases.assert_any_call("humble", "eod")
-        mock_provider.get_location_aliases.assert_any_call("humble", "front")
+        mock_provider.fetch.assert_any_call("humble_eod")
+        mock_provider.fetch.assert_any_call("humble_front")
 
     @patch("apps.backend.metrics.build_sheets_provider")
     def test_default_location_parameter(self, mock_build_provider: Mock) -> None:
@@ -285,11 +258,6 @@ class TestLocationSwitching:
         # Setup mock provider
         mock_provider = Mock()
         mock_build_provider.return_value = mock_provider
-
-        # Configure alias mapping
-        mock_provider.get_location_aliases.side_effect = lambda location, data_type: (
-            f"{location}_{data_type}"
-        )
 
         # Configure data fetching
         def mock_fetch(alias: str) -> pd.DataFrame:
@@ -305,8 +273,8 @@ class TestLocationSwitching:
         get_all_kpis()
 
         # Verify the default location was used
-        mock_provider.get_location_aliases.assert_any_call("baytown", "eod")
-        mock_provider.get_location_aliases.assert_any_call("baytown", "front")
+        mock_provider.fetch.assert_any_call("baytown_eod")
+        mock_provider.fetch.assert_any_call("baytown_front")
 
 
 @pytest.fixture

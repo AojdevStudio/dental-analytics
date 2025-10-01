@@ -8,7 +8,7 @@ audience: "Development Team, DevOps"
 status: "Final"
 author: "AOJDevStudio"
 created_date: "2025-09-04"
-last_updated: "2025-09-16"
+last_updated: "2025-10-02"
 tags:
   - fullstack-architecture
   - system-design
@@ -26,64 +26,55 @@ A complete, production-ready architecture for a dental analytics dashboard that 
 ## System Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         USERS                              │
-│                  (Practice Managers)                        │
-└──────────────────────┬──────────────────────────────────────┘
-                       │ HTTPS
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    WEB BROWSER                             │
-│              (Chrome 90+, Firefox 88+)                     │
-└──────────────────────┬──────────────────────────────────────┘
-                       │ Port 8501
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│                 PRESENTATION LAYER                         │
-│                   Streamlit Server                         │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │           apps/frontend/app.py (~80 lines)          │  │
-│  │  • Page Configuration & Theming                     │  │
-│  │  • KPI Display Components (st.metric)               │  │
-│  │  • Layout Management (st.columns)                   │  │
-│  │  • Error State Handling                             │  │
-│  └─────────────────────────────────────────────────────┘  │
-└──────────────────────┬──────────────────────────────────────┘
-                       │ Function Calls
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  BUSINESS LOGIC LAYER                      │
-│              Backend Python Modules (100 lines)            │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │         apps/backend/metrics.py (~92 lines)         │  │
-│  │  • calculate_production_total()                     │  │
-│  │  • calculate_collection_rate()                      │  │
-│  │  • calculate_new_patients()                         │  │
-│  │  • calculate_case_acceptance()                 │  │
-│  │  • calculate_hygiene_reappointment()                │  │
-│  │  • get_all_kpis() orchestrator                      │  │
-│  └──────────────────┬──────────────────────────────────┘  │
-│                     │                                      │
-│  ┌──────────────────▼──────────────────────────────────┐  │
-│  │      apps/backend/data_providers.py (~77 lines)      │  │
-│  │  • Service Account Authentication                   │  │
-│  │  • Google Sheets API Connection                     │  │
-│  │  • Data Retrieval & DataFrame Conversion            │  │
-│  └──────────────────┬──────────────────────────────────┘  │
-└─────────────────────┼────────────────────────────────────────┘
-                      │ HTTPS API v4
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    DATA SOURCE LAYER                       │
-│                     Google Sheets                          │
-│            ID: 1lTDek2zvQNYwlIXss6yW9uawASAWbDIKR1E...   │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  • EOD - Baytown Billing (Production/Collections)   │  │
-│  │  • EOD - Humble Billing (Production/Collections)    │  │
-│  │  • Baytown Front KPIs Form responses (Treatment/Hygiene)          │  │
-│  │  • Humble Front KPIs Form responses (Treatment/Hygiene)           │  │
-│  └─────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                             USERS                            │
+│                   Practice Managers & Leads                   │
+└───────────────┬──────────────────────────────────────────────┘
+                │ HTTPS (Port 8501)
+                ▼
+┌──────────────────────────────────────────────────────────────┐
+│                     PRESENTATION LAYER                       │
+│                     apps/frontend/app.py                     │
+│   • Streamlit UI components                                  │
+│   • Location selector + branding                             │
+│   • Validation / freshness expanders                         │
+└───────────────┬──────────────────────────────────────────────┘
+                │ KPIService.get_kpis()
+                ▼
+┌──────────────────────────────────────────────────────────────┐
+│                      SERVICE LAYER                            │
+│                   services/kpi_service.py                     │
+│   • KPIService orchestrates calendar → fetch → transform      │
+│   • Produces Pydantic KPIResponse models                      │
+└───────────────┬──────────────────────────────────────────────┘
+                │ Pure-function calls
+                ▼
+┌──────────────────────────────────────────────────────────────┐
+│                        CORE LAYER                             │
+│   core/models            Pydantic contracts                   │
+│   core/business_rules    Calendar & validation rules          │
+│   core/transformers      DataFrame → calculator inputs        │
+│   core/calculators       Pure KPI math functions              │
+└───────────────┬──────────────────────────────────────────────┘
+                │ Provider protocol
+                ▼
+┌──────────────────────────────────────────────────────────────┐
+│                    DATA ACCESS LAYER                          │
+│           apps/backend/data_providers.py (SheetsProvider)     │
+│   • Service account auth                                      │
+│   • Alias-based sheet resolution                              │
+│   • DataFrame creation                                        │
+└───────────────┬──────────────────────────────────────────────┘
+                │ Google Sheets API v4
+                ▼
+┌──────────────────────────────────────────────────────────────┐
+│                        DATA SOURCES                           │
+│   Google Sheets workbook (KamDental)                          │
+│   • EOD - Baytown Billing                                     │
+│   • EOD - Humble Billing                                      │
+│   • Baytown Front KPI Form responses                          │
+│   • Humble Front KPI Form responses                           │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ## Technology Stack
@@ -109,71 +100,87 @@ Type Checking: mypy (optional)
 
 ## Component Architecture
 
-### 1. Frontend Layer (`apps/frontend/app.py`)
+### 1. Presentation Layer (`apps/frontend/app.py`)
 
-**Responsibility:** User interface and data presentation
+**Responsibility:** Collect user input, invoke the service layer, and render KPIResponse objects.
 
-**Key Components:**
 ```python
-# Page Configuration
-st.set_page_config(
-    page_title="Kam Dental Analytics",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+from datetime import date
+
+from services.kpi_service import KPIService
+from core.business_rules.calendar import BusinessCalendar
+from core.business_rules.validation_rules import KPIValidationRules
+from core.transformers.sheets_transformer import SheetsToKPIInputs
+from apps.backend.data_providers import build_sheets_provider
+
+service = KPIService(
+    data_provider=build_sheets_provider(),
+    calendar=BusinessCalendar(),
+    validation_rules=KPIValidationRules(),
+    transformer=SheetsToKPIInputs(),
 )
-
-# Data Fetching
-from backend.metrics import get_all_kpis
-kpis = get_all_kpis()
-
-# UI Rendering
-- Header: st.markdown() with custom styling
-- Metrics: st.metric() components in columns
-- Layout: st.columns() for responsive grid
-- Footer: st.caption() with timestamp
+response = service.get_kpis(location, date.today())
 ```
 
-**Design Patterns:**
-- **Single Page Application:** No routing, no navigation
-- **Reactive Updates:** Auto-refresh on page load
-- **Graceful Degradation:** "Data Unavailable" fallbacks
+Key UI elements:
+- Location toggle, global theming, and layout grids for KPIs
+- Validation warnings + data freshness expanders powered by `KPIResponse`
+- Graceful fallbacks for closures, infrastructure errors, and partial data
 
-### 2. Backend Layer (`apps/backend/`)
+### 2. Service Layer (`services/kpi_service.py`)
 
-**Responsibility:** Data retrieval and business logic
+**Responsibility:** Orchestrate business rules, data fetch, transformations, calculations, and validation.
 
-**Module Structure:**
-```
-apps/backend/
-├── __init__.py           # Module initialization
-├── data_providers.py      # Google Sheets API interface
-├── metrics.py            # KPI calculations
-├── chart_data.py         # Chart data processing
-├── historical_data.py    # Historical data management
-└── metrics.py           # KPI calculation logic
-```
+- Dependency-injected constructor for provider, calendar, transformer, and validation rules
+- `get_kpis(location, target_date)` coordinates:
+  1. Business calendar open/closed check
+  2. SheetsProvider fetch (EOD + Front KPI aliases)
+  3. Transformer extraction of calculator inputs
+  4. Pure calculator execution
+  5. Validation rule evaluation + warning aggregation
+  6. Pydantic `KPIResponse` assembly with freshness metadata
+- Emits telemetry logs for availability, validation, and errors
 
-**Key Design Principles:**
-- **Separation of Concerns:** Data access vs. business logic
-- **Framework Independence:** No Streamlit imports
-- **Pure Functions:** Stateless calculations
-- **Type Safety:** Full type hints
+### 3. Core Layer (`core/`)
 
-### 3. Configuration Layer (`config/`)
+| Module | Purpose |
+| --- | --- |
+| `core/models/kpi_models.py` | Pydantic models for `KPIResponse`, `KPIValue`, `CalculationResult`, and enums |
+| `core/business_rules/calendar.py` | Business calendar (Baytown alternating Saturdays, Humble Fri-Sun closure) |
+| `core/business_rules/validation_rules.py` | Goal-based validations (production variance, rate thresholds, hygiene caps) |
+| `core/transformers/sheets_transformer.py` | Robust DataFrame extractors with currency cleaning and null handling |
+| `core/calculators/kpi_calculator.py` | Pure numeric KPI functions returning `CalculationResult` instances |
 
-**Responsibility:** Secure credential storage
+Design attributes:
+- Pure functions + Pydantic models ensure framework independence
+- Strict typing with targeted goal configuration (`config/business_rules/*.yml`)
+- Shared singletons instantiated once and reused by `KPIService`
+
+### 4. Data Access Layer (`apps/backend/`)
+
+- `data_providers.py`
+  - SheetsProvider uses service-account auth and alias lookups (`location_eod`, `location_front`)
+  - Converts Google Sheets API responses into pandas DataFrames
+- `metrics.py`
+  - Now a compatibility façade calling `KPIService` and returning legacy dictionaries for scripts/tests
+  - Delegates individual calculator helpers to the transformer/calculator stack
+- Historical utilities (`historical_data.py`, `chart_data.py`) continue to operate on DataFrames and use the modern currency utilities
+
+### 5. Configuration Layer (`config/`)
 
 ```
 config/
-├── credentials.json      # Google service account key
-└── .streamlit/
-    └── config.toml      # Streamlit theming
+├── credentials.json            # Service account key (gitignored)
+├── business_rules/
+│   ├── calendar.yml            # Location schedules
+│   └── goals.yml               # KPI goal thresholds
+└── .streamlit/config.toml      # Branding + theme overrides
 ```
 
-**Security Measures:**
-- credentials.json in .gitignore
-- Read-only API permissions
-- No user data storage
+Security controls:
+- Read-only service account scoped to the practice spreadsheet
+- Structured YAML configs replace hard-coded thresholds
+- No PHI or PII persisted; data retrieved on demand only
 
 ## Data Flow Architecture
 
@@ -183,51 +190,53 @@ config/
 sequenceDiagram
     participant User
     participant Browser
-    participant Streamlit
-    participant Metrics
+    participant StreamlitUI
+    participant KPIService
+    participant CorePipeline
     participant SheetsProvider
     participant GoogleAPI
 
-    User->>Browser: Open Dashboard
-    Browser->>Streamlit: HTTP Request
-    Streamlit->>Metrics: get_all_kpis()
-    Metrics->>SheetsProvider: get_sheet_data("EOD")
-    SheetsProvider->>GoogleAPI: Authenticate & Fetch
-    GoogleAPI-->>SheetsProvider: Raw Data
-    SheetsProvider-->>Metrics: DataFrame
-    Metrics->>SheetsProvider: get_sheet_data("Front KPI")
-    SheetsProvider->>GoogleAPI: Fetch
-    GoogleAPI-->>SheetsProvider: Raw Data
-    SheetsProvider-->>Metrics: DataFrame
-    Metrics-->>Streamlit: KPI Dictionary
-    Streamlit-->>Browser: Rendered HTML
-    Browser-->>User: Display Dashboard
+    User->>Browser: Open dashboard
+    Browser->>StreamlitUI: HTTPS request (8501)
+    StreamlitUI->>KPIService: get_kpis(location, date)
+    KPIService->>SheetsProvider: fetch("{location}_eod")
+    SheetsProvider->>GoogleAPI: spreadsheets.values.get
+    GoogleAPI-->>SheetsProvider: EOD sheet values
+    SheetsProvider-->>KPIService: EOD DataFrame
+    KPIService->>SheetsProvider: fetch("{location}_front")
+    SheetsProvider->>GoogleAPI: spreadsheets.values.get
+    GoogleAPI-->>SheetsProvider: Front KPI values
+    SheetsProvider-->>KPIService: Front DataFrame
+    KPIService->>CorePipeline: transform + calculate + validate
+    CorePipeline-->>KPIService: KPIResponse
+    KPIService-->>StreamlitUI: KPIResponse
+    StreamlitUI-->>Browser: Render metrics & warnings
+    Browser-->>User: Display updated dashboard
 ```
 
 ### Data Transformation Pipeline
 
 ```
-Google Sheets → API Response → JSON → DataFrame → Calculations → Dict → UI Components
+Google Sheets → SheetsProvider → pandas DataFrame → Transformer → Calculator → Validation Rules → KPIResponse → Streamlit UI
 ```
 
 **Stage 1: Data Retrieval**
-- Google Sheets API returns nested arrays
-- Convert to pandas DataFrame with headers
+- SheetsProvider authenticates via service account and resolves aliases
+- Google Sheets API responses converted to DataFrames with headers
 
-**Stage 2: Data Processing**
-- Type conversion (strings to numbers)
-- Null handling (coerce errors)
-- Aggregation (sum, count)
+**Stage 2: Transformation**
+- `_safe_extract` cleans currency, coercing nulls and mixed types
+- Inputs shaped into tuples for calculators (production, collection, etc.)
 
-**Stage 3: KPI Calculation**
-- Apply business formulas
-- Handle edge cases (division by zero)
-- Return typed results
+**Stage 3: Calculation & Validation**
+- Pure calculators compute KPI values, returning `CalculationResult`
+- Validation rules compare against goals, appending warnings/errors
+- KPIService assembles `KPIValue` objects and overall availability
 
-**Stage 4: UI Rendering**
-- Format numbers (currency, percentage)
-- Apply conditional styling
-- Display in metric cards
+**Stage 4: Presentation**
+- Streamlit formats KPI values (currency/percent) and displays status badges
+- Validation warnings surfaced via expanders; freshness metadata captioned
+```
 
 ## Deployment Architecture
 

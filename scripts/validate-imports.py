@@ -4,14 +4,13 @@
 import ast
 import sys
 from pathlib import Path
-from typing import Set, List, Tuple
 
 
-def get_imports_from_file(filepath: Path) -> Set[str]:
+def get_imports_from_file(filepath: Path) -> set[str]:
     """Extract all imports from a Python file."""
     imports = set()
     try:
-        with open(filepath, 'r') as f:
+        with filepath.open() as f:
             tree = ast.parse(f.read())
 
         for node in ast.walk(tree):
@@ -19,7 +18,7 @@ def get_imports_from_file(filepath: Path) -> Set[str]:
                 for alias in node.names:
                     imports.add(alias.name)
             elif isinstance(node, ast.ImportFrom):
-                module = node.module or ''
+                module = node.module or ""
                 for alias in node.names:
                     if module:
                         imports.add(f"{module}.{alias.name}")
@@ -31,7 +30,7 @@ def get_imports_from_file(filepath: Path) -> Set[str]:
     return imports
 
 
-def validate_project_imports() -> Tuple[bool, List[str]]:
+def validate_project_imports() -> tuple[bool, list[str]]:
     """Validate all imports in the project."""
     errors = []
     project_root = Path(__file__).parent.parent
@@ -39,17 +38,16 @@ def validate_project_imports() -> Tuple[bool, List[str]]:
     # Check all Python files
     for py_file in project_root.rglob("*.py"):
         # Skip virtual environments and cache
-        if any(part in str(py_file) for part in ['.venv', '__pycache__', '.git']):
+        if any(part in str(py_file) for part in [".venv", "__pycache__", ".git"]):
             continue
 
         # Try to import the module to catch import errors
         relative_path = py_file.relative_to(project_root)
-        module_path = str(relative_path).replace('/', '.').replace('.py', '')
 
         try:
             # Use compile to check syntax and imports
-            with open(py_file, 'r') as f:
-                compile(f.read(), py_file, 'exec')
+            with py_file.open() as f:
+                compile(f.read(), py_file, "exec")
         except SyntaxError as e:
             errors.append(f"Syntax error in {relative_path}: {e}")
         except Exception as e:

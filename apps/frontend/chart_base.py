@@ -119,7 +119,7 @@ def create_base_figure() -> Figure:
         Configured base figure with brand styling
     """
     fig = go.Figure()
-    fig.update_layout(BASE_LAYOUT)
+    fig.update_layout(BASE_LAYOUT)  # type: ignore[arg-type]
     return fig
 
 

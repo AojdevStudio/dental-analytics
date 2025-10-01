@@ -43,11 +43,17 @@ uv pip list
 # Run all tests
 uv run pytest
 
-# Run with coverage
-uv run pytest --cov=backend --cov=frontend
+# Run with coverage (core + services + compatibility facade)
+uv run pytest --cov=core --cov=services --cov=apps/backend --cov-report=term-missing
 
 # Run specific test file
 uv run pytest tests/test_metrics.py
+
+# Run service orchestration integration tests
+uv run pytest tests/integration/test_kpi_service.py
+
+# Run transformer unit tests
+uv run pytest tests/unit/transformers/test_sheets_transformer.py
 
 # Run tests in watch mode
 uv run pytest-watch
@@ -62,7 +68,7 @@ uv run black .
 uv run flake8 backend/ frontend/
 
 # Type checking
-uv run mypy backend/ frontend/
+uv run mypy apps/ core/ services/
 
 # Run all quality checks
 uv run pre-commit run --all-files
@@ -118,22 +124,35 @@ uv run python -c "from apps.backend.data_providers import build_sheets_provider;
 dental-analytics/
 ├── apps/
 │   ├── frontend/
-│   │   └── app.py             # Streamlit UI entrypoint
+│   │   └── app.py                 # Streamlit UI entrypoint (calls KPIService)
 │   └── backend/
 │       ├── __init__.py
-│       ├── data_providers.py   # Google Sheets provider (SheetsProvider)
-│       ├── metrics.py         # KPI calculations
-│       ├── chart_data.py      # Dashboard chart shaping
-│       ├── historical_data.py # Historical KPI orchestration
-│       └── types.py           # TypedDicts and enums
+│       ├── data_providers.py      # SheetsProvider + provider protocol
+│       ├── metrics.py             # Legacy facade delegating to KPIService/core
+│       ├── chart_data.py          # Dashboard chart shaping
+│       ├── historical_data.py     # Historical KPI orchestration
+│       └── types.py               # TypedDicts kept for legacy consumers
+├── core/
+│   ├── calculators/               # Pure KPI math helpers (CalculationResult)
+│   ├── business_rules/            # Calendars & goal-based validation (Pydantic)
+│   ├── transformers/              # DataFrame → calculator inputs
+│   └── models/                    # Shared Pydantic contracts (KPIResponse, etc.)
+├── services/
+│   └── kpi_service.py             # Orchestration layer (calendar → validate)
 ├── config/
-│   └── credentials.json   # Google API credentials
-├── tests/                 # Test files (mirror backend structure)
-│   ├── test_data_sources.py
-│   ├── test_metrics.py
+│   ├── credentials.json           # Google API credentials (gitignored)
+│   └── business_rules/            # calendar.yml, goals.yml
+├── tests/
+│   ├── unit/
+│   │   ├── transformers/test_sheets_transformer.py
+│   │   └── business_rules/test_validation_rules.py
+│   ├── integration/test_kpi_service.py
+│   ├── test_metrics.py            # Legacy compatibility regression suite
+│   ├── test_currency_parsing.py
+│   ├── test_gdrive_validation.py
 │   └── ...
-├── pyproject.toml         # Project configuration
-└── uv.lock               # Dependency lockfile
+├── pyproject.toml                 # Project configuration
+└── uv.lock                       # Dependency lockfile
 ```
 
 ### Naming Conventions
@@ -186,8 +205,8 @@ def get_sheet_data(spreadsheet_id: str, range_name: str) -> Optional[pd.DataFram
 ### Code Style
 - Follow PEP 8 style guide
 - Use meaningful names: `production_total` not `pt`
-- Keep functions focused: one KPI calculation per function
-- Use docstrings for all public functions
+- Keep functions focused: one KPI calculation per function or Pydantic model per file
+- Use docstrings for all public functions/classes and explain validation assumptions
 - Limit line length to 88 characters (Black default)
 
 ### Best Practices
@@ -209,15 +228,25 @@ except Exception as e:
 # Good: Use logging instead of print
 import logging
 logger = logging.getLogger(__name__)
+
+# Preferred: Use Pydantic models for structured responses in new core/service layers
+from pydantic import BaseModel
+
+
+class KPIValue(BaseModel):
+    value: float | None
+    available: bool
 ```
 ### Strict Typing with Narrow Expectations
-- ALWAYS yse TypedDicts for:
-    - Chart data structures
-    - KPI response structures
-    - Any function returning structured dicts
+- ALWAYS use Pydantic models for:
+    - Core/service data contracts (KPIResponse, KPIValue, validation payloads)
+    - Any new structured API between layers
+- Legacy TypedDicts remain only for:
+    - `apps/backend/metrics.py` compatibility facades
+    - Historical chart utilities that still emit dicts
 - ALWAYS use Plotly types:
-    - go.Layout instead of dict[str, Any]
-    - layout.XAxism layout.YAxis for axis configs
+    - `go.Layout` instead of `dict[str, Any]`
+    - `layout.XAxis`, `layout.YAxis` for axis configs
     - Import from plotly.graph_objects.layout submodules
 - ONLY allow Any for:
     - YAML ingestion: config: dict[str, Any] = yaml.safe_load(f)

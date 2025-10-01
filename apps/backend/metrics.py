@@ -20,7 +20,7 @@ Functions handle missing data gracefully and return None for failed calculations
 
 import logging
 import sys
-from datetime import datetime
+from datetime import date, datetime
 
 try:
     from config.data_sources import COLUMN_MAPPINGS
@@ -31,6 +31,13 @@ except (
 
 import pandas as pd
 import structlog
+
+from core.business_rules.calendar import BusinessCalendar
+from core.business_rules.validation_rules import KPIValidationRules
+from core.calculators import kpi_calculator
+from core.models.kpi_models import CalculationResult, KPIValue, Location
+from core.transformers.sheets_transformer import SheetsToKPIInputs
+from services.kpi_service import KPIService
 
 from .data_providers import build_sheets_provider
 from .types import (
@@ -68,399 +75,238 @@ logger = logging.getLogger(__name__)
 EOD_MAPPING = COLUMN_MAPPINGS.get("eod_billing", {})
 FRONT_MAPPING = COLUMN_MAPPINGS.get("front_kpis", {})
 
+_TRANSFORMER = SheetsToKPIInputs()
+_CALENDAR = BusinessCalendar()
+_VALIDATION_RULES = KPIValidationRules()
+
+
+def _build_kpi_service() -> KPIService:
+    """Create a KPIService instance wired to the Sheets provider."""
+
+    provider = build_sheets_provider()
+    return KPIService(
+        data_provider=provider,
+        calendar=_CALENDAR,
+        validation_rules=_VALIDATION_RULES,
+        transformer=_TRANSFORMER,
+    )
+
+
+def _result_value(result: CalculationResult) -> float | int | None:
+    """Return the numeric value from a CalculationResult when available."""
+
+    if not result.can_calculate or result.value is None:
+        return None
+    return result.value
+
 
 def clean_currency_string(value: object) -> object:
-    """Clean currency formatting from a value.
+    """Normalize currency-formatted strings for historical calculations."""
 
-    Args:
-        value: Value to clean (can be string, number, or other)
-
-    Returns:
-        Cleaned value ready for numeric conversion
-    """
     if isinstance(value, str):
-        # Remove currency symbols and thousands separators
-        cleaned = value.replace("$", "").replace(",", "").strip()
-        # Handle edge cases
-        if cleaned == "" or cleaned == "-":
+        raw = value.strip()
+        is_accounting_negative = raw.startswith("(") and raw.endswith(")")
+        if is_accounting_negative:
+            raw = raw[1:-1]
+
+        cleaned = raw.replace("$", "").replace(",", "")
+        if cleaned in {"", "-"}:
             return 0.0
+        if is_accounting_negative and cleaned:
+            return f"-{cleaned}"
         return cleaned
+
     return value
 
 
-def safe_numeric_conversion(df: pd.DataFrame, column: str) -> float:
-    """
-    Safely convert a DataFrame column value to numeric.
+def _kpi_value_to_number(kpi_value: KPIValue) -> float | int | None:
+    """Convert a KPIValue into a primitive numeric value for legacy callers."""
 
-    Args:
-        df: DataFrame containing the data
-        column: Column name to convert
+    if not kpi_value.available or kpi_value.value is None:
+        return None
+    return kpi_value.value
 
-    Returns:
-        Float value or 0.0 if conversion fails
 
-    Note:
-        Current implementation uses iloc[0] for single-row design.
-        Future time series implementation will sum entire columns.
-        Handles currency formats like '$1,234.56' and '-$1,234.56'.
-    """
-    if df is None or df.empty or column not in df.columns:
-        return 0.0
+def safe_numeric_conversion(
+    df: pd.DataFrame, column: str, default: float = 0.0
+) -> float:
+    """Legacy helper retained for historical tests via transformer extraction."""
 
-    # Handle case where value might be a pandas Series with single value
-    # Use iloc[-1] to get the LATEST/MOST RECENT entry (last row)
-    value = df[column].iloc[-1] if len(df) > 0 else 0
+    if df is None or df.empty:
+        return default
 
-    # Clean currency formatting: remove $, commas, and handle negative values
-    cleaned_value = clean_currency_string(value)
-
-    # Convert to numeric, return 0 if conversion fails or is NaN
-    numeric_value = pd.to_numeric(cleaned_value, errors="coerce")
-    result = 0.0 if pd.isna(numeric_value) else float(numeric_value)
-
-    # Debug logging for currency conversion
-    if isinstance(value, str) and ("$" in value or "," in value):
-        logger.debug(f"Currency conversion: '{value}' -> {result}")
-
-    return result
+    value = _TRANSFORMER._safe_extract(df, column, default=default)  # noqa: SLF001
+    if value is None:
+        return default
+    return float(value)
 
 
 def calculate_production_total(df: pd.DataFrame | None) -> float | None:
-    """
-    Calculate total production for the day.
+    """Calculate total production for the day using the decoupled core."""
 
-    Args:
-        df: DataFrame with production data (EOD sheet format)
-
-    Returns:
-        Total production amount or None if calculation fails
-
-    Formula:
-        Production = Total Production Today + Adjustments Today + Write-offs Today
-    """
     if df is None or df.empty:
         return None
 
-    # Story 2.1 validated column names (primary)
-    prod_col = "Total Production Today"
-    adjustments_col = "Adjustments Today"
-    writeoffs_col = "Write-offs Today"
+    production, adjustments, writeoffs = _TRANSFORMER.extract_production_inputs(df)
+    result = kpi_calculator.compute_production_total(production, adjustments, writeoffs)
+    value = _result_value(result)
 
-    # Fallback to legacy column names for backward compatibility
-    if prod_col not in df.columns:
-        prod_col = (
-            "total_production" if "total_production" in df.columns else "Production"
+    if value is None:
+        logger.warning("Production total unavailable via new calculator")
+    else:
+        logger.info(
+            "metrics.production_total",
+            extra={
+                "production": production,
+                "adjustments": adjustments,
+                "writeoffs": writeoffs,
+                "total": value,
+            },
         )
-    if adjustments_col not in df.columns:
-        adjustments_col = "adjustments"
-    if writeoffs_col not in df.columns:
-        writeoffs_col = "writeoffs"
 
-    if prod_col not in df.columns:
-        logger.warning(
-            f"Required production column not found. Available: {list(df.columns)}"
-        )
-        return None
-
-    # Calculate total with validated column names
-    production = safe_numeric_conversion(df, prod_col)
-    adjustments = (
-        safe_numeric_conversion(df, adjustments_col)
-        if adjustments_col in df.columns
-        else 0.0
-    )
-    writeoffs = (
-        safe_numeric_conversion(df, writeoffs_col)
-        if writeoffs_col in df.columns
-        else 0.0
-    )
-
-    total = production + adjustments + writeoffs
-    logger.info(
-        f"Production: Base={production}, Adj={adjustments}, "
-        f"Writeoffs={writeoffs}, Total={total}"
-    )
-    return float(total)
+    return float(value) if value is not None else None
 
 
 def calculate_collection_rate(df: pd.DataFrame | None) -> float | None:
-    """
-    Calculate collection rate percentage.
+    """Calculate collection rate percentage using the decoupled core."""
 
-    Args:
-        df: DataFrame with production and collection data
-
-    Returns:
-        Collection rate as percentage (0-100) or None if calculation fails
-
-    Formula:
-        Collection Rate = (Total Collections / Adjusted Production) × 100
-        Adjusted Production = Gross Production - |Adjustments| - |Write-offs|
-        Total Collections = Patient Income + Unearned Income + Insurance Income
-
-    Note:
-        Uses ADJUSTED production (net) not gross production as denominator.
-        Industry standard collection rate should be 98-100%.
-    """
     if df is None or df.empty:
         return None
 
-    # Check required columns - updated for Story 2.1 validation
-    production_col = "Total Production Today"
-    adjustments_col = "Adjustments Today"
-    writeoffs_col = "Write-offs Today"
-    patient_income_col = "Patient Income Today"
-    unearned_income_col = "Unearned Income Today"
-    insurance_income_col = "Insurance Income Today"
+    (
+        production,
+        adjustments,
+        writeoffs,
+        patient_income,
+        unearned_income,
+        insurance_income,
+    ) = _TRANSFORMER.extract_collection_inputs(df)
 
-    # Fallback to old column names for backward compatibility (please remove this!!!)
-    if production_col not in df.columns:
-        production_col = (
-            "total_production" if "total_production" in df.columns else "Production"
-        )
+    result = kpi_calculator.compute_collection_rate(
+        production,
+        adjustments,
+        writeoffs,
+        patient_income,
+        unearned_income,
+        insurance_income,
+    )
 
-    # Check for production columns
-    production_columns = [production_col, adjustments_col, writeoffs_col]
-    income_columns = [patient_income_col, unearned_income_col, insurance_income_col]
-
-    # Check if we have all required columns
-    has_production = all(col in df.columns for col in production_columns)
-    has_income = all(col in df.columns for col in income_columns)
-
-    if not has_production or not has_income:
-        # Try fallback for collections as single column
-        col_col = (
-            "total_collections" if "total_collections" in df.columns else "Collections"
-        )
-        if col_col in df.columns and production_col in df.columns:
-            logger.info("Using fallback single collections column")
-            production = safe_numeric_conversion(df, production_col)
-            collections = safe_numeric_conversion(df, col_col)
-        else:
-            logger.warning(
-                f"Required columns not found. " f"Available columns: {list(df.columns)}"
-            )
-            return None
-    else:
-        # Calculate ADJUSTED production (corrected formula)
-        # Adjusted Production = Gross Production - |Adjustments| - |Write-offs|
-        production_base = safe_numeric_conversion(df, production_col)
-        adjustments = safe_numeric_conversion(df, adjustments_col)
-        writeoffs = safe_numeric_conversion(df, writeoffs_col)
-
-        # Use absolute values since adjustments and writeoffs reduce production
-        adjusted_production = production_base - abs(adjustments) - abs(writeoffs)
-        production = adjusted_production  # Use adjusted production for collection rate
-
-        logger.info(
-            f"Adjusted Production: Gross={production_base}, "
-            f"Adjustments={adjustments}, Write-offs={writeoffs}, "
-            f"Adjusted={adjusted_production}"
-        )
-
-        # Calculate total collections from three components (Story 2.1 validated)
-        patient_income = safe_numeric_conversion(df, patient_income_col)
-        unearned_income = safe_numeric_conversion(df, unearned_income_col)
-        insurance_income = safe_numeric_conversion(df, insurance_income_col)
-
-        collections = patient_income + unearned_income + insurance_income
-
-        logger.info(
-            f"Collections breakdown: Patient={patient_income}, "
-            f"Unearned={unearned_income}, Insurance={insurance_income}, "
-            f"Total={collections}"
-        )
-
-    # Avoid division by zero
-    if production == 0:
-        logger.warning("Production is zero, cannot calculate collection rate")
+    value = _result_value(result)
+    if value is None:
+        logger.warning("Collection rate unavailable via new calculator")
         return None
 
-    collection_rate = (collections / production) * 100
-    return float(collection_rate)
+    logger.info(
+        "metrics.collection_rate",
+        extra={
+            "production": production,
+            "adjustments": adjustments,
+            "writeoffs": writeoffs,
+            "patient_income": patient_income,
+            "unearned_income": unearned_income,
+            "insurance_income": insurance_income,
+            "rate": value,
+        },
+    )
+
+    return float(value)
 
 
 def calculate_new_patients(df: pd.DataFrame | None) -> int | None:
-    """
-    Calculate new patient count.
+    """Calculate new patient count using the core calculator."""
 
-    Args:
-        df: DataFrame with new patient data (EOD sheet format)
-
-    Returns:
-        Number of new patients or None if calculation fails
-
-    Formula:
-        New Patients = New Patients - Total Month to Date (latest value)
-    """
     if df is None or df.empty:
         return None
 
-    # Story 2.1 validated column name
-    new_patients_col = "New Patients - Total Month to Date"
+    (new_patients_mtd,) = _TRANSFORMER.extract_new_patients_inputs(df)
+    result = kpi_calculator.compute_new_patients(new_patients_mtd)
+    value = _result_value(result)
 
-    # Fallback to legacy column names (please remove this!!!)
-    if new_patients_col not in df.columns:
-        new_patients_col = "new_patients"
-
-    if new_patients_col not in df.columns:
-        logger.warning(
-            f"Required new patients column not found. Available: {list(df.columns)}"
-        )
+    if value is None:
+        logger.warning("New patients unavailable via new calculator")
         return None
 
-    # Get the latest value (most recent entry)
-    new_patients = safe_numeric_conversion(df, new_patients_col)
-    logger.info(f"New patients (MTD): {new_patients}")
-    return int(new_patients)
+    logger.info("metrics.new_patients", extra={"total": value})
+    return int(value)
 
 
 def calculate_case_acceptance(df: pd.DataFrame | None) -> float | None:
-    """
-    Calculate case acceptance percentage.
+    """Calculate case acceptance percentage using the decoupled core."""
 
-    Args:
-        df: DataFrame with treatment data (Front KPI sheet format)
-
-    Returns:
-        Case acceptance rate as percentage or None if calculation fails
-
-    Formula:
-        Case Acceptance = ((Treatments Scheduled $ + Same Day Treatment $)
-                          / Treatments Presented $) × 100
-    """
     if df is None or df.empty:
         return None
 
-    # Check required columns
-    presented_col = "treatments_presented"
-    scheduled_col = "treatments_scheduled"
-    same_day_col = "$ Same Day Treatment"
+    presented, scheduled, same_day = _TRANSFORMER.extract_case_acceptance_inputs(df)
+    result = kpi_calculator.compute_case_acceptance(presented, scheduled, same_day)
+    value = _result_value(result)
 
-    required_cols = [presented_col, scheduled_col, same_day_col]
-    if not all(col in df.columns for col in required_cols):
-        logger.warning(
-            "Required columns for case acceptance not found. Missing: %s",
-            [c for c in required_cols if c not in df.columns],
-        )
+    if value is None:
+        logger.warning("Case acceptance unavailable via new calculator")
         return None
 
-    # Column L: Presented $; Column M: Scheduled $; Column N: Same Day $
-    presented = safe_numeric_conversion(df, presented_col)
-    scheduled = safe_numeric_conversion(df, scheduled_col)
-    same_day = safe_numeric_conversion(df, same_day_col)
+    logger.info(
+        "metrics.case_acceptance",
+        extra={
+            "presented": presented,
+            "scheduled": scheduled,
+            "same_day": same_day,
+            "rate": value,
+        },
+    )
 
-    # Avoid division by zero
-    if presented == 0:
-        logger.warning(
-            "Treatments presented $ is zero, cannot calculate acceptance rate"
-        )
-        return None
-
-    # Calculate acceptance rate INCLUDING Same Day Treatment
-    acceptance_rate = ((scheduled + same_day) / presented) * 100
-
-    return float(acceptance_rate)
+    return float(value)
 
 
 def calculate_hygiene_reappointment(df: pd.DataFrame | None) -> float | None:
-    """
-    Calculate hygiene reappointment percentage.
+    """Calculate hygiene reappointment percentage using the decoupled core."""
 
-    Args:
-        df: DataFrame with hygiene data (Front KPI sheet format)
-
-    Returns:
-        Hygiene reappointment rate as percentage (0-100) or None if calculation fails
-
-    Formula:
-        Hygiene Reappointment = ((Total Hygiene - Not Reappointed) /
-                                Total Hygiene) × 100
-    """
     if df is None or df.empty:
         return None
 
-    # Story 2.1 validated column names
-    total_hygiene_col = "Total hygiene Appointments"
-    not_reappointed_col = "Number of patients NOT reappointed?"
+    total_hygiene, not_reappointed = _TRANSFORMER.extract_hygiene_inputs(df)
+    result = kpi_calculator.compute_hygiene_reappointment(
+        total_hygiene, not_reappointed
+    )
+    value = _result_value(result)
 
-    # Fallback to legacy column names
-    if total_hygiene_col not in df.columns:
-        total_hygiene_col = "total_hygiene_appointments"
-    if not_reappointed_col not in df.columns:
-        not_reappointed_col = "patients_not_reappointed"
-
-    required_cols = [total_hygiene_col, not_reappointed_col]
-    missing_cols = [col for col in required_cols if col not in df.columns]
-
-    if missing_cols:
-        logger.warning(
-            f"Required columns not found: {missing_cols}. "
-            f"Available columns: {list(df.columns)}"
-        )
+    if value is None:
+        logger.warning("Hygiene reappointment unavailable via new calculator")
         return None
-
-    # Calculate reappointment rate with validated column names
-    total_hygiene = safe_numeric_conversion(df, total_hygiene_col)
-    not_reappointed = safe_numeric_conversion(df, not_reappointed_col)
-
-    # Avoid division by zero
-    if total_hygiene == 0:
-        logger.warning(
-            "Total hygiene appointments is zero, cannot calculate reappointment rate"
-        )
-        return None
-
-    reappointed = total_hygiene - not_reappointed
-    reappointment_rate = (reappointed / total_hygiene) * 100
 
     logger.info(
-        f"Hygiene: Total={total_hygiene}, "
-        f"Not Reappointed={not_reappointed}, Rate={reappointment_rate:.1f}%"
+        "metrics.hygiene_reappointment",
+        extra={
+            "total_hygiene": total_hygiene,
+            "not_reappointed": not_reappointed,
+            "rate": value,
+        },
     )
-    return float(reappointment_rate)
+
+    return float(value)
 
 
-def get_all_kpis(location: str = "baytown") -> KPIData:
-    """
-    Calculate all 5 KPIs from Google Sheets data for a specific location.
+def get_all_kpis(location: Location = "baytown") -> KPIData:
+    """Return legacy KPI dictionary output backed by the new KPI service."""
 
-    Args:
-        location: Location name ('baytown' or 'humble')
-
-    Returns:
-        Dictionary containing all calculated KPIs:
-        - production_total: float or None
-        - collection_rate: float or None
-        - new_patients: int or None
-        - case_acceptance: float or None
-        - hygiene_reappointment: float or None
-    """
     try:
-        # Initialize sheets provider with alias-based configuration
-        provider = build_sheets_provider()
+        service = _build_kpi_service()
+        response = service.get_kpis(location, date.today())
+        values = response.values
 
-        # Get data from location-specific sheets using alias system
-        eod_alias = provider.get_location_aliases(location, "eod")
-        front_alias = provider.get_location_aliases(location, "front")
-
-        eod_data = provider.fetch(eod_alias) if eod_alias else None
-        front_kpi_data = provider.fetch(front_alias) if front_alias else None
-
-        # Calculate all KPIs
-        kpis: KPIData = {
-            "production_total": calculate_production_total(eod_data),
-            "collection_rate": calculate_collection_rate(eod_data),
-            "new_patients": calculate_new_patients(eod_data),
-            "case_acceptance": calculate_case_acceptance(front_kpi_data),
-            "hygiene_reappointment": calculate_hygiene_reappointment(front_kpi_data),
+        new_patients_value = _kpi_value_to_number(values.new_patients)
+        new_patients_int = (
+            int(new_patients_value) if new_patients_value is not None else None
+        )
+        return {
+            "production_total": _kpi_value_to_number(values.production_total),
+            "collection_rate": _kpi_value_to_number(values.collection_rate),
+            "new_patients": new_patients_int,
+            "case_acceptance": _kpi_value_to_number(values.case_acceptance),
+            "hygiene_reappointment": _kpi_value_to_number(values.hygiene_reappointment),
         }
 
-        logger.info(f"Successfully calculated {location.title()} KPIs: {kpis}")
-        return kpis
-
-    except Exception as e:
-        logger.error(f"Error calculating {location.title()} KPIs: {e}")
+    except Exception as exc:
+        logger.error("Error calculating %s KPIs via service", location, exc_info=exc)
         return {
             "production_total": None,
             "collection_rate": None,
@@ -534,7 +380,8 @@ def safe_time_series_conversion(
         parsed = pd.to_datetime(text_value, errors="coerce")
         if pd.isna(parsed):
             return None
-        return parsed.to_pydatetime()
+        result = parsed.to_pydatetime()
+        return result if isinstance(result, datetime) else None
 
     try:
         # Create a copy to avoid modifying original

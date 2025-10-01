@@ -88,7 +88,8 @@ class HistoricalDataManager:
         parsed = pd.to_datetime(text_value, errors="coerce")
         if pd.isna(parsed):
             return None
-        return parsed.to_pydatetime()
+        result = parsed.to_pydatetime()
+        return result if isinstance(result, datetime) else None
 
     def _convert_to_datetime_column(
         self, df: pd.DataFrame, column: str

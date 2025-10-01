@@ -75,15 +75,19 @@ class TestRealDataScenarios:
         # Real data pattern from Google Sheets (single row as per current design)
         df = pd.DataFrame(
             {
-                "total_production": ["$1,234.56"],
-                "total_collections": ["$1,100.00"],
+                "Total Production Today": ["$1,234.56"],
+                "Adjustments Today": ["$0.00"],
+                "Write-offs Today": ["$0.00"],
+                "Patient Income Today": ["$800.00"],
+                "Unearned Income Today": ["$100.00"],
+                "Insurance Income Today": ["$200.00"],
             }
         )
 
         production_total = calculate_production_total(df)
         collection_rate = calculate_collection_rate(df)
 
-        assert production_total == 1234.56
+        assert production_total == pytest.approx(1234.56)
         assert collection_rate == pytest.approx(89.11, rel=1e-2)  # (1100/1234.56)*100
 
     @pytest.mark.integration

@@ -1,0 +1,57 @@
+# Daily KPI goals for each practice location
+#
+# This configuration defines the target values and acceptable ranges for each KPI.
+# Used by the validation rules to determine if actual values are within expected bounds.
+
+# Production Goals (daily targets by location and day of week)
+production_goals:
+  baytown:
+    monday: 7620  # Scaled to support $160k monthly target
+    tuesday: 7620
+    wednesday: 7620
+    thursday: 7620
+    friday: 6980
+    saturday: 5080  # Alternating Saturdays (~2/month)
+    sunday: 0  # Closed
+  humble:
+    monday: 7500  # Adjusted for $120k monthly target
+    tuesday: 7500
+    wednesday: 7500
+    thursday: 7500
+    friday: 0  # Closed
+    saturday: 0  # Closed
+    sunday: 0  # Closed
+
+# Production Variance Thresholds
+# Flag if production is too far above or below goal
+production_variance:
+  over_goal_threshold: 0.50  # 50% over goal triggers warning
+  under_goal_threshold: 0.30  # 30% under goal triggers warning
+
+# Collection Rate Targets
+collection_rate:
+  target_min: 98.0  # Target minimum: 98%
+  target_max: 100.0  # Target maximum: 100%
+  warning_min: 50.0  # Warning if below 50%
+  warning_max: 110.0  # Warning if above 110%
+
+# Case Acceptance Targets
+case_acceptance:
+  target_min: 80.0  # Target minimum: 80%
+  target_max: 90.0  # Target maximum: 90%
+  warning_max: 100.0  # Warning if above 100%
+  warning_min: 0.0  # Warning if below 0%
+
+# Hygiene Reappointment Targets
+hygiene_reappointment:
+  target_min: 95.0  # Target minimum: 95%
+  target_max: 100.0  # Target maximum: 100%
+  error_min: 0.0  # Error if below 0%
+  error_max: 100.0  # Error if above 100%
+
+# New Patients Targets (optional - for future use)
+new_patients:
+  baytown:
+    monthly_target: 50
+  humble:
+    monthly_target: 45

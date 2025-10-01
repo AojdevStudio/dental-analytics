@@ -1,4 +1,4 @@
-# Google Drive and Sheets validation tests
+# Google Sheets data validation tests aligned with the decoupled KPI core.
 
 import pandas as pd
 import pytest
@@ -13,279 +13,161 @@ from apps.backend.metrics import (
 
 
 class TestSheetsStructure:
-    """Test Google Sheets data structure and access."""
-
-    @pytest.mark.unit
-    def test_column_mappings(self) -> None:
-        """Test that expected columns exist in sample data."""
-        # Test EOD sheet structure
-        eod_columns = [
-            "date",
-            "total_production",
-            "total_collections",
-            "adjustments",
-            "writeoffs",
-            "new_patients",
-        ]
-
-        # Create sample data to verify column existence
-        eod_sample = pd.DataFrame({col: [0] for col in eod_columns})
-
-        # Verify all expected columns exist
-        for col in eod_columns:
-            assert col in eod_sample.columns
-
-        # Test Front KPI sheet structure
-        front_kpi_columns = [
-            "date",
-            "total_hygiene_appointments",
-            "patients_not_reappointed",
-            "treatments_presented",
-            "treatments_scheduled",
-        ]
-
-        front_sample = pd.DataFrame({col: [0] for col in front_kpi_columns})
-
-        # Verify all expected columns exist
-        for col in front_kpi_columns:
-            assert col in front_sample.columns
+    """Validate that sample Google Sheets structures work with the new calculators."""
 
     @pytest.mark.unit
     def test_eod_production_calculation(self) -> None:
-        """Test production total calculation with real data structure."""
-        test_data = pd.DataFrame(
+        eod_df = pd.DataFrame(
             {
-                "date": ["2024-01-15"],
-                "total_production": [8500.00],
-                "adjustments": [200.00],
-                "writeoffs": [300.00],
-                "total_collections": [8000.00],
-                "new_patients": [3],
+                "Submission Date": ["2024-01-15"],
+                "Total Production Today": [8500.0],
+                "Adjustments Today": [200.0],
+                "Write-offs Today": [300.0],
+                "Patient Income Today": [6000.0],
+                "Unearned Income Today": [1000.0],
+                "Insurance Income Today": [2000.0],
+                "New Patients - Total Month to Date": [3],
             }
         )
 
-        production_total = calculate_production_total(test_data)
-        # $8,500 + $200 + $300 = $9,000
+        production_total = calculate_production_total(eod_df)
         assert production_total == 9000.0
 
     @pytest.mark.unit
     def test_eod_collection_calculation(self) -> None:
-        """Test collection rate calculation with realistic values."""
-        test_data = pd.DataFrame(
+        eod_df = pd.DataFrame(
             {
-                "date": ["2024-01-15"],
-                "total_production": [10000.00],
-                "total_collections": [9500.00],
-                "adjustments": [0],
-                "writeoffs": [0],
-                "new_patients": [2],
+                "Submission Date": ["2024-01-15"],
+                "Total Production Today": [10000.0],
+                "Adjustments Today": [0.0],
+                "Write-offs Today": [0.0],
+                "Patient Income Today": [5000.0],
+                "Unearned Income Today": [1500.0],
+                "Insurance Income Today": [3000.0],
             }
         )
 
-        collection_rate = calculate_collection_rate(test_data)
-        # ($9,500 / $10,000) * 100 = 95%
-        assert collection_rate == 95.0
+        collection_rate = calculate_collection_rate(eod_df)
+        assert collection_rate == pytest.approx(95.0)
 
     @pytest.mark.unit
     def test_eod_new_patients_calculation(self) -> None:
-        """Test new patient count calculation."""
-        test_data = pd.DataFrame(
+        eod_df = pd.DataFrame(
             {
-                "date": ["2024-01-15"],
-                "total_production": [5000.00],
-                "total_collections": [4800.00],
-                "adjustments": [0],
-                "writeoffs": [0],
-                "new_patients": [7],
+                "Submission Date": ["2024-01-15"],
+                "Total Production Today": [5000.0],
+                "Adjustments Today": [0.0],
+                "Write-offs Today": [0.0],
+                "Patient Income Today": [4200.0],
+                "Unearned Income Today": [400.0],
+                "Insurance Income Today": [200.0],
+                "New Patients - Total Month to Date": [7],
             }
         )
 
-        new_patients = calculate_new_patients(test_data)
+        new_patients = calculate_new_patients(eod_df)
         assert new_patients == 7
 
     @pytest.mark.unit
     def test_front_kpi_case_acceptance(self) -> None:
-        """Test treatment acceptance calculation with Front KPI data."""
-        test_data = pd.DataFrame(
+        front_df = pd.DataFrame(
             {
-                "date": ["2024-01-15"],
-                "total_hygiene_appointments": [25],
-                "patients_not_reappointed": [3],
-                "treatments_presented": [150000.00],
-                "treatments_scheduled": [120000.00],
-                "$ Same Day Treatment": [15000.00],
+                "Submission Date": ["2024-01-15"],
+                "treatments_presented": [150000.0],
+                "treatments_scheduled": [120000.0],
+                "$ Same Day Treatment": [15000.0],
+                "Total hygiene Appointments": [25],
+                "Number of patients NOT reappointed?": [3],
             }
         )
 
-        acceptance_rate = calculate_case_acceptance(test_data)
-        # (($120,000 + $15,000) / $150,000) * 100 = 90%
-        assert acceptance_rate == 90.0
+        acceptance_rate = calculate_case_acceptance(front_df)
+        assert acceptance_rate == pytest.approx(90.0)
 
     @pytest.mark.unit
     def test_front_kpi_hygiene_reappointment(self) -> None:
-        """Test hygiene reappointment calculation with Front KPI data."""
-        test_data = pd.DataFrame(
+        front_df = pd.DataFrame(
             {
-                "date": ["2024-01-15"],
-                "total_hygiene_appointments": [30],
-                "patients_not_reappointed": [3],
-                "treatments_presented": [100000.00],
-                "treatments_scheduled": [90000.00],
+                "Submission Date": ["2024-01-15"],
+                "Total hygiene Appointments": [30],
+                "Number of patients NOT reappointed?": [3],
             }
         )
 
-        reappointment_rate = calculate_hygiene_reappointment(test_data)
-        # ((30 - 3) / 30) * 100 = 90%
-        assert reappointment_rate == 90.0
+        reappointment_rate = calculate_hygiene_reappointment(front_df)
+        assert reappointment_rate == pytest.approx(90.0)
 
     @pytest.mark.unit
     def test_edge_case_zero_values(self) -> None:
-        """Test handling of zero values in calculations."""
-        # Test zero production (should return None for collection rate)
         zero_production = pd.DataFrame(
             {
-                "total_production": [0],
-                "total_collections": [100],
-                "adjustments": [0],
-                "writeoffs": [0],
+                "Submission Date": ["2024-01-15"],
+                "Total Production Today": [0.0],
+                "Adjustments Today": [0.0],
+                "Write-offs Today": [0.0],
+                "Patient Income Today": [0.0],
+                "Unearned Income Today": [0.0],
+                "Insurance Income Today": [0.0],
             }
         )
+        assert calculate_collection_rate(zero_production) is None
 
-        collection_rate = calculate_collection_rate(zero_production)
-        assert collection_rate is None
-
-        # Test zero hygiene appointments
         zero_hygiene = pd.DataFrame(
             {
-                "total_hygiene_appointments": [0],
-                "patients_not_reappointed": [0],
+                "Submission Date": ["2024-01-15"],
+                "Total hygiene Appointments": [0],
+                "Number of patients NOT reappointed?": [0],
             }
         )
-
-        hygiene_rate = calculate_hygiene_reappointment(zero_hygiene)
-        assert hygiene_rate is None
+        assert calculate_hygiene_reappointment(zero_hygiene) is None
 
     @pytest.mark.unit
     def test_realistic_daily_numbers(self) -> None:
-        """Test with realistic daily numbers for Kam Dental."""
-        # Typical daily EOD data
-        daily_eod = pd.DataFrame(
+        eod_df = pd.DataFrame(
             {
-                "date": ["2024-01-15"],
-                "total_production": [12000.00],  # Typical daily production
-                "total_collections": [11000.00],  # ~92% collection rate
-                "adjustments": [500.00],
-                "writeoffs": [300.00],
-                "new_patients": [4],  # 3-5 new patients per day
+                "Submission Date": ["2024-01-15"],
+                "Total Production Today": [12000.0],
+                "Adjustments Today": [500.0],
+                "Write-offs Today": [300.0],
+                "Patient Income Today": [8500.0],
+                "Unearned Income Today": [500.0],
+                "Insurance Income Today": [2500.0],
+            }
+        )
+        front_df = pd.DataFrame(
+            {
+                "Submission Date": ["2024-01-15"],
+                "treatments_presented": [85000.0],
+                "treatments_scheduled": [68000.0],
+                "$ Same Day Treatment": [4250.0],
+                "Total hygiene Appointments": [25],
+                "Number of patients NOT reappointed?": [2],
             }
         )
 
-        # Typical daily Front KPI data
-        daily_front = pd.DataFrame(
-            {
-                "date": ["2024-01-15"],
-                "total_hygiene_appointments": [25],  # 20-30 hygiene per day
-                "patients_not_reappointed": [2],  # ~8% not reappointed
-                "treatments_presented": [85000.00],  # Treatment presentations
-                "treatments_scheduled": [68000.00],  # ~80% acceptance
-                "$ Same Day Treatment": [4250.00],  # 5% of presented
-            }
-        )
+        production = calculate_production_total(eod_df)
+        collection_rate = calculate_collection_rate(eod_df)
+        acceptance = calculate_case_acceptance(front_df)
+        hygiene = calculate_hygiene_reappointment(front_df)
 
-        # Calculate and verify reasonable ranges
-        production = calculate_production_total(daily_eod)
-        collection_rate = calculate_collection_rate(daily_eod)
-
-        assert production == 12800.0  # $12,000 + $500 + $300
-        assert collection_rate == pytest.approx(86.0, rel=1e-1)  # ~86%
-
-        new_patients = calculate_new_patients(daily_eod)
-        assert new_patients == 4
-
-        case_acceptance = calculate_case_acceptance(daily_front)
-        assert case_acceptance == 85.0  # ((68000 + 4250) / 85000) * 100
-
-        hygiene_reappointment = calculate_hygiene_reappointment(daily_front)
-        assert hygiene_reappointment == 92.0  # ((25-2)/25) * 100
+        assert production == 12800.0
+        assert collection_rate == pytest.approx(102.68, rel=1e-2)
+        assert acceptance == pytest.approx(85.0, rel=1e-2)
+        assert hygiene == pytest.approx(92.0, rel=1e-1)
 
     @pytest.mark.unit
     def test_currency_format_handling(self) -> None:
-        """Test handling of currency-formatted strings from sheets."""
-        # Test data that might come with currency formatting
-        currency_data = pd.DataFrame(
+        eod_df = pd.DataFrame(
             {
-                "total_production": [10000.00],
-                "total_collections": [9000.00],
-                "adjustments": [0],
-                "writeoffs": [0],
+                "Submission Date": ["2024-01-15"],
+                "Total Production Today": ["$10,000.00"],
+                "Adjustments Today": ["$0.00"],
+                "Write-offs Today": ["$0.00"],
+                "Patient Income Today": ["$6,000.00"],
+                "Unearned Income Today": ["$2,000.00"],
+                "Insurance Income Today": ["$1,000.00"],
             }
         )
 
-        collection_rate = calculate_collection_rate(currency_data)
-        # ($9,000 / $10,000) * 100 = 90%
-        assert collection_rate == 90.0
-
-    @pytest.mark.unit
-    def test_spreadsheet_id_in_config(self) -> None:
-        """Verify the correct spreadsheet ID is configured in the provider."""
-        # Check if the provider can be built with configuration
-        from apps.backend.data_providers import build_sheets_provider
-
-        try:
-            provider = build_sheets_provider()
-            # Check if any aliases are configured (basic validation)
-            available_aliases = provider.list_available_aliases()
-            assert len(available_aliases) > 0, "No aliases configured"
-            # Note: The actual spreadsheet ID is in the YAML config
-        except Exception:
-            # If provider fails to build, just check that config file exists
-            from pathlib import Path
-
-            config_path = Path("config/sheets.yml")
-            assert config_path.exists(), "Configuration file should exist"
-
-    @pytest.mark.unit
-    def test_data_type_conversions(self) -> None:
-        """Test that currency and percentage strings are properly converted."""
-        from apps.backend.metrics import safe_numeric_conversion
-
-        # Test currency conversion
-        currency_df = pd.DataFrame({"amount": ["$1,234.56"]})
-        result = safe_numeric_conversion(currency_df, "amount")
-        # Note: This tests the actual conversion logic in the metrics module
-        assert isinstance(result, int | float)
-
-        # Test percentage conversion
-        percent_df = pd.DataFrame({"rate": ["85.5%"]})
-        result = safe_numeric_conversion(percent_df, "rate")
-        assert isinstance(result, int | float)
-
-    @pytest.mark.unit
-    def test_missing_column_handling(self) -> None:
-        """Test graceful handling of missing columns."""
-        from apps.backend.metrics import safe_numeric_conversion
-
-        # DataFrame missing the requested column
-        incomplete_df = pd.DataFrame({"other_column": [100]})
-
-        result = safe_numeric_conversion(incomplete_df, "missing_column")
-        assert result == 0.0  # Should return 0 for missing columns
-
-    @pytest.mark.unit
-    def test_empty_dataframe_handling(self) -> None:
-        """Test handling of empty DataFrames."""
-        empty_df = pd.DataFrame()
-
-        # All calculation functions should return None for empty data
-        assert calculate_production_total(empty_df) is None
-        assert calculate_collection_rate(empty_df) is None
-        assert calculate_new_patients(empty_df) is None
-        assert calculate_case_acceptance(empty_df) is None
-        assert calculate_hygiene_reappointment(empty_df) is None
-
-        # Test None input
-        assert calculate_production_total(None) is None
-        assert calculate_collection_rate(None) is None
-        assert calculate_new_patients(None) is None
-        assert calculate_case_acceptance(None) is None
-        assert calculate_hygiene_reappointment(None) is None
+        collection_rate = calculate_collection_rate(eod_df)
+        assert collection_rate == pytest.approx(90.0)

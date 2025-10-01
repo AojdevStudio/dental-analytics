@@ -16,25 +16,35 @@ Our testing strategy leverages a multi-layered approach combining automated test
 ### 1. Automated Testing Framework (pytest)
 
 **Test Infrastructure**:
-- **Framework**: pytest with comprehensive fixtures (4,389 lines of test code)
-- **Coverage Target**: 90%+ for backend (currently achieving 94%)
-- **Test Organization**: Unit tests, integration tests, edge case validation
+- **Framework**: pytest with layered suites (unit ↔ integration ↔ regression)
+- **Coverage Targets**:
+  - ≥95% for core calculators (`core/calculators/kpi_calculator.py`)
+  - ≥90% for service orchestration (`services/kpi_service.py`)
+  - ≥90% aggregate backend coverage (latest run: 93%)
+- **Test Organization**: Unit tests (core + transformers + business rules), integration tests (service orchestration), compatibility regression tests (legacy `apps/backend/metrics.py`)
 
-**Core Test Suites**:
+**Test Layout**:
 ```bash
 tests/
-├── test_metrics.py              # KPI calculation accuracy
-├── test_data_sources.py         # Google Sheets data processing
-├── test_chart_data.py           # Chart data generation
-├── test_historical_data_flow.py # Time-series analysis
-├── integration/                 # End-to-end workflows
-└── conftest.py                  # Shared fixtures with real data
+├── unit/
+│   ├── transformers/test_sheets_transformer.py   # DataFrame extraction edge cases
+│   ├── business_rules/test_validation_rules.py   # Goal-based validation logic
+│   └── calculators/                              # (reserved for additional calculator specs)
+├── integration/
+│   └── test_kpi_service.py                       # Service flow and partial data scenarios
+├── test_metrics.py                               # Legacy wrapper regression tests
+├── test_gdrive_validation.py                     # Spreadsheet structure parity
+├── test_currency_parsing.py                      # Currency cleaning fallbacks
+├── test_location_switching.py                    # Location-aware provider behaviour
+└── conftest.py                                   # Shared fixtures (EOD/front samples, edge datasets)
 ```
 
-**Test Data Strategy**:
-- **Real Production Data**: August/September 2025 samples from actual spreadsheets
-- **Edge Cases**: Empty, null, negative, mixed types, large values
-- **Backward Compatibility**: Legacy column name support
+**Test Data & Fixtures**:
+- **Real Production Snapshots**: August/September 2025 rows stored in pytest fixtures (`sample_eod_data`, `sample_front_kpi_data`)
+- **Edge Case Fixtures**: `zero_values_data`, `negative_values_data`, `mixed_types_data` validating transformer resilience and calculator safety
+- **Transformer Fixture Strategy**: `tests/unit/transformers/test_sheets_transformer.py` combines shared fixtures with purpose-built DataFrames covering currency strings, accounting parentheses, whitespace, and mixed-type inputs
+- **Validation Fixtures**: `tests/unit/business_rules/test_validation_rules.py` loads updated `config/business_rules/goals.yml` to exercise production variance and rate thresholds
+- **Backward Compatibility**: Regression suites keep legacy column names in `tests/test_metrics.py` ensuring `apps/backend/metrics.py` facade remains safe for scripts and tooling
 
 ### 2. KPI Calculation Validation
 

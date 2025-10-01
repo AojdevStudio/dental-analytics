@@ -383,6 +383,7 @@ REPO_ROOT = Path.cwd().resolve()
 MAX_TRASH_BYTES = 20 * 1024 * 1024  # 20MB cap
 TRASH_DIR = REPO_ROOT / ".trash"
 
+
 def _is_simple_relpath(p: str) -> bool:
     # disallow globs and backrefs; must not be absolute
     if not p or p.startswith("-"):
@@ -392,6 +393,7 @@ def _is_simple_relpath(p: str) -> bool:
         return False
     return not os.path.isabs(p)
 
+
 def _resolve_inside_repo(raw_path: str) -> Path | None:
     try:
         candidate = (Path.cwd() / raw_path).resolve()
@@ -399,11 +401,14 @@ def _resolve_inside_repo(raw_path: str) -> Path | None:
         return None
     try:
         # Python 3.12+: Path.is_relative_to
-        if str(candidate).startswith(str(REPO_ROOT) + os.sep) or str(candidate) == str(REPO_ROOT):
+        if str(candidate).startswith(str(REPO_ROOT) + os.sep) or str(candidate) == str(
+            REPO_ROOT
+        ):
             return candidate
         return None
     except Exception:
         return None
+
 
 def _is_denied_path(p: Path) -> bool:
     try:
@@ -420,6 +425,7 @@ def _is_denied_path(p: Path) -> bool:
         return True
     return False
 
+
 def _is_regular_and_small(p: Path, max_bytes: int = MAX_TRASH_BYTES) -> bool:
     try:
         st = p.stat()
@@ -427,6 +433,7 @@ def _is_regular_and_small(p: Path, max_bytes: int = MAX_TRASH_BYTES) -> bool:
         return p.is_file() and not p.is_symlink() and st.st_size <= max_bytes
     except Exception:
         return False
+
 
 def _trash_destination_for(p: Path) -> Path:
     # timestamped bucket to keep history
@@ -437,6 +444,7 @@ def _trash_destination_for(p: Path) -> Path:
     dest = bucket / rel
     dest.parent.mkdir(parents=True, exist_ok=True)
     return dest
+
 
 def _append_trash_log(original: Path, moved_to: Path, session_id: str):
     try:
@@ -472,6 +480,7 @@ def _append_trash_log(original: Path, moved_to: Path, session_id: str):
         # logging failures must never block file move
         pass
 
+
 def is_allowed_trash_command(command: str) -> tuple[bool, str | None]:
     """
     Allow exactly one ultra-safe pattern:
@@ -497,6 +506,7 @@ def is_allowed_trash_command(command: str) -> tuple[bool, str | None]:
         return (False, None)
     return (True, str(target))
 
+
 def handle_safe_trash(command: str, session_id: str) -> bool:
     """
     If command matches safe_trash policy, move the file into ./.trash/<timestamp>/...
@@ -512,10 +522,22 @@ def handle_safe_trash(command: str, session_id: str) -> bool:
         shutil.move(str(target), str(dest))
         _append_trash_log(target, dest, session_id)
         # Also mirror to the standard log flow
-        log_tool_call("Bash", {"command": command}, "approved", "allowed_trash_command", f"target={target}")
+        log_tool_call(
+            "Bash",
+            {"command": command},
+            "approved",
+            "allowed_trash_command",
+            f"target={target}",
+        )
         # Inform via stderr so the IDE shows it prominently
-        print(f"✅ safe_trash moved file:\n   from: {target}\n   to:   {dest}", file=sys.stderr)
-        print("ℹ️ External command was intercepted by pre_tool_use hook (no shell execution).", file=sys.stderr)
+        print(
+            f"✅ safe_trash moved file:\n   from: {target}\n   to:   {dest}",
+            file=sys.stderr,
+        )
+        print(
+            "ℹ️ External command was intercepted by pre_tool_use hook (no shell execution).",
+            file=sys.stderr,
+        )
         return True
     except Exception as e:
         print(f"safe_trash error: {e}", file=sys.stderr)

@@ -9,6 +9,37 @@ Full-stack dental analytics dashboard that reads KPI data from Google Sheets, pr
 **Multi-Location**: Baytown and Humble locations with unified data access
 **Historical Data**: Time-series KPI analysis with operational date logic
 
+## Architecture (Story 3.0: 5-Layer Design)
+
+**Directory Structure:**
+```
+core/                           # Pure business logic (framework-independent)
+├── models/kpi_models.py       # Pydantic data contracts
+├── calculators/kpi_calculator.py  # Pure KPI calculation functions
+├── business_rules/
+│   ├── calendar.py            # Business day logic (Baytown/Humble schedules)
+│   └── validation_rules.py    # Goal-based validation (production variance, rate thresholds)
+└── transformers/
+    └── sheets_transformer.py  # DataFrame → calculator inputs
+
+services/
+└── kpi_service.py             # Orchestration layer (calendar → fetch → transform → calculate → validate)
+
+apps/backend/
+├── data_providers.py          # Google Sheets API integration
+└── metrics.py                 # Legacy facade (compatibility wrapper)
+
+config/business_rules/
+├── calendar.yml               # Location schedules (Baytown alternating Saturdays, Humble Mon-Thu)
+└── goals.yml                  # Daily production goals and KPI thresholds
+```
+
+**Key Principles:**
+- **core/** uses Pydantic models exclusively (type-safe, validated)
+- **apps/backend/types.py** uses TypedDict (legacy compatibility)
+- Pure functions in calculators (no side effects, easy to test)
+- Dependency injection in services (testable, flexible)
+
 ## Development Commands
 
 ### Best Practices
@@ -40,7 +71,7 @@ uv sync && uv run streamlit run apps/frontend/app.py  # http://localhost:8501
 # Quality & Testing
 ./scripts/quality-check.sh    # Comprehensive checks
 ./scripts/quick-test.sh       # Fast verification
-uv run pytest --cov=apps.backend --cov=apps.frontend
+uv run pytest --cov=core --cov=services --cov-report=term-missing
 
 # Development
 uv add package-name          # Dependencies
@@ -90,18 +121,32 @@ uv run python               # Interactive shell
 
 ## Python Guidelines
 
-### Type Hints
+### Type Hints (Modern Python 3.10+ Syntax)
 ```python
-from typing import Dict, List, Optional
 import pandas as pd
+from pydantic import BaseModel
 
-def calculate_kpis(df: pd.DataFrame) -> Dict[str, float]:
+# Use built-in types (NOT typing.Dict, typing.List, typing.Optional)
+def calculate_kpis(df: pd.DataFrame) -> dict[str, float]:
     """Calculate all 5 core KPIs from dental data."""
     pass
 
-def get_sheet_data(spreadsheet_id: str, range_name: str) -> Optional[pd.DataFrame]:
-    """Fetch data from Google Sheets."""
+def get_sheet_data(spreadsheet_id: str, range_name: str) -> pd.DataFrame | None:
+    """Fetch data from Google Sheets (use | None instead of Optional)."""
     pass
+
+# For structured data in core/, use Pydantic models
+class KPIResponse(BaseModel):
+    location: str
+    values: dict[str, float | None]
+    availability: str
+
+# For legacy compatibility in apps/backend/types.py, use TypedDict
+from typing import TypedDict
+
+class LegacyKPIData(TypedDict):
+    production_total: float | None
+    collection_rate: float | None
 ```
 
 ### Code Style
@@ -132,21 +177,25 @@ import logging
 logger = logging.getLogger(__name__)
 ```
 ### Strict Typing with Narrow Expectations
-- ALWAYS yse TypedDicts for:
-    - Chart data structures
-    - KPI response structures
-    - Any function returning structured dicts
-- ALWAYS use Plotly types:
+- **New code in core/services/** uses Pydantic models:
+    - KPI response structures → Pydantic (validation + type safety)
+    - Business logic models → Pydantic (CalculationResult, KPIValue, etc.)
+    - Configuration models → Pydantic when validation needed
+- **Legacy apps/backend/types.py** uses TypedDict:
+    - Chart data structures (backward compatibility)
+    - Legacy KPI response (for scripts/tests still using old API)
+    - Don't add new TypedDicts; use Pydantic for new structures
+- **ALWAYS use Plotly types:**
     - go.Layout instead of dict[str, Any]
-    - layout.XAxism layout.YAxis for axis configs
+    - layout.XAxis, layout.YAxis for axis configs
     - Import from plotly.graph_objects.layout submodules
-- ONLY allow Any for:
-    - YAML ingestion: config: dict[str, Any] = yaml.safe_load(f)
+- **ONLY allow Any for:**
+    - YAML ingestion: `config: dict[str, Any] = yaml.safe_load(f)`
     - Reason: YAML is external, untyped data source we don't control
-- NEVER use Any for:
-    - Function return types (use TypedDict)
+- **NEVER use Any for:**
+    - Function return types (use Pydantic or TypedDict)
     - Plotly configurations (use Plotly-stubs types)
-    - Internal data structions (define explicit types)
+    - Internal data structures (define explicit types)
 Example:
 ```python
 # Bad:

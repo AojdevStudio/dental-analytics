@@ -1293,7 +1293,7 @@ def validate_processed_chart_data(data: ChartData) -> bool:
 
         # Check that dates and values are lists of same length
         if not isinstance(data["dates"], list) or not isinstance(data["values"], list):
-            return False
+            return False  # type: ignore[unreachable]
 
         if len(data["dates"]) != len(data["values"]):
             return False
