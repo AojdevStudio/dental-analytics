@@ -2,35 +2,77 @@
 
 # Global review configuration
 reviews:
-  # Path-based instructions to exclude documentation files
+  # Path-based instructions to exclude specific directories and files
   path_instructions:
-    # Exclude markdown files from review
-    - path: "**/*.md"
+    # Exclude system/cache directories
+    - path: ".bmad-core"
       instructions: |
-        Skip reviewing this markdown file as it contains documentation only.
+        Skip reviewing this system directory.
 
-    # Exclude YAML configuration files from review
-    - path: "**/*.yml"
+    - path: ".claude"
       instructions: |
-        Skip reviewing this YAML configuration file.
+        Skip reviewing this AI assistant directory.
 
-    - path: "**/*.yaml"
+    - path: ".code"
       instructions: |
-        Skip reviewing this YAML configuration file.
+        Skip reviewing this IDE configuration directory.
 
-    # Exclude text files from review
-    - path: "**/*.txt"
+    - path: ".cursor"
       instructions: |
-        Skip reviewing this text file.
+        Skip reviewing this IDE configuration directory.
 
-    # Exclude other common documentation formats
-    - path: "**/*.rst"
+    - path: ".mypy_cache"
       instructions: |
-        Skip reviewing this reStructuredText documentation file.
+        Skip reviewing this Python type checking cache directory.
 
-    - path: "**/*.adoc"
+    - path: ".old-files"
       instructions: |
-        Skip reviewing this AsciiDoc documentation file.
+        Skip reviewing this backup files directory.
+
+    - path: ".playwright-mcp"
+      instructions: |
+        Skip reviewing this testing framework directory.
+
+    - path: ".pytest_cache"
+      instructions: |
+        Skip reviewing this test cache directory.
+
+    - path: ".serena"
+      instructions: |
+        Skip reviewing this AI memory system directory.
+
+    - path: ".ruff_cache"
+      instructions: |
+        Skip reviewing this Python linter cache directory.
+
+    - path: ".uv-cache"
+      instructions: |
+        Skip reviewing this package manager cache directory.
+
+    # Exclude documentation and configuration directories
+    - path: "ai-docs"
+      instructions: |
+        Skip reviewing this AI documentation directory.
+
+    - path: "docs"
+      instructions: |
+        Skip reviewing this documentation directory.
+
+    - path: "logs"
+      instructions: |
+        Skip reviewing this logs directory.
+
+    - path: "planning"
+      instructions: |
+        Skip reviewing this planning documentation directory.
+
+    - path: "scripts"
+      instructions: |
+        Skip reviewing this utility scripts directory.
+
+    - path: "specs"
+      instructions: |
+        Skip reviewing this specification documents directory.
 
     # Focus on actual code files with detailed review
     - path: "**/*.js"
