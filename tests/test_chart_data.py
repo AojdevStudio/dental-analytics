@@ -1301,8 +1301,9 @@ class TestHelperFunctions:
 
     def test_get_chart_data_processor_invalid_type(self) -> None:
         """Test getting chart data processor for invalid KPI type."""
-        from apps.backend.chart_data import get_chart_data_processor
         import pytest
+
+        from apps.backend.chart_data import get_chart_data_processor
 
         with pytest.raises(ValueError) as excinfo:
             get_chart_data_processor("invalid_kpi_type")
