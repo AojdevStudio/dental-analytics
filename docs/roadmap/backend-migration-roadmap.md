@@ -77,9 +77,19 @@ from core.models.kpi_models import KPIResponse  # One source of truth
 - **Runtime validation** - Pydantic catches errors TypedDict can't
 
 **Deliverable:**
-- `apps/backend/types.py` deleted
-- All imports updated to use `core/models/`
-- Tests passing with zero TypedDict references
+- Historical baseline comparisons and assumptions noted in personal tracker
+
+**Exit Criteria:**
+- Legacy historical functions removed or demoted to thin wrappers only during transition
+- Analyzer/service modules validated against representative datasets
+- Automated coverage ≥90% for analyzers and services
+- Manual sanity checks (calendar boundaries, aggregation totals) documented for future reference
+- New formatter/service modules under 300 lines each
+- Automated tests cover new modules with ≥90% coverage
+- Manual chart comparisons captured (before/after screenshots or notes)
+- `apps/backend/types.py` removed from version control history
+- All affected tests updated and green
+- Regression comparison steps documented to revisit during execution
 
 ---
 
@@ -182,12 +192,14 @@ services/
 3. ✅ **Facade Pattern** - Keep old files as wrappers temporarily
 4. ✅ **Validate** - Run side-by-side comparisons
 5. ✅ **Delete Old** - Remove legacy code once validated
+6. ✅ **Document** - Log regression steps, screenshots, and data snapshots in personal notes
 
 **Risk Mitigation**:
 - Still in development = low production risk
 - Comprehensive test suite catches regressions
 - Facade pattern allows easy rollback
 - Each phase is independent
+- Solo developer: reserve buffer time after each phase for manual checks and documentation
 
 ---
 
