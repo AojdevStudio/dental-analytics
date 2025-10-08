@@ -12,6 +12,7 @@ from typing import Any
 
 import structlog
 from plotly.graph_objects import Figure
+from pydantic import BaseModel
 
 from .chart_base import (
     BRAND_COLORS,
@@ -30,31 +31,47 @@ from .chart_utils import (
 log = structlog.get_logger()
 
 
+def _to_dict(chart_data: BaseModel) -> dict[str, Any]:
+    """Convert Pydantic model to dict for Plotly compatibility.
+
+    Plotly requires plain dicts, so we convert Pydantic models here.
+
+    Args:
+        chart_data: Pydantic TimeSeriesData model
+
+    Returns:
+        Dictionary representation for Plotly
+    """
+    return chart_data.model_dump()
+
+
 def create_collection_rate_chart(
-    chart_data: dict, format_options: dict | None = None
+    chart_data: BaseModel, format_options: dict | None = None
 ) -> Figure:
     """Create collection rate chart with enhanced KPI features.
 
     Args:
-        chart_data: Dictionary with dates, values, and metadata
+        chart_data: TimeSeriesData Pydantic model
         format_options: Chart formatting preferences
 
     Returns:
         Plotly figure with collection rate visualization
     """
+    chart_dict = _to_dict(chart_data)
+
     if format_options is None:
         format_options = {}
 
     log.info(
         "chart.collection_rate_creation_started",
-        data_points=len(chart_data.get("dates", [])),
+        data_points=len(chart_dict.get("dates", [])),
     )
 
     fig = create_base_figure()
 
     # Data validation
-    dates = chart_data.get("dates", [])
-    raw_values = chart_data.get("values", [])
+    dates = chart_dict.get("dates", [])
+    raw_values = chart_dict.get("values", [])
     clean_values = [value for value in raw_values if value is not None]
 
     if not dates or not clean_values:
@@ -142,30 +159,32 @@ def create_collection_rate_chart(
 
 
 def create_new_patients_chart(
-    chart_data: dict, format_options: dict | None = None
+    chart_data: BaseModel, format_options: dict | None = None
 ) -> Figure:
     """Create new patients chart with bar visualization.
 
     Args:
-        chart_data: Dictionary with dates, values, and metadata
+        chart_data: TimeSeriesData Pydantic model
         format_options: Chart formatting preferences
 
     Returns:
         Plotly figure with new patients visualization
     """
+    chart_dict = _to_dict(chart_data)
+
     if format_options is None:
         format_options = {}
 
     log.info(
         "chart.new_patients_creation_started",
-        data_points=len(chart_data.get("dates", [])),
+        data_points=len(chart_dict.get("dates", [])),
     )
 
     fig = create_base_figure()
 
     # Data validation
-    dates = chart_data.get("dates", [])
-    values = chart_data.get("values", [])
+    dates = chart_dict.get("dates", [])
+    values = chart_dict.get("values", [])
 
     if not dates or not values:
         log.warning("chart.new_patients_no_data")
@@ -231,30 +250,32 @@ def create_new_patients_chart(
 
 
 def create_case_acceptance_chart(
-    chart_data: dict, format_options: dict | None = None
+    chart_data: BaseModel, format_options: dict | None = None
 ) -> Figure:
     """Create case acceptance rate chart.
 
     Args:
-        chart_data: Dictionary with dates, values, and metadata
+        chart_data: TimeSeriesData Pydantic model
         format_options: Chart formatting preferences
 
     Returns:
         Plotly figure with case acceptance visualization
     """
+    chart_dict = _to_dict(chart_data)
+
     if format_options is None:
         format_options = {}
 
     log.info(
         "chart.case_acceptance_creation_started",
-        data_points=len(chart_data.get("dates", [])),
+        data_points=len(chart_dict.get("dates", [])),
     )
 
     fig = create_base_figure()
 
     # Data validation
-    dates = chart_data.get("dates", [])
-    raw_values = chart_data.get("values", [])
+    dates = chart_dict.get("dates", [])
+    raw_values = chart_dict.get("values", [])
     values = [value for value in raw_values if value is not None]
 
     if not dates or not values:
@@ -328,30 +349,32 @@ def create_case_acceptance_chart(
 
 
 def create_hygiene_reappointment_chart(
-    chart_data: dict, format_options: dict | None = None
+    chart_data: BaseModel, format_options: dict | None = None
 ) -> Figure:
     """Create hygiene reappointment rate chart.
 
     Args:
-        chart_data: Dictionary with dates, values, and metadata
+        chart_data: TimeSeriesData Pydantic model
         format_options: Chart formatting preferences
 
     Returns:
         Plotly figure with hygiene reappointment visualization
     """
+    chart_dict = _to_dict(chart_data)
+
     if format_options is None:
         format_options = {}
 
     log.info(
         "chart.hygiene_reappointment_creation_started",
-        data_points=len(chart_data.get("dates", [])),
+        data_points=len(chart_dict.get("dates", [])),
     )
 
     fig = create_base_figure()
 
     # Data validation
-    dates = chart_data.get("dates", [])
-    raw_values = chart_data.get("values", [])
+    dates = chart_dict.get("dates", [])
+    raw_values = chart_dict.get("values", [])
     values = [value for value in raw_values if value is not None]
 
     if not dates or not values:
@@ -485,14 +508,14 @@ def _prepare_series_lists(chart_data: dict[str, Any]) -> dict[str, Any]:
 
 
 def create_chart_from_data(
-    chart_data: dict[str, Any],
+    chart_data: BaseModel,
     metric_name: str | None = None,
     **overrides: Any,
 ) -> Figure:
     """Create appropriate chart based on KPI type.
 
     Args:
-        chart_data: Dictionary with time-series data and metadata
+        chart_data: TimeSeriesData Pydantic model
         metric_name: Optional explicit metric identifier for dispatch
         **overrides: Additional format overrides such as show_trend
 
@@ -503,15 +526,22 @@ def create_chart_from_data(
         ValueError: If the metric type cannot be determined or supported
     """
 
-    if not isinstance(chart_data, dict):
-        raise TypeError("chart_data must be a dictionary")
+    # Story 3.2: Accept only Pydantic models (TypedDict eliminated)
+    if not isinstance(chart_data, BaseModel):
+        raise TypeError(
+            f"chart_data must be a Pydantic BaseModel (TimeSeriesData), "
+            f"got {type(chart_data).__name__}"
+        )
+
+    # Convert to dict for metadata extraction only
+    chart_dict = _to_dict(chart_data)
 
     metric_candidates = [
         metric_name,
-        chart_data.get("metric_key"),
-        chart_data.get("metric_name"),
-        chart_data.get("metadata", {}).get("metric_key"),
-        chart_data.get("metadata", {}).get("metric"),
+        chart_dict.get("metric_key"),
+        chart_dict.get("metric_name"),
+        chart_dict.get("metadata", {}).get("metric_key"),
+        chart_dict.get("metadata", {}).get("metric"),
     ]
 
     resolved_metric: str | None = None
@@ -535,9 +565,10 @@ def create_chart_from_data(
             production_kwargs["timeframe"] = timeframe_override
 
         log.info("chart.dynamic_creation", metric=resolved_metric)
-        return create_production_chart(chart_data, **production_kwargs)
+        # create_production_chart expects dict, so convert BaseModel
+        return create_production_chart(chart_dict, **production_kwargs)
 
-    chart_creators: dict[str, Callable[[dict[str, Any], dict[str, Any]], Figure]] = {
+    chart_creators: dict[str, Callable[[BaseModel, dict[str, Any] | None], Figure]] = {
         "collection_rate": create_collection_rate_chart,
         "new_patients": create_new_patients_chart,
         "case_acceptance": create_case_acceptance_chart,
@@ -552,8 +583,8 @@ def create_chart_from_data(
             f"Unknown KPI type: {resolved_metric}. Available: {joined_types}"
         )
 
-    normalized_data = _prepare_series_lists(chart_data)
-    format_options = {**normalized_data.get("format_options", {})}
+    # Use chart_dict for extracting format_options metadata
+    format_options = {**chart_dict.get("format_options", {})}
 
     if show_trend_override is not None:
         format_options["show_trend"] = show_trend_override
@@ -564,4 +595,4 @@ def create_chart_from_data(
         format_options[key] = value
 
     log.info("chart.dynamic_creation", metric=resolved_metric)
-    return creator(normalized_data, format_options)
+    return creator(chart_data, format_options)  # Pass BaseModel, not dict
