@@ -1,7 +1,7 @@
 # Story 3.1: Create Pydantic Chart & Config Models
 
 ## Status
-Ready for Review
+Done
 
 ## Story
 **As a** developer maintaining the dental analytics backend,

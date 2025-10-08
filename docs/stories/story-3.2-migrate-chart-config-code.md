@@ -1,7 +1,7 @@
 # Story 3.2: Migrate Chart & Config Code to Pydantic
 
 ## Status
-Draft
+Approved
 
 ## Story
 **As a** developer maintaining the dental analytics backend,

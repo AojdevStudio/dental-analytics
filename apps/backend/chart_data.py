@@ -11,16 +11,20 @@ from typing import Any
 
 import pandas as pd
 import structlog
+from pydantic import ValidationError
+
+from core.models.chart_models import (
+    ChartDataPoint,
+    ChartMetaInfo,
+    ChartsMetadata,
+    ChartStats,
+    DataSourceInfo,
+    ProcessedChartData,
+    SummaryStatistics,
+    TimeSeriesData,
+)
 
 from .metrics import clean_currency_string
-from .types import (
-    AllChartData,
-    ChartData,
-    ChartStatistics,
-    ChartSummaryStats,
-    TimeSeriesChartData,
-    TimeSeriesPoint,
-)
 
 try:
     from config.data_sources import COLUMN_MAPPINGS
@@ -32,6 +36,36 @@ log = structlog.get_logger()
 
 EOD_MAPPING = COLUMN_MAPPINGS.get("eod_billing", {})
 FRONT_MAPPING = COLUMN_MAPPINGS.get("front_kpis", {})
+
+
+def create_empty_processed_chart_data(
+    error_message: str, date_column: str = ""
+) -> ProcessedChartData:
+    """Create empty ProcessedChartData with error message.
+
+    Helper function to reduce code duplication in error handling.
+    """
+    return ProcessedChartData(
+        dates=[],
+        values=[],
+        statistics=ChartStats(
+            total=0.0,
+            average=0.0,
+            minimum=0.0,
+            maximum=0.0,
+            data_points=0,
+        ),
+        metadata=ChartMetaInfo(
+            date_column=date_column,
+            date_range="No data",
+            error=error_message,
+            aggregation=None,
+            business_days_only=None,
+            date_filter=None,
+            filtered_data_points=None,
+        ),
+        error=error_message,
+    )
 
 
 def safe_float_conversion(value: Any) -> float | None:
@@ -88,18 +122,18 @@ def parse_datetime_string(date_str: str | None) -> datetime | None:
 
 def create_time_series_point(
     date: datetime | None, value: float | int | None
-) -> TimeSeriesPoint | None:
-    """Create standardized time-series data point."""
+) -> ChartDataPoint | None:
+    """Create standardized time-series data point using Pydantic model."""
 
     if date is None:
         return None
 
-    return {
-        "date": date.strftime("%Y-%m-%d"),
-        "timestamp": date.isoformat(),
-        "value": value,
-        "has_data": value is not None,
-    }
+    return ChartDataPoint(
+        date=date.strftime("%Y-%m-%d"),
+        timestamp=date.isoformat(),
+        value=value,
+        has_data=value is not None,
+    )
 
 
 def process_time_series_data(
@@ -107,7 +141,7 @@ def process_time_series_data(
     date_column: str,
     value_column: str,
     data_type: str = "float",
-) -> list[TimeSeriesPoint]:
+) -> list[ChartDataPoint]:
     """Process DataFrame into time-series format for charts."""
 
     if df is None or df.empty:
@@ -123,7 +157,7 @@ def process_time_series_data(
         )
         return []
 
-    time_series: list[TimeSeriesPoint] = []
+    time_series: list[ChartDataPoint] = []
     conversion_func = (
         safe_int_conversion if data_type == "int" else safe_float_conversion
     )
@@ -137,50 +171,55 @@ def process_time_series_data(
             if point:
                 time_series.append(point)
 
-    time_series.sort(key=lambda entry: entry["timestamp"])
+    time_series.sort(key=lambda entry: entry.timestamp)
 
     log.info(
         "time_series.processed",
         value_column=value_column,
         data_points=len(time_series),
-        valid_values=sum(1 for point in time_series if point["has_data"]),
+        valid_values=sum(1 for point in time_series if point.has_data),
     )
 
     return time_series
 
 
-def validate_chart_data(chart_data: TimeSeriesChartData) -> bool:
-    """Validate chart data structure integrity."""
+def validate_chart_data(
+    chart_data: TimeSeriesData | dict[str, Any]
+) -> bool:
+    """Validate chart data structure integrity using Pydantic validation."""
 
-    required_fields = ["metric_name", "chart_type", "data_type", "time_series"]
+    # Pydantic models are self-validating at instantiation
+    # This function now serves as a compatibility wrapper
+    try:
+        # If we have a Pydantic model, it's already validated
+        if isinstance(chart_data, TimeSeriesData):
+            log.debug("chart_data.validation_passed", metric=chart_data.metric_name)
+            return True
 
-    for field in required_fields:
-        if field not in chart_data:
-            log.error("chart_data.validation_failed", missing_field=field)
-            return False
-
-    time_series = chart_data.get("time_series", [])
-    if not isinstance(time_series, list):
-        log.error("chart_data.invalid_time_series_type")
+        TimeSeriesData.model_validate(chart_data)
+        metric_name = (
+            chart_data.get("metric_name")
+            if isinstance(chart_data, dict)
+            else None
+        )
+        log.warning("chart_data.dict_input_validated", metric=metric_name)
+        return True
+    except ValidationError as error:
+        log.error("chart_data.validation_error", errors=error.errors())
+        return False
+    except Exception as error:  # pragma: no cover - defensive safeguard
+        log.error("chart_data.validation_error", error=str(error))
         return False
 
-    for point in time_series:
-        if not isinstance(point, dict) or "date" not in point:
-            log.error("chart_data.invalid_time_series_point", point=point)
-            return False
 
-    log.debug("chart_data.validation_passed", metric=chart_data.get("metric_name"))
-    return True
-
-
-def process_production_data_for_chart(df: pd.DataFrame) -> ChartData:
+def process_production_data_for_chart(df: pd.DataFrame) -> ProcessedChartData:
     """Process production data for chart display.
 
     Args:
         df: DataFrame with production data
 
     Returns:
-        Dictionary with chart-ready data structure
+        Pydantic model with chart-ready data structure
     """
     try:
         log.info("chart_data.processing_started", columns=list(df.columns))
@@ -203,27 +242,7 @@ def process_production_data_for_chart(df: pd.DataFrame) -> ChartData:
                 )
             else:
                 log.error("chart_data.no_date_column", columns=list(df.columns))
-                return {
-                    "dates": [],
-                    "values": [],
-                    "statistics": {
-                        "total": 0.0,
-                        "average": 0.0,
-                        "minimum": 0.0,
-                        "maximum": 0.0,
-                        "data_points": 0,
-                    },
-                    "metadata": {
-                        "date_column": "",
-                        "date_range": "No data",
-                        "error": "No date column found",
-                        "aggregation": None,
-                        "business_days_only": None,
-                        "date_filter": None,
-                        "filtered_data_points": None,
-                    },
-                    "error": "No date column found",
-                }
+                return create_empty_processed_chart_data("No date column found")
 
         if production_col not in df.columns:
             available_prod_cols = [
@@ -240,27 +259,7 @@ def process_production_data_for_chart(df: pd.DataFrame) -> ChartData:
                 )
             else:
                 log.error("chart_data.no_production_column", columns=list(df.columns))
-                return {
-                    "dates": [],
-                    "values": [],
-                    "statistics": {
-                        "total": 0.0,
-                        "average": 0.0,
-                        "minimum": 0.0,
-                        "maximum": 0.0,
-                        "data_points": 0,
-                    },
-                    "metadata": {
-                        "date_column": "",
-                        "date_range": "No data",
-                        "error": "No production column found",
-                        "aggregation": None,
-                        "business_days_only": None,
-                        "date_filter": None,
-                        "filtered_data_points": None,
-                    },
-                    "error": "No production column found",
-                }
+                return create_empty_processed_chart_data("No production column found")
 
         # Clean and prepare data
         chart_df = df[[date_col, production_col]].copy()
@@ -268,27 +267,9 @@ def process_production_data_for_chart(df: pd.DataFrame) -> ChartData:
 
         if chart_df.empty:
             log.warning("chart_data.empty_after_cleanup")
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data after cleanup",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data after cleanup",
-            }
+            return create_empty_processed_chart_data(
+                "No valid data after cleanup", date_col
+            )
 
         # Convert dates to datetime and production to numeric
         chart_df[date_col] = pd.to_datetime(chart_df[date_col], errors="coerce")
@@ -301,27 +282,9 @@ def process_production_data_for_chart(df: pd.DataFrame) -> ChartData:
 
         if chart_df.empty:
             log.warning("chart_data.empty_after_conversion")
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data after conversion",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data after conversion",
-            }
+            return create_empty_processed_chart_data(
+                "No valid data after conversion", date_col
+            )
 
         # Sort by date
         chart_df = chart_df.sort_values(date_col)
@@ -336,32 +299,32 @@ def process_production_data_for_chart(df: pd.DataFrame) -> ChartData:
         min_production = min(values) if values else 0
         max_production = max(values) if values else 0
 
-        result: ChartData = {
-            "dates": dates,
-            "values": values,
-            "statistics": {
-                "total": round(total_production, 2),
-                "average": round(avg_production, 2),
-                "minimum": round(min_production, 2),
-                "maximum": round(max_production, 2),
-                "data_points": len(values),
-            },
-            "metadata": {
-                "date_column": date_col,
-                "date_range": f"{dates[0]} to {dates[-1]}" if dates else "No data",
-                "error": None,
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": None,
-        }
+        result = ProcessedChartData(
+            dates=dates,
+            values=values,
+            statistics=ChartStats(
+                total=round(total_production, 2),
+                average=round(avg_production, 2),
+                minimum=round(min_production, 2),
+                maximum=round(max_production, 2),
+                data_points=len(values),
+            ),
+            metadata=ChartMetaInfo(
+                date_column=date_col,
+                date_range=f"{dates[0]} to {dates[-1]}" if dates else "No data",
+                error=None,
+                aggregation=None,
+                business_days_only=None,
+                date_filter=None,
+                filtered_data_points=None,
+            ),
+            error=None,
+        )
 
         log.info(
             "chart_data.processing_completed",
             data_points=len(values),
-            date_range=result["metadata"]["date_range"],
+            date_range=result.metadata.date_range,
             total_production=total_production,
         )
 
@@ -369,44 +332,17 @@ def process_production_data_for_chart(df: pd.DataFrame) -> ChartData:
 
     except Exception as e:
         log.error("chart_data.processing_error", error=str(e))
-        return {
-            "dates": [],
-            "values": [],
-            "statistics": {
-                "total": 0.0,
-                "average": 0.0,
-                "minimum": 0.0,
-                "maximum": 0.0,
-                "data_points": 0,
-            },
-            "metadata": {
-                "date_column": "",
-                "date_range": "No data",
-                "error": f"Processing failed: {str(e)}",
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": f"Processing failed: {str(e)}",
-        }
+        return create_empty_processed_chart_data(f"Processing failed: {str(e)}")
 
 
-def process_collection_rate_data_for_chart(df: pd.DataFrame) -> ChartData:
-    """Process collection rate data for chart display.
+def process_collection_rate_data_for_chart(df: pd.DataFrame) -> ProcessedChartData:
+    """Process collection rate data for chart display using Pydantic models."""
 
-    Args:
-        df: DataFrame with collection and production data
-
-    Returns:
-        Dictionary with chart-ready collection rate data
-    """
     try:
         log.info(
             "chart_data.collection_rate_processing_started", columns=list(df.columns)
         )
 
-        # Get column names from mapping
         date_col = str(COLUMN_MAPPINGS.get("submission_date", "Submission Date"))
         production_col = COLUMN_MAPPINGS.get(
             "total_production", "Total Production Today"
@@ -416,44 +352,22 @@ def process_collection_rate_data_for_chart(df: pd.DataFrame) -> ChartData:
             "insurance_income", "Insurance Income Today"
         )
 
-        # Check for required columns with fallback logic
-        missing_cols = []
-        for col_name, col_key in [
+        missing_cols: list[str] = []
+        for col_name, fallback_key in [
             (date_col, "date"),
             (production_col, "production"),
             (collections_col, "collections"),
         ]:
             if col_name not in df.columns:
-                missing_cols.append(col_key)
+                missing_cols.append(fallback_key)
 
         if missing_cols:
+            message = f"Missing columns: {missing_cols}"
             log.error("chart_data.missing_columns", missing=missing_cols)
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": "",
-                    "date_range": "No data",
-                    "error": f"Missing columns: {missing_cols}",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": f"Missing columns: {missing_cols}",
-            }
+            return create_empty_processed_chart_data(message, date_col)
 
-        # Prepare data
         chart_df = df[[date_col, production_col, collections_col]].copy()
 
-        # Add insurance collections if available
         if insurance_col in df.columns:
             chart_df[insurance_col] = pd.to_numeric(
                 df[insurance_col].apply(clean_currency_string), errors="coerce"
@@ -461,33 +375,13 @@ def process_collection_rate_data_for_chart(df: pd.DataFrame) -> ChartData:
         else:
             chart_df[insurance_col] = 0
 
-        # Clean data
         chart_df = chart_df.dropna(subset=[date_col, production_col, collections_col])
 
         if chart_df.empty:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data after cleanup",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data after cleanup",
-            }
+            return create_empty_processed_chart_data(
+                "No valid data after cleanup", date_col
+            )
 
-        # Convert data types
         chart_df[date_col] = pd.to_datetime(chart_df[date_col], errors="coerce")
         chart_df[production_col] = pd.to_numeric(
             chart_df[production_col].apply(clean_currency_string), errors="coerce"
@@ -496,77 +390,52 @@ def process_collection_rate_data_for_chart(df: pd.DataFrame) -> ChartData:
             chart_df[collections_col].apply(clean_currency_string), errors="coerce"
         )
 
-        # Remove rows with conversion failures
         chart_df = chart_df.dropna()
 
         if chart_df.empty:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data after conversion",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data after conversion",
-            }
+            return create_empty_processed_chart_data(
+                "No valid data after conversion", date_col
+            )
 
-        # Calculate total collections (patient + insurance)
         chart_df["total_collections"] = (
             chart_df[collections_col] + chart_df[insurance_col]
         )
-
-        # Calculate collection rate (avoid division by zero)
         chart_df["collection_rate"] = (
             (chart_df["total_collections"] / chart_df[production_col] * 100)
             .fillna(0)
             .replace([float("inf"), -float("inf")], 0)
         )
 
-        # Sort by date
         chart_df = chart_df.sort_values(date_col)
 
-        # Prepare chart data
         dates = chart_df[date_col].dt.strftime("%Y-%m-%d").tolist()
         values = chart_df["collection_rate"].round(2).tolist()
 
-        # Calculate statistics
-        avg_rate = sum(values) / len(values) if values else 0
-        min_rate = min(values) if values else 0
-        max_rate = max(values) if values else 0
+        avg_rate = sum(values) / len(values) if values else 0.0
+        min_rate = min(values) if values else 0.0
+        max_rate = max(values) if values else 0.0
 
-        result: ChartData = {
-            "dates": dates,
-            "values": values,
-            "statistics": {
-                "total": 0.0,  # Not applicable for rates
-                "average": round(avg_rate, 2),
-                "minimum": round(min_rate, 2),
-                "maximum": round(max_rate, 2),
-                "data_points": len(values),
-            },
-            "metadata": {
-                "date_column": date_col,
-                "date_range": f"{dates[0]} to {dates[-1]}" if dates else "No data",
-                "error": None,
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": None,
-        }
+        result = ProcessedChartData(
+            dates=dates,
+            values=values,
+            statistics=ChartStats(
+                total=0.0,
+                average=round(avg_rate, 2),
+                minimum=round(min_rate, 2),
+                maximum=round(max_rate, 2),
+                data_points=len(values),
+            ),
+            metadata=ChartMetaInfo(
+                date_column=date_col,
+                date_range=f"{dates[0]} to {dates[-1]}" if dates else "No data",
+                error=None,
+                aggregation=None,
+                business_days_only=None,
+                date_filter=None,
+                filtered_data_points=None,
+            ),
+            error=None,
+        )
 
         log.info(
             "chart_data.collection_rate_completed",
@@ -576,106 +445,41 @@ def process_collection_rate_data_for_chart(df: pd.DataFrame) -> ChartData:
 
         return result
 
-    except Exception as e:
-        log.error("chart_data.collection_rate_error", error=str(e))
-        return {
-            "dates": [],
-            "values": [],
-            "statistics": {
-                "total": 0.0,
-                "average": 0.0,
-                "minimum": 0.0,
-                "maximum": 0.0,
-                "data_points": 0,
-            },
-            "metadata": {
-                "date_column": "",
-                "date_range": "No data",
-                "error": f"Collection rate processing failed: {str(e)}",
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": f"Collection rate processing failed: {str(e)}",
-        }
+    except Exception as error:
+        log.error("chart_data.collection_rate_error", error=str(error))
+        return create_empty_processed_chart_data(
+            f"Collection rate processing failed: {error}", date_col
+        )
 
 
-def process_new_patients_data_for_chart(df: pd.DataFrame) -> ChartData:
-    """Process new patients data for chart display.
+def process_new_patients_data_for_chart(df: pd.DataFrame) -> ProcessedChartData:
+    """Process new patient counts into the standardized chart response."""
 
-    Args:
-        df: DataFrame with new patients data
-
-    Returns:
-        Dictionary with chart-ready new patients data
-    """
     try:
         log.info("chart_data.new_patients_processing_started", columns=list(df.columns))
 
-        # Get column names
         date_col = str(COLUMN_MAPPINGS.get("submission_date", "Submission Date"))
         new_patients_col = COLUMN_MAPPINGS.get(
             "new_patients", "New Patients - Total Month to Date"
         )
 
-        # Check required columns
-        if date_col not in df.columns or new_patients_col not in df.columns:
-            missing = []
-            if date_col not in df.columns:
-                missing.append("date")
-            if new_patients_col not in df.columns:
-                missing.append("new_patients")
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": "",
-                    "date_range": "No data",
-                    "error": f"Missing columns: {missing}",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": f"Missing columns: {missing}",
-            }
+        missing_columns: list[str] = []
+        if date_col not in df.columns:
+            missing_columns.append("date")
+        if new_patients_col not in df.columns:
+            missing_columns.append("new_patients")
 
-        # Clean and prepare data
+        if missing_columns:
+            message = f"Missing columns: {missing_columns}"
+            log.error("chart_data.missing_columns", missing=missing_columns)
+            return create_empty_processed_chart_data(message, date_col)
+
         chart_df = df[[date_col, new_patients_col]].copy()
         chart_df = chart_df.dropna()
 
         if chart_df.empty:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data",
-            }
+            return create_empty_processed_chart_data("No valid data", date_col)
 
-        # Convert data types
         chart_df[date_col] = pd.to_datetime(chart_df[date_col], errors="coerce")
         chart_df[new_patients_col] = pd.to_numeric(
             chart_df[new_patients_col], errors="coerce"
@@ -684,62 +488,41 @@ def process_new_patients_data_for_chart(df: pd.DataFrame) -> ChartData:
         chart_df = chart_df.dropna()
 
         if chart_df.empty:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data after conversion",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data after conversion",
-            }
+            return create_empty_processed_chart_data(
+                "No valid data after conversion", date_col
+            )
 
-        # Sort by date
         chart_df = chart_df.sort_values(date_col)
 
-        # Prepare chart data
         dates = chart_df[date_col].dt.strftime("%Y-%m-%d").tolist()
-        values = chart_df[new_patients_col].astype(int).tolist()
+        values = chart_df[new_patients_col].astype(float).tolist()
 
-        # Calculate statistics
         total_new = sum(values)
-        avg_new = sum(values) / len(values) if values else 0
-        min_new = min(values) if values else 0
-        max_new = max(values) if values else 0
+        avg_new = sum(values) / len(values) if values else 0.0
+        min_new = min(values) if values else 0.0
+        max_new = max(values) if values else 0.0
 
-        result: ChartData = {
-            "dates": dates,
-            "values": values,
-            "statistics": {
-                "total": float(total_new),
-                "average": round(avg_new, 1),
-                "minimum": float(min_new),
-                "maximum": float(max_new),
-                "data_points": len(values),
-            },
-            "metadata": {
-                "date_column": date_col,
-                "date_range": f"{dates[0]} to {dates[-1]}" if dates else "No data",
-                "error": None,
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": None,
-        }
+        result = ProcessedChartData(
+            dates=dates,
+            values=values,
+            statistics=ChartStats(
+                total=round(float(total_new), 2),
+                average=round(avg_new, 1),
+                minimum=round(float(min_new), 2),
+                maximum=round(float(max_new), 2),
+                data_points=len(values),
+            ),
+            metadata=ChartMetaInfo(
+                date_column=date_col,
+                date_range=f"{dates[0]} to {dates[-1]}" if dates else "No data",
+                error=None,
+                aggregation=None,
+                business_days_only=None,
+                date_filter=None,
+                filtered_data_points=None,
+            ),
+            error=None,
+        )
 
         log.info(
             "chart_data.new_patients_completed",
@@ -749,46 +532,21 @@ def process_new_patients_data_for_chart(df: pd.DataFrame) -> ChartData:
 
         return result
 
-    except Exception as e:
-        log.error("chart_data.new_patients_error", error=str(e))
-        return {
-            "dates": [],
-            "values": [],
-            "statistics": {
-                "total": 0.0,
-                "average": 0.0,
-                "minimum": 0.0,
-                "maximum": 0.0,
-                "data_points": 0,
-            },
-            "metadata": {
-                "date_column": "",
-                "date_range": "No data",
-                "error": f"New patients processing failed: {str(e)}",
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": f"New patients processing failed: {str(e)}",
-        }
+    except Exception as error:
+        log.error("chart_data.new_patients_error", error=str(error))
+        return create_empty_processed_chart_data(
+            f"New patients processing failed: {error}", date_col
+        )
 
 
-def process_case_acceptance_data_for_chart(df: pd.DataFrame) -> ChartData:
-    """Process case acceptance data for chart display.
+def process_case_acceptance_data_for_chart(df: pd.DataFrame) -> ProcessedChartData:
+    """Transform case acceptance data into a validated chart response."""
 
-    Args:
-        df: DataFrame with case acceptance data
-
-    Returns:
-        Dictionary with chart-ready case acceptance rate data
-    """
     try:
         log.info(
             "chart_data.case_acceptance_processing_started", columns=list(df.columns)
         )
 
-        # Get column names
         date_col = str(COLUMN_MAPPINGS.get("timestamp", "Timestamp"))
         presented_col = COLUMN_MAPPINGS.get(
             "treatments_presented", "Treatments Presented"
@@ -798,43 +556,22 @@ def process_case_acceptance_data_for_chart(df: pd.DataFrame) -> ChartData:
         )
         same_day_col = COLUMN_MAPPINGS.get("same_day_starts", "Same Day Starts")
 
-        # Check required columns
-        missing_cols = []
-        for col_name, col_key in [
+        missing_columns: list[str] = []
+        for column_name, key in [
             (date_col, "date"),
             (presented_col, "presented"),
             (scheduled_col, "scheduled"),
         ]:
-            if col_name not in df.columns:
-                missing_cols.append(col_key)
+            if column_name not in df.columns:
+                missing_columns.append(key)
 
-        if missing_cols:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": "",
-                    "date_range": "No data",
-                    "error": f"Missing columns: {missing_cols}",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": f"Missing columns: {missing_cols}",
-            }
+        if missing_columns:
+            message = f"Missing columns: {missing_columns}"
+            log.error("chart_data.missing_columns", missing=missing_columns)
+            return create_empty_processed_chart_data(message, date_col)
 
-        # Prepare data
         chart_df = df[[date_col, presented_col, scheduled_col]].copy()
 
-        # Add same day starts if available
         if same_day_col in df.columns:
             chart_df[same_day_col] = pd.to_numeric(
                 df[same_day_col], errors="coerce"
@@ -842,33 +579,11 @@ def process_case_acceptance_data_for_chart(df: pd.DataFrame) -> ChartData:
         else:
             chart_df[same_day_col] = 0
 
-        # Clean data
         chart_df = chart_df.dropna(subset=[date_col, presented_col, scheduled_col])
 
         if chart_df.empty:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data",
-            }
+            return create_empty_processed_chart_data("No valid data", date_col)
 
-        # Convert data types
         chart_df[date_col] = pd.to_datetime(chart_df[date_col], errors="coerce")
         chart_df[presented_col] = pd.to_numeric(
             chart_df[presented_col], errors="coerce"
@@ -880,71 +595,47 @@ def process_case_acceptance_data_for_chart(df: pd.DataFrame) -> ChartData:
         chart_df = chart_df.dropna()
 
         if chart_df.empty:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data after conversion",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data after conversion",
-            }
+            return create_empty_processed_chart_data(
+                "No valid data after conversion", date_col
+            )
 
-        # Calculate total accepted (scheduled + same day)
         chart_df["total_accepted"] = chart_df[scheduled_col] + chart_df[same_day_col]
-
-        # Calculate acceptance rate
         chart_df["acceptance_rate"] = (
             (chart_df["total_accepted"] / chart_df[presented_col] * 100)
             .fillna(0)
             .replace([float("inf"), -float("inf")], 0)
         )
 
-        # Sort by date
         chart_df = chart_df.sort_values(date_col)
 
-        # Prepare chart data
         dates = chart_df[date_col].dt.strftime("%Y-%m-%d").tolist()
         values = chart_df["acceptance_rate"].round(2).tolist()
 
-        # Calculate statistics
-        avg_rate = sum(values) / len(values) if values else 0
-        min_rate = min(values) if values else 0
-        max_rate = max(values) if values else 0
+        avg_rate = sum(values) / len(values) if values else 0.0
+        min_rate = min(values) if values else 0.0
+        max_rate = max(values) if values else 0.0
 
-        result: ChartData = {
-            "dates": dates,
-            "values": values,
-            "statistics": {
-                "total": 0.0,  # Not applicable for rates
-                "average": round(avg_rate, 2),
-                "minimum": round(min_rate, 2),
-                "maximum": round(max_rate, 2),
-                "data_points": len(values),
-            },
-            "metadata": {
-                "date_column": date_col,
-                "date_range": f"{dates[0]} to {dates[-1]}" if dates else "No data",
-                "error": None,
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": None,
-        }
+        result = ProcessedChartData(
+            dates=dates,
+            values=values,
+            statistics=ChartStats(
+                total=0.0,
+                average=round(avg_rate, 2),
+                minimum=round(min_rate, 2),
+                maximum=round(max_rate, 2),
+                data_points=len(values),
+            ),
+            metadata=ChartMetaInfo(
+                date_column=date_col,
+                date_range=f"{dates[0]} to {dates[-1]}" if dates else "No data",
+                error=None,
+                aggregation=None,
+                business_days_only=None,
+                date_filter=None,
+                filtered_data_points=None,
+            ),
+            error=None,
+        )
 
         log.info(
             "chart_data.case_acceptance_completed",
@@ -954,44 +645,21 @@ def process_case_acceptance_data_for_chart(df: pd.DataFrame) -> ChartData:
 
         return result
 
-    except Exception as e:
-        log.error("chart_data.case_acceptance_error", error=str(e))
-        return {
-            "dates": [],
-            "values": [],
-            "statistics": {
-                "total": 0.0,
-                "average": 0.0,
-                "minimum": 0.0,
-                "maximum": 0.0,
-                "data_points": 0,
-            },
-            "metadata": {
-                "date_column": "",
-                "date_range": "No data",
-                "error": f"Case acceptance processing failed: {str(e)}",
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": f"Case acceptance processing failed: {str(e)}",
-        }
+    except Exception as error:
+        log.error("chart_data.case_acceptance_error", error=str(error))
+        return create_empty_processed_chart_data(
+            f"Case acceptance processing failed: {error}", date_col
+        )
 
 
-def process_hygiene_reappointment_data_for_chart(df: pd.DataFrame) -> ChartData:
-    """Process hygiene reappointment data for chart display.
+def process_hygiene_reappointment_data_for_chart(
+    df: pd.DataFrame,
+) -> ProcessedChartData:
+    """Process hygiene reappointment data into a validated chart payload."""
 
-    Args:
-        df: DataFrame with hygiene reappointment data
-
-    Returns:
-        Dictionary with chart-ready hygiene reappointment rate data
-    """
     try:
         log.info("chart_data.hygiene_processing_started", columns=list(df.columns))
 
-        # Get column names
         date_col = str(COLUMN_MAPPINGS.get("timestamp", "Timestamp"))
         total_hygiene_col = COLUMN_MAPPINGS.get(
             "total_hygiene_appointments", "Total Hygiene Appointments"
@@ -1000,101 +668,41 @@ def process_hygiene_reappointment_data_for_chart(df: pd.DataFrame) -> ChartData:
             "patients_not_reappointed", "Patients Not Reappointed"
         )
 
-        # Check required columns
-        missing_cols = []
-        for col_name, col_key in [
+        missing_columns: list[str] = []
+        for column_name, key in [
             (date_col, "date"),
             (total_hygiene_col, "total_hygiene"),
             (not_reappointed_col, "not_reappointed"),
         ]:
-            if col_name not in df.columns:
-                missing_cols.append(col_key)
+            if column_name not in df.columns:
+                missing_columns.append(key)
 
-        if missing_cols:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": "",
-                    "date_range": "No data",
-                    "error": f"Missing columns: {missing_cols}",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": f"Missing columns: {missing_cols}",
-            }
+        if missing_columns:
+            message = f"Missing columns: {missing_columns}"
+            log.error("chart_data.missing_columns", missing=missing_columns)
+            return create_empty_processed_chart_data(message, date_col)
 
-        # Clean and prepare data
         chart_df = df[[date_col, total_hygiene_col, not_reappointed_col]].copy()
-        chart_df = chart_df.dropna()
+        chart_df = chart_df.dropna(subset=[date_col, total_hygiene_col])
 
         if chart_df.empty:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data",
-            }
+            return create_empty_processed_chart_data("No valid data", date_col)
 
-        # Convert data types
         chart_df[date_col] = pd.to_datetime(chart_df[date_col], errors="coerce")
         chart_df[total_hygiene_col] = pd.to_numeric(
             chart_df[total_hygiene_col], errors="coerce"
         )
         chart_df[not_reappointed_col] = pd.to_numeric(
             chart_df[not_reappointed_col], errors="coerce"
-        )
+        ).fillna(0)
 
         chart_df = chart_df.dropna()
 
         if chart_df.empty:
-            return {
-                "dates": [],
-                "values": [],
-                "statistics": {
-                    "total": 0.0,
-                    "average": 0.0,
-                    "minimum": 0.0,
-                    "maximum": 0.0,
-                    "data_points": 0,
-                },
-                "metadata": {
-                    "date_column": date_col,
-                    "date_range": "No data",
-                    "error": "No valid data after conversion",
-                    "aggregation": None,
-                    "business_days_only": None,
-                    "date_filter": None,
-                    "filtered_data_points": None,
-                },
-                "error": "No valid data after conversion",
-            }
+            return create_empty_processed_chart_data(
+                "No valid data after conversion", date_col
+            )
 
-        # Calculate reappointment rate
         chart_df["reappointed"] = (
             chart_df[total_hygiene_col] - chart_df[not_reappointed_col]
         )
@@ -1104,39 +712,36 @@ def process_hygiene_reappointment_data_for_chart(df: pd.DataFrame) -> ChartData:
             .replace([float("inf"), -float("inf")], 0)
         )
 
-        # Sort by date
         chart_df = chart_df.sort_values(date_col)
 
-        # Prepare chart data
         dates = chart_df[date_col].dt.strftime("%Y-%m-%d").tolist()
         values = chart_df["reappointment_rate"].round(2).tolist()
 
-        # Calculate statistics
-        avg_rate = sum(values) / len(values) if values else 0
-        min_rate = min(values) if values else 0
-        max_rate = max(values) if values else 0
+        avg_rate = sum(values) / len(values) if values else 0.0
+        min_rate = min(values) if values else 0.0
+        max_rate = max(values) if values else 0.0
 
-        result: ChartData = {
-            "dates": dates,
-            "values": values,
-            "statistics": {
-                "total": 0.0,  # Not applicable for rates
-                "average": round(avg_rate, 2),
-                "minimum": round(min_rate, 2),
-                "maximum": round(max_rate, 2),
-                "data_points": len(values),
-            },
-            "metadata": {
-                "date_column": date_col,
-                "date_range": f"{dates[0]} to {dates[-1]}" if dates else "No data",
-                "error": None,
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": None,
-        }
+        result = ProcessedChartData(
+            dates=dates,
+            values=values,
+            statistics=ChartStats(
+                total=0.0,
+                average=round(avg_rate, 2),
+                minimum=round(min_rate, 2),
+                maximum=round(max_rate, 2),
+                data_points=len(values),
+            ),
+            metadata=ChartMetaInfo(
+                date_column=date_col,
+                date_range=f"{dates[0]} to {dates[-1]}" if dates else "No data",
+                error=None,
+                aggregation=None,
+                business_days_only=None,
+                date_filter=None,
+                filtered_data_points=None,
+            ),
+            error=None,
+        )
 
         log.info(
             "chart_data.hygiene_completed", data_points=len(values), avg_rate=avg_rate
@@ -1144,80 +749,49 @@ def process_hygiene_reappointment_data_for_chart(df: pd.DataFrame) -> ChartData:
 
         return result
 
-    except Exception as e:
-        log.error("chart_data.hygiene_error", error=str(e))
-        return {
-            "dates": [],
-            "values": [],
-            "statistics": {
-                "total": 0.0,
-                "average": 0.0,
-                "minimum": 0.0,
-                "maximum": 0.0,
-                "data_points": 0,
-            },
-            "metadata": {
-                "date_column": "",
-                "date_range": "No data",
-                "error": f"Hygiene reappointment processing failed: {str(e)}",
-                "aggregation": None,
-                "business_days_only": None,
-                "date_filter": None,
-                "filtered_data_points": None,
-            },
-            "error": f"Hygiene reappointment processing failed: {str(e)}",
-        }
+    except Exception as error:
+        log.error("chart_data.hygiene_error", error=str(error))
+        return create_empty_processed_chart_data(
+            f"Hygiene reappointment processing failed: {error}", date_col
+        )
 
 
-def calculate_basic_statistics(time_series: list[TimeSeriesPoint]) -> ChartStatistics:
+def calculate_basic_statistics(time_series: list[ChartDataPoint]) -> ChartStats:
     """Calculate statistics for time series data.
 
     Args:
-        time_series: List of dictionaries with 'date' and 'value' keys
+        time_series: List of chart data points containing values.
 
     Returns:
-        Dictionary with calculated statistics
+        ChartStats Pydantic model summarizing the series.
     """
-    if not time_series:
-        return {
-            "average": 0.0,
-            "minimum": 0.0,
-            "maximum": 0.0,
-            "total": 0.0,
-            "data_points": 0,
-        }
 
-    # Filter out None values and ensure type safety
-    valid_values: list[float | int] = []
-    for entry in time_series:
-        val = entry.get("value")
-        if val is not None:
-            valid_values.append(val)
+    if not time_series:
+        return ChartStats()
+
+    valid_values = [
+        point.value
+        for point in time_series
+        if point.has_data and point.value is not None
+    ]
 
     if not valid_values:
-        return {
-            "average": 0.0,
-            "minimum": 0.0,
-            "maximum": 0.0,
-            "total": 0.0,
-            "data_points": 0,
-        }
+        return ChartStats()
 
-    # Convert all values to float for consistent calculations
-    float_values: list[float] = [float(v) for v in valid_values]
+    float_values = [float(value) for value in valid_values]
 
-    return {
-        "average": round(sum(float_values) / len(float_values), 2),
-        "minimum": round(min(float_values), 2),
-        "maximum": round(max(float_values), 2),
-        "total": round(sum(float_values), 2),
-        "data_points": len(float_values),
-    }
+    return ChartStats(
+        average=round(sum(float_values) / len(float_values), 2),
+        minimum=round(min(float_values), 2),
+        maximum=round(max(float_values), 2),
+        total=round(sum(float_values), 2),
+        data_points=len(float_values),
+    )
 
 
 def get_chart_data_processor(
     kpi_type: str,
-) -> Callable[[pd.DataFrame], ChartData]:
+) -> Callable[[pd.DataFrame], ProcessedChartData]:
     """Get the appropriate chart data processor function for a KPI type.
 
     Args:
@@ -1227,7 +801,7 @@ def get_chart_data_processor(
     Returns:
         Function to process data for the specified KPI type
     """
-    processors: dict[str, Callable[[pd.DataFrame], ChartData]] = {
+    processors: dict[str, Callable[[pd.DataFrame], ProcessedChartData]] = {
         "production": process_production_data_for_chart,
         "collection_rate": process_collection_rate_data_for_chart,
         "new_patients": process_new_patients_data_for_chart,
@@ -1245,399 +819,321 @@ def get_chart_data_processor(
     return processor
 
 
-def create_empty_chart_data(error_message: str = "No data available") -> ChartData:
-    """Create empty chart data structure with error message.
+def create_empty_chart_data(
+    error_message: str = "No data available", *, date_column: str = ""
+) -> ProcessedChartData:
+    """Create empty chart data structure with error message."""
 
-    Args:
-        error_message: Message to include in the error field
-
-    Returns:
-        Empty chart data structure
-    """
-    return {
-        "dates": [],
-        "values": [],
-        "statistics": {
-            "total": 0.0,
-            "average": 0.0,
-            "minimum": 0.0,
-            "maximum": 0.0,
-            "data_points": 0,
-        },
-        "metadata": {
-            "date_column": "",
-            "date_range": "No data",
-            "error": error_message,
-            "aggregation": None,
-            "business_days_only": None,
-            "date_filter": None,
-            "filtered_data_points": None,
-        },
-        "error": error_message,
-    }
+    return create_empty_processed_chart_data(error_message, date_column)
 
 
-def validate_processed_chart_data(data: ChartData) -> bool:
-    """Validate processed chart data structure.
+def validate_processed_chart_data(
+    data: ProcessedChartData | dict[str, Any]
+) -> bool:
+    """Validate processed chart data structure via Pydantic enforcement."""
 
-    Args:
-        data: Processed chart data
-
-    Returns:
-        bool: True if data structure is valid
-    """
     try:
-        required_keys = {"dates", "values", "statistics", "metadata"}
-        if not required_keys.issubset(data.keys()):
-            return False
+        if isinstance(data, ProcessedChartData):
+            log.debug(
+                "chart_data.validation_passed", metric_dates=len(data.dates)
+            )
+            return True
 
-        # Check that dates and values are lists of same length
-        if not isinstance(data["dates"], list) or not isinstance(data["values"], list):
-            return False  # type: ignore[unreachable]
+        ProcessedChartData.model_validate(data)
+        log.warning("chart_data.dict_input_validated")
+        return True
 
-        if len(data["dates"]) != len(data["values"]):
-            return False
-
-        # Check statistics structure
-        stats = data["statistics"]
-        required_stats = {"total", "average", "minimum", "maximum", "data_points"}
-        if not required_stats.issubset(stats.keys()):
-            return False
-
-        # Check metadata structure
-        metadata = data["metadata"]
-        return isinstance(metadata, dict)
-
-    except Exception as e:
-        log.error("chart_data.validation_error", error=str(e))
+    except ValidationError as error:
+        log.error("chart_data.validation_error", errors=error.errors())
+        return False
+    except Exception as error:  # pragma: no cover - defensive safeguard
+        log.error("chart_data.validation_error", error=str(error))
         return False
 
 
-def aggregate_to_weekly(data: ChartData, business_days_only: bool = True) -> ChartData:
-    """Aggregate daily data into weekly summaries.
+def aggregate_to_weekly(
+    data: ProcessedChartData, business_days_only: bool = True
+) -> ProcessedChartData:
+    """Aggregate daily data into weekly summaries using Pydantic models."""
 
-    Args:
-        data: Chart data with 'dates' and 'values' keys
-        business_days_only: If True, excludes Sundays from aggregation
-                            (Mon-Sat operational)
-
-    Returns:
-        Aggregated weekly data in same format as input
-    """
     try:
-        if not data["dates"] or not data["values"]:
+        if not data.dates or not data.values:
             return data
 
-        # Convert to DataFrame for easier manipulation
         df = pd.DataFrame(
-            {"date": pd.to_datetime(data["dates"]), "value": data["values"]}
+            {"date": pd.to_datetime(data.dates), "value": pd.to_numeric(data.values)}
         )
 
-        # Filter out Sundays if business_days_only is True
         if business_days_only:
-            # Keep Monday (0) through Saturday (5), exclude Sunday (6)
             df = df[df["date"].dt.dayofweek < 6]
 
         if df.empty:
-            return create_empty_chart_data("No business days data available")
+            return create_empty_processed_chart_data(
+                "No business days data available", data.metadata.date_column
+            )
 
-        # Group by week and sum values
         weekly = (
             df.groupby(df["date"].dt.to_period("W"))
-            .agg(
-                {
-                    "date": "last",  # Use last date of week as representative
-                    "value": "sum",  # Sum values for the week
-                }
-            )
+            .agg({"date": "last", "value": "sum"})
             .reset_index(drop=True)
         )
 
-        # Recalculate statistics for weekly data
-        if not weekly["value"].empty and weekly["value"].notna().any():
-            # Convert pandas Series to time_series format expected by
-            # calculate_chart_statistics
-            time_series: list[TimeSeriesPoint] = [
-                {
-                    "date": row["date"].strftime("%Y-%m-%d"),
-                    "timestamp": row["date"].isoformat(),
-                    "value": row["value"],
-                    "has_data": True,
-                }
-                for _, row in weekly.iterrows()
-                if pd.notna(row["value"])
-            ]
+        if weekly.empty:
+            return create_empty_processed_chart_data(
+                "No weekly data available", data.metadata.date_column
+            )
 
-            statistics = calculate_basic_statistics(time_series)
-        else:
-            statistics = {
-                "average": 0.0,
-                "minimum": 0.0,
-                "maximum": 0.0,
-                "total": 0.0,
-                "data_points": 0,
-            }
+        weekly_values = weekly["value"].astype(float).tolist()
+        weekly_dates = weekly["date"].dt.strftime("%Y-%m-%d").tolist()
 
-        # Get existing metadata and update with aggregation info
-        existing_metadata = data.get("metadata", {})
-        from .types import ChartMetadata
+        total = float(sum(weekly_values))
+        average = total / len(weekly_values) if weekly_values else 0.0
+        minimum = min(weekly_values) if weekly_values else 0.0
+        maximum = max(weekly_values) if weekly_values else 0.0
 
-        result_metadata: ChartMetadata = {
-            "date_column": str(existing_metadata.get("date_column", "")),
-            "date_range": str(existing_metadata.get("date_range", "No data")),
-            "error": None,
-            "aggregation": "weekly",
-            "business_days_only": business_days_only,
-            "date_filter": existing_metadata.get("date_filter"),
-            "filtered_data_points": existing_metadata.get("filtered_data_points"),
-        }
-
-        result: ChartData = {
-            "dates": weekly["date"].dt.strftime("%Y-%m-%d").tolist(),
-            "values": weekly["value"].round(2).tolist(),
-            "statistics": statistics,
-            "metadata": result_metadata,
-            "error": None,
-        }
-
-        return result
-
-    except Exception as e:
-        log.error("chart_data.weekly_aggregation_error", error=str(e))
-        return create_empty_chart_data(f"Weekly aggregation failed: {str(e)}")
-
-
-def aggregate_to_monthly(data: ChartData, business_days_only: bool = True) -> ChartData:
-    """Aggregate daily data into monthly summaries.
-
-    Args:
-        data: Chart data with 'dates' and 'values' keys
-        business_days_only: If True, excludes Sundays from aggregation
-
-    Returns:
-        Aggregated monthly data in same format as input
-    """
-    try:
-        if not data["dates"] or not data["values"]:
-            return data
-
-        # Convert to DataFrame for easier manipulation
-        df = pd.DataFrame(
-            {"date": pd.to_datetime(data["dates"]), "value": data["values"]}
+        metadata = ChartMetaInfo(
+            date_column=data.metadata.date_column,
+            date_range=(
+                f"{weekly_dates[0]} to {weekly_dates[-1]}"
+                if weekly_dates
+                else "No data"
+            ),
+            error=None,
+            aggregation="weekly",
+            business_days_only=business_days_only,
+            date_filter=data.metadata.date_filter,
+            filtered_data_points=len(weekly_values),
         )
 
-        # Filter out Sundays if business_days_only is True
+        rounded_values = [round(float(value), 2) for value in weekly_values]
+
+        return ProcessedChartData(
+            dates=weekly_dates,
+            values=rounded_values,
+            statistics=ChartStats(
+                total=round(total, 2),
+                average=round(average, 2),
+                minimum=round(minimum, 2),
+                maximum=round(maximum, 2),
+                data_points=len(rounded_values),
+            ),
+            metadata=metadata,
+            error=None,
+        )
+
+    except Exception as error:
+        log.error("chart_data.weekly_aggregation_error", error=str(error))
+        return create_empty_processed_chart_data(
+            f"Weekly aggregation failed: {error}", data.metadata.date_column
+        )
+
+
+def aggregate_to_monthly(
+    data: ProcessedChartData, business_days_only: bool = True
+) -> ProcessedChartData:
+    """Aggregate daily data into monthly summaries using Pydantic models."""
+
+    try:
+        if not data.dates or not data.values:
+            return data
+
+        df = pd.DataFrame(
+            {"date": pd.to_datetime(data.dates), "value": pd.to_numeric(data.values)}
+        )
+
         if business_days_only:
             df = df[df["date"].dt.dayofweek < 6]
 
         if df.empty:
-            return create_empty_chart_data("No business days data available")
+            return create_empty_processed_chart_data(
+                "No business days data available", data.metadata.date_column
+            )
 
-        # Group by month and sum values
         monthly = (
             df.groupby(df["date"].dt.to_period("M"))
-            .agg(
-                {
-                    "date": "last",  # Use last date of month as representative
-                    "value": "sum",  # Sum values for the month
-                }
-            )
+            .agg({"date": "last", "value": "sum"})
             .reset_index(drop=True)
         )
 
-        # Recalculate statistics for monthly data
-        if not monthly["value"].empty and monthly["value"].notna().any():
-            # Convert pandas Series to time_series format expected by
-            # calculate_chart_statistics
-            time_series: list[TimeSeriesPoint] = [
-                {
-                    "date": row["date"].strftime("%Y-%m-%d"),
-                    "timestamp": row["date"].isoformat(),
-                    "value": row["value"],
-                    "has_data": True,
-                }
-                for _, row in monthly.iterrows()
-                if pd.notna(row["value"])
-            ]
+        if monthly.empty:
+            return create_empty_processed_chart_data(
+                "No monthly data available", data.metadata.date_column
+            )
 
-            statistics = calculate_basic_statistics(time_series)
-        else:
-            statistics = {
-                "average": 0.0,
-                "minimum": 0.0,
-                "maximum": 0.0,
-                "total": 0.0,
-                "data_points": 0,
-            }
+        monthly_values = monthly["value"].astype(float).tolist()
+        monthly_dates = monthly["date"].dt.strftime("%Y-%m-%d").tolist()
 
-        # Get existing metadata and update with aggregation info
-        existing_metadata = data.get("metadata", {})
-        from .types import ChartMetadata
+        total = float(sum(monthly_values))
+        average = total / len(monthly_values) if monthly_values else 0.0
+        minimum = min(monthly_values) if monthly_values else 0.0
+        maximum = max(monthly_values) if monthly_values else 0.0
 
-        result_metadata: ChartMetadata = {
-            "date_column": str(existing_metadata.get("date_column", "")),
-            "date_range": str(existing_metadata.get("date_range", "No data")),
-            "error": None,
-            "aggregation": "monthly",
-            "business_days_only": business_days_only,
-            "date_filter": existing_metadata.get("date_filter"),
-            "filtered_data_points": existing_metadata.get("filtered_data_points"),
-        }
+        metadata = ChartMetaInfo(
+            date_column=data.metadata.date_column,
+            date_range=(
+                f"{monthly_dates[0]} to {monthly_dates[-1]}"
+                if monthly_dates
+                else "No data"
+            ),
+            error=None,
+            aggregation="monthly",
+            business_days_only=business_days_only,
+            date_filter=data.metadata.date_filter,
+            filtered_data_points=len(monthly_values),
+        )
 
-        result: ChartData = {
-            "dates": monthly["date"].dt.strftime("%Y-%m-%d").tolist(),
-            "values": monthly["value"].round(2).tolist(),
-            "statistics": statistics,
-            "metadata": result_metadata,
-            "error": None,
-        }
+        rounded_values = [round(float(value), 2) for value in monthly_values]
 
-        return result
+        return ProcessedChartData(
+            dates=monthly_dates,
+            values=rounded_values,
+            statistics=ChartStats(
+                total=round(total, 2),
+                average=round(average, 2),
+                minimum=round(minimum, 2),
+                maximum=round(maximum, 2),
+                data_points=len(rounded_values),
+            ),
+            metadata=metadata,
+            error=None,
+        )
 
-    except Exception as e:
-        log.error("chart_data.monthly_aggregation_error", error=str(e))
-        return create_empty_chart_data(f"Monthly aggregation failed: {str(e)}")
+    except Exception as error:
+        log.error("chart_data.monthly_aggregation_error", error=str(error))
+        return create_empty_processed_chart_data(
+            f"Monthly aggregation failed: {error}", data.metadata.date_column
+        )
 
 
 def filter_data_by_date_range(
-    data: ChartData, start_date: str, end_date: str
-) -> ChartData:
-    """Filter chart data by date range.
+    data: ProcessedChartData, start_date: str, end_date: str
+) -> ProcessedChartData:
+    """Filter chart data by date range using Pydantic outputs."""
 
-    Args:
-        data: Chart data with 'dates' and 'values' keys
-        start_date: Start date in YYYY-MM-DD format
-        end_date: End date in YYYY-MM-DD format
-
-    Returns:
-        Filtered data in same format as input
-    """
     try:
-        if not data["dates"] or not data["values"]:
+        if not data.dates or not data.values:
             return data
 
-        # Convert to DataFrame for easier filtering
         df = pd.DataFrame(
-            {"date": pd.to_datetime(data["dates"]), "value": data["values"]}
+            {"date": pd.to_datetime(data.dates), "value": pd.to_numeric(data.values)}
         )
 
-        # Parse filter dates
         start_dt = pd.to_datetime(start_date)
         end_dt = pd.to_datetime(end_date)
 
-        # Filter by date range
         mask = (df["date"] >= start_dt) & (df["date"] <= end_dt)
-        filtered_df = df[mask]
+        filtered_df = df.loc[mask]
 
         if filtered_df.empty:
-            return create_empty_chart_data(
-                f"No data in range {start_date} to {end_date}"
+            return create_empty_processed_chart_data(
+                f"No data in range {start_date} to {end_date}",
+                data.metadata.date_column,
             )
 
-        # Recalculate statistics for filtered data
-        time_series: list[TimeSeriesPoint] = [
-            {
-                "date": row["date"].strftime("%Y-%m-%d"),
-                "timestamp": row["date"].isoformat(),
-                "value": row["value"],
-                "has_data": True,
-            }
-            for _, row in filtered_df.iterrows()
-            if pd.notna(row["value"])
-        ]
+        filtered_values = filtered_df["value"].astype(float).tolist()
+        filtered_dates = filtered_df["date"].dt.strftime("%Y-%m-%d").tolist()
 
-        statistics = calculate_basic_statistics(time_series)
+        total = float(sum(filtered_values))
+        average = total / len(filtered_values) if filtered_values else 0.0
+        minimum = min(filtered_values) if filtered_values else 0.0
+        maximum = max(filtered_values) if filtered_values else 0.0
 
-        # Get existing metadata and update with filter info
-        existing_metadata = data.get("metadata", {})
-        from .types import ChartMetadata
+        metadata = ChartMetaInfo(
+            date_column=data.metadata.date_column,
+            date_range=(
+                f"{filtered_dates[0]} to {filtered_dates[-1]}"
+                if filtered_dates
+                else "No data"
+            ),
+            error=None,
+            aggregation=data.metadata.aggregation,
+            business_days_only=data.metadata.business_days_only,
+            date_filter=f"{start_date} to {end_date}",
+            filtered_data_points=len(filtered_values),
+        )
 
-        result_metadata: ChartMetadata = {
-            "date_column": str(existing_metadata.get("date_column", "")),
-            "date_range": str(existing_metadata.get("date_range", "No data")),
-            "error": None,
-            "aggregation": existing_metadata.get("aggregation"),
-            "business_days_only": existing_metadata.get("business_days_only"),
-            "date_filter": f"{start_date} to {end_date}",
-            "filtered_data_points": len(filtered_df),
-        }
+        rounded_values = [round(value, 2) for value in filtered_values]
 
-        result: ChartData = {
-            "dates": filtered_df["date"].dt.strftime("%Y-%m-%d").tolist(),
-            "values": filtered_df["value"].tolist(),
-            "statistics": statistics,
-            "metadata": result_metadata,
-            "error": None,
-        }
+        return ProcessedChartData(
+            dates=filtered_dates,
+            values=rounded_values,
+            statistics=ChartStats(
+                total=round(total, 2),
+                average=round(average, 2),
+                minimum=round(minimum, 2),
+                maximum=round(maximum, 2),
+                data_points=len(rounded_values),
+            ),
+            metadata=metadata,
+            error=None,
+        )
 
-        return result
-
-    except Exception as e:
-        log.error("chart_data.date_filter_error", error=str(e))
-        return create_empty_chart_data(f"Date filtering failed: {str(e)}")
+    except Exception as error:
+        log.error("chart_data.date_filter_error", error=str(error))
+        return create_empty_processed_chart_data(
+            f"Date filtering failed: {error}", data.metadata.date_column
+        )
 
 
-def calculate_chart_statistics(time_series: list[TimeSeriesPoint]) -> ChartSummaryStats:
+def calculate_chart_statistics(time_series: list[ChartDataPoint]) -> SummaryStatistics:
     """Calculate summary statistics for chart data."""
 
     if not time_series:
-        empty_stats: ChartSummaryStats = {
-            "total_points": 0,
-            "valid_points": 0,
-            "missing_points": 0,
-            "coverage_percentage": 0.0,
-            "date_range": None,
-        }
+        empty_stats = SummaryStatistics()
+        log.debug("chart_statistics.calculated", **empty_stats.model_dump())
         return empty_stats
 
-    # Filter out None values for valid calculations
-    valid_values: list[float | int] = [
-        point["value"]
+    valid_values = [
+        point.value
         for point in time_series
-        if point["has_data"] and point["value"] is not None
+        if point.has_data and point.value is not None
     ]
 
-    result_stats: ChartSummaryStats = {
-        "total_points": len(time_series),
-        "valid_points": len(valid_values),
-        "missing_points": len(time_series) - len(valid_values),
-        "coverage_percentage": (
-            (len(valid_values) / len(time_series)) * 100 if time_series else 0.0
-        ),
-        "date_range": {
-            "start": time_series[0]["date"],
-            "end": time_series[-1]["date"],
+    total_points = len(time_series)
+    valid_points = len(valid_values)
+    missing_points = total_points - valid_points
+    coverage_percentage = (
+        (valid_points / total_points) * 100 if total_points else 0.0
+    )
+
+    stats = SummaryStatistics(
+        total_points=total_points,
+        valid_points=valid_points,
+        missing_points=missing_points,
+        coverage_percentage=round(coverage_percentage, 2),
+        date_range={
+            "start": time_series[0].date,
+            "end": time_series[-1].date,
         },
-    }
+    )
 
     if valid_values:
-        # Convert to float for consistent calculations
-        float_values = [float(v) for v in valid_values]
-        result_stats["min_value"] = min(float_values)
-        result_stats["max_value"] = max(float_values)
-        result_stats["average_value"] = sum(float_values) / len(float_values)
+        float_values = [float(value) for value in valid_values]
+        stats.min_value = min(float_values)
+        stats.max_value = max(float_values)
+        stats.average_value = sum(float_values) / len(float_values)
 
-    log.debug("chart_statistics.calculated", **result_stats)
-    return result_stats
+    log.debug("chart_statistics.calculated", **stats.model_dump())
+    return stats
 
 
-def _empty_chart_data(metric_name: str) -> TimeSeriesChartData:
+def _empty_chart_data(metric_name: str) -> TimeSeriesData:
     """Create empty chart data structure for missing data."""
 
-    return {
-        "metric_name": metric_name,
-        "chart_type": "line",
-        "data_type": "unknown",
-        "time_series": [],
-        "statistics": calculate_chart_statistics([]),
-        "format_options": {},
-        "error": "No data available",
-    }
+    return TimeSeriesData(
+        metric_name=metric_name,
+        chart_type="line",
+        data_type="float",
+        time_series=[],
+        statistics=calculate_chart_statistics([]),
+        format_options={},
+        error="No data available",
+    )
 
 
 def format_production_chart_data(
     eod_df: pd.DataFrame | None, date_column: str = "Submission Date"
-) -> TimeSeriesChartData:
+) -> TimeSeriesData:
     """Format production data for chart visualization."""
 
     if eod_df is None or eod_df.empty:
@@ -1679,25 +1175,25 @@ def format_production_chart_data(
             eod_df, resolved_date_column, fallback_column, "float"
         )
 
-    return {
-        "metric_name": "Production Total",
-        "chart_type": "line",
-        "data_type": "currency",
-        "time_series": time_series,
-        "statistics": calculate_chart_statistics(time_series),
-        "format_options": {
+    return TimeSeriesData(
+        metric_name="Production Total",
+        chart_type="line",
+        data_type="currency",
+        time_series=time_series,
+        statistics=calculate_chart_statistics(time_series),
+        format_options={
             "currency_symbol": "$",
             "decimal_places": 0,
             "show_grid": True,
             "line_color": "#007E9E",
         },
-        "error": None,
-    }
+        error=None,
+    )
 
 
 def format_collection_rate_chart_data(
     eod_df: pd.DataFrame | None, date_column: str = "Submission Date"
-) -> TimeSeriesChartData:
+) -> TimeSeriesData:
     """Format collection rate data for chart visualization."""
 
     if eod_df is None or eod_df.empty:
@@ -1778,26 +1274,26 @@ def format_collection_rate_chart_data(
         rate_df, resolved_date_column, "collection_rate", "float"
     )
 
-    return {
-        "metric_name": "Collection Rate",
-        "chart_type": "line",
-        "data_type": "percentage",
-        "time_series": time_series,
-        "statistics": calculate_chart_statistics(time_series),
-        "format_options": {
+    return TimeSeriesData(
+        metric_name="Collection Rate",
+        chart_type="line",
+        data_type="percentage",
+        time_series=time_series,
+        statistics=calculate_chart_statistics(time_series),
+        format_options={
             "percentage_symbol": "%",
             "decimal_places": 1,
             "show_grid": True,
             "line_color": "#142D54",
             "target_range": {"min": 95.0, "max": 100.0},
         },
-        "error": None,
-    }
+        error=None,
+    )
 
 
 def format_new_patients_chart_data(
     eod_df: pd.DataFrame | None, date_column: str = "Submission Date"
-) -> TimeSeriesChartData:
+) -> TimeSeriesData:
     """Format new patients data for chart visualization."""
 
     if eod_df is None or eod_df.empty:
@@ -1833,24 +1329,24 @@ def format_new_patients_chart_data(
             eod_df, resolved_date_column, fallback_column, "int"
         )
 
-    return {
-        "metric_name": "New Patients",
-        "chart_type": "bar",
-        "data_type": "count",
-        "time_series": time_series,
-        "statistics": calculate_chart_statistics(time_series),
-        "format_options": {
+    return TimeSeriesData(
+        metric_name="New Patients",
+        chart_type="bar",
+        data_type="count",
+        time_series=time_series,
+        statistics=calculate_chart_statistics(time_series),
+        format_options={
             "decimal_places": 0,
             "show_grid": True,
             "bar_color": "#007E9E",
         },
-        "error": None,
-    }
+        error=None,
+    )
 
 
 def format_case_acceptance_chart_data(
     front_kpi_df: pd.DataFrame | None, date_column: str = "Submission Date"
-) -> TimeSeriesChartData:
+) -> TimeSeriesData:
     """Format case acceptance data for chart visualization."""
 
     if front_kpi_df is None or front_kpi_df.empty:
@@ -1886,26 +1382,26 @@ def format_case_acceptance_chart_data(
         rate_df, resolved_date_column, "acceptance_rate", "float"
     )
 
-    return {
-        "metric_name": "Case Acceptance",
-        "chart_type": "line",
-        "data_type": "percentage",
-        "time_series": time_series,
-        "statistics": calculate_chart_statistics(time_series),
-        "format_options": {
+    return TimeSeriesData(
+        metric_name="Case Acceptance",
+        chart_type="line",
+        data_type="percentage",
+        time_series=time_series,
+        statistics=calculate_chart_statistics(time_series),
+        format_options={
             "percentage_symbol": "%",
             "decimal_places": 1,
             "show_grid": True,
             "line_color": "#142D54",
             "target_range": {"min": 80.0, "max": 100.0},
         },
-        "error": None,
-    }
+        error=None,
+    )
 
 
 def format_hygiene_reappointment_chart_data(
     front_kpi_df: pd.DataFrame | None, date_column: str = "Submission Date"
-) -> TimeSeriesChartData:
+) -> TimeSeriesData:
     """Format hygiene reappointment data for chart visualization."""
 
     if front_kpi_df is None or front_kpi_df.empty:
@@ -1937,33 +1433,33 @@ def format_hygiene_reappointment_chart_data(
         rate_df, resolved_date_column, "reappointment_rate", "float"
     )
 
-    return {
-        "metric_name": "Hygiene Reappointment",
-        "chart_type": "line",
-        "data_type": "percentage",
-        "time_series": time_series,
-        "statistics": calculate_chart_statistics(time_series),
-        "format_options": {
+    return TimeSeriesData(
+        metric_name="Hygiene Reappointment",
+        chart_type="line",
+        data_type="percentage",
+        time_series=time_series,
+        statistics=calculate_chart_statistics(time_series),
+        format_options={
             "percentage_symbol": "%",
             "decimal_places": 1,
             "show_grid": True,
             "line_color": "#007E9E",
             "target_range": {"min": 85.0, "max": 100.0},
         },
-        "error": None,
-    }
+        error=None,
+    )
 
 
 def format_all_chart_data(
     eod_df: pd.DataFrame | None,
     front_kpi_df: pd.DataFrame | None,
     date_column: str = "Submission Date",
-) -> AllChartData:
+) -> dict[str, TimeSeriesData | ChartsMetadata]:
     """Format all KPI data for chart visualization."""
 
     log.info("chart_data.formatting_all_metrics")
 
-    chart_data: AllChartData = {
+    chart_data: dict[str, TimeSeriesData | ChartsMetadata] = {
         "production_total": format_production_chart_data(eod_df, date_column),
         "collection_rate": format_collection_rate_chart_data(eod_df, date_column),
         "new_patients": format_new_patients_chart_data(eod_df, date_column),
@@ -1973,24 +1469,21 @@ def format_all_chart_data(
         ),
     }
 
-    # Add metadata - using a separate dict that matches AllChartsMetadata structure
-    from .types import AllChartsMetadata
-
-    metadata: AllChartsMetadata = {
-        "generated_at": datetime.now().isoformat(),
-        "data_sources": {
-            "eod_available": eod_df is not None and not eod_df.empty,
-            "front_kpi_available": front_kpi_df is not None and not front_kpi_df.empty,
-        },
-        "total_metrics": 5,
-    }
+    metadata = ChartsMetadata(
+        generated_at=datetime.now().isoformat(),
+        data_sources=DataSourceInfo(
+            eod_available=eod_df is not None and not eod_df.empty,
+            front_kpi_available=front_kpi_df is not None and not front_kpi_df.empty,
+        ),
+        total_metrics=5,
+    )
     chart_data["metadata"] = metadata
 
     log.info(
         "chart_data.formatting_complete",
-        metrics_count=metadata["total_metrics"],
-        eod_available=metadata["data_sources"]["eod_available"],
-        front_kpi_available=metadata["data_sources"]["front_kpi_available"],
+        metrics_count=metadata.total_metrics,
+        eod_available=metadata.data_sources.eod_available,
+        front_kpi_available=metadata.data_sources.front_kpi_available,
     )
 
     return chart_data

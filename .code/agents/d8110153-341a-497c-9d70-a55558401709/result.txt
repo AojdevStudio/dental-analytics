@@ -1,6 +1,0 @@
-Loaded cached credentials.
-Okay, I understand the issue. The Streamlit app is crashing due to missing helper functions in `apps/frontend/chart_utils.py`. It seems these functions were removed or relocated, and I need to restore them to fix the chart rendering.
-
-I'll start by investigating the files you've mentioned, focusing on finding the missing function implementations. I'll look in `.old-files` as that seems like a promising place for recently removed code.# Utilities for formatting, trend detection, trend lines, etc.
-# Missing: add_trend_line_to_figure, add_pattern_annotation, format_currency_hover, handle_empty_data
-

@@ -197,7 +197,7 @@ class TimeSeriesData(BaseModel):
     time_series: list[ChartDataPoint] = Field(
         default_factory=list, description="Time series data points"
     )
-    statistics: dict[str, float | int] | None = Field(
+    statistics: dict[str, float | int] | SummaryStatistics | None = Field(
         default=None, description="Statistical summary"
     )
     format_options: dict[str, str | float | bool | dict[str, float]] = Field(
