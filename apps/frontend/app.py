@@ -19,7 +19,7 @@ Features:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import streamlit as st
 
@@ -37,6 +37,7 @@ from core.models.kpi_models import (  # noqa: E402
     DataAvailabilityStatus,
     KPIResponse,
 )
+from core.models.chart_models import AllChartsData  # noqa: E402
 from core.transformers.sheets_transformer import SheetsToKPIInputs  # noqa: E402
 
 # New KPIService and dependencies (Story 3.0: Checkpoint 3)
@@ -155,7 +156,7 @@ st.markdown("---")
 
 # Cache function for chart data (Story 2.3: Performance Optimization)
 @st.cache_data(ttl=300)  # 5 minute cache
-def load_chart_data(location: str) -> dict[str, Any] | None:
+def load_chart_data(location: str) -> AllChartsData | None:
     """Load chart data with caching for performance."""
     try:
         provider = SheetsProvider()
@@ -394,10 +395,10 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(
 )
 
 with tab1:
-    if chart_data and "production_total" in chart_data:
+    if chart_data is not None:
         # Pass timeframe parameter for advanced features (Story 2.3)
         production_chart = create_chart_from_data(
-            chart_data["production_total"], show_trend=True, timeframe=timeframe
+            chart_data.production_total, show_trend=True, timeframe=timeframe
         )
         st.plotly_chart(
             production_chart, use_container_width=True, key="production_chart"
@@ -406,9 +407,9 @@ with tab1:
         st.info("📈 Production chart data unavailable for selected location")
 
 with tab2:
-    if chart_data and "collection_rate" in chart_data:
+    if chart_data is not None:
         collection_chart = create_chart_from_data(
-            chart_data["collection_rate"], show_trend=True, timeframe=timeframe
+            chart_data.collection_rate, show_trend=True, timeframe=timeframe
         )
         st.plotly_chart(
             collection_chart, use_container_width=True, key="collection_chart"
@@ -417,9 +418,9 @@ with tab2:
         st.info("📈 Collection rate chart data unavailable for selected location")
 
 with tab3:
-    if chart_data and "new_patients" in chart_data:
+    if chart_data is not None:
         new_patients_chart = create_chart_from_data(
-            chart_data["new_patients"], show_trend=True, timeframe=timeframe
+            chart_data.new_patients, show_trend=True, timeframe=timeframe
         )
         st.plotly_chart(
             new_patients_chart, use_container_width=True, key="new_patients_chart"
@@ -428,9 +429,9 @@ with tab3:
         st.info("📈 New patients chart data unavailable for selected location")
 
 with tab4:
-    if chart_data and "case_acceptance" in chart_data:
+    if chart_data is not None:
         treatment_chart = create_chart_from_data(
-            chart_data["case_acceptance"], show_trend=True, timeframe=timeframe
+            chart_data.case_acceptance, show_trend=True, timeframe=timeframe
         )
         st.plotly_chart(
             treatment_chart, use_container_width=True, key="treatment_chart"
@@ -439,9 +440,9 @@ with tab4:
         st.info("📈 Treatment acceptance chart data unavailable for selected location")
 
 with tab5:
-    if chart_data and "hygiene_reappointment" in chart_data:
+    if chart_data is not None:
         hygiene_chart = create_chart_from_data(
-            chart_data["hygiene_reappointment"], show_trend=True, timeframe=timeframe
+            chart_data.hygiene_reappointment, show_trend=True, timeframe=timeframe
         )
         st.plotly_chart(hygiene_chart, use_container_width=True, key="hygiene_chart")
     else:

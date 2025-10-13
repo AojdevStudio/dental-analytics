@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import pytest
+from plotly.graph_objects import Figure
 
 from apps.backend.chart_data import format_all_chart_data
 from apps.frontend.chart_kpis import (
@@ -14,10 +16,25 @@ from apps.frontend.chart_kpis import (
 )
 from apps.frontend.chart_production import create_production_chart
 from apps.frontend.chart_utils import validate_chart_data_structure
+from core.models.chart_models import AllChartsData, SummaryStatistics, TimeSeriesData
 
 
 @pytest.fixture()
-def empty_chart_data() -> dict[str, object]:
+def empty_chart_data() -> TimeSeriesData:
+    """Create empty TimeSeriesData Pydantic model for testing."""
+    return TimeSeriesData(
+        metric_name="Production Total",
+        chart_type="line",
+        data_type="float",
+        time_series=[],
+        statistics=SummaryStatistics(total_points=0, valid_points=0),
+        format_options={},
+    )
+
+
+@pytest.fixture()
+def empty_chart_data_dict() -> dict[str, object]:
+    """Legacy dict fixture for validate_chart_data_structure compatibility."""
     return {
         "metric_name": "Production Total",
         "metric_key": "production_total",
@@ -30,14 +47,16 @@ def empty_chart_data() -> dict[str, object]:
 
 
 def test_validate_chart_data_structure_handles_empty(
-    empty_chart_data: dict[str, object],
+    empty_chart_data_dict: dict[str, object],
 ) -> None:
-    assert validate_chart_data_structure(empty_chart_data) is True
+    """Test validate_chart_data_structure with dict input (legacy compatibility)."""
+    assert validate_chart_data_structure(empty_chart_data_dict) is True
 
 
 def test_create_chart_from_data_returns_placeholder_on_empty(
-    empty_chart_data: dict[str, object],
+    empty_chart_data: TimeSeriesData,
 ) -> None:
+    """Test create_chart_from_data with Pydantic TimeSeriesData model."""
     figure = create_chart_from_data(empty_chart_data)
     assert len(figure.data) == 0
 
@@ -45,7 +64,6 @@ def test_create_chart_from_data_returns_placeholder_on_empty(
 @pytest.mark.parametrize(
     "chart_factory",
     [
-        create_production_chart,
         create_collection_rate_chart,
         create_new_patients_chart,
         create_case_acceptance_chart,
@@ -53,27 +71,47 @@ def test_create_chart_from_data_returns_placeholder_on_empty(
     ],
 )
 def test_individual_chart_factories_accept_empty_payload(
-    chart_factory, empty_chart_data: dict[str, object]
+    chart_factory: Callable[..., Figure],
+    empty_chart_data: TimeSeriesData,
 ) -> None:
+    """Test individual chart factories with Pydantic TimeSeriesData models.
+
+    Note: create_production_chart still expects dict (legacy), excluded from this test.
+    Chart factories accept (chart_data: BaseModel, format_options: dict | None = None).
+    """
     figure = chart_factory(empty_chart_data)
     assert len(figure.data) == 0
 
 
-def test_format_all_chart_data_produces_expected_keys() -> None:
-    chart_data = format_all_chart_data(None, None)
-    expected_keys = {
-        "production_total",
-        "collection_rate",
-        "new_patients",
-        "case_acceptance",
-        "hygiene_reappointment",
-        "metadata",
-    }
-    assert expected_keys.issubset(chart_data.keys())
+def test_production_chart_factory_accepts_empty_dict() -> None:
+    """Test create_production_chart with legacy dict input.
 
-    metadata = chart_data["metadata"]
-    assert metadata["total_metrics"] == 5
-    assert metadata["data_sources"] == {
-        "eod_available": False,
-        "front_kpi_available": False,
+    Production chart still uses dict input format (future migration).
+    """
+    empty_dict = {
+        "dates": [],
+        "values": [],
+        "statistics": {"total": 0.0, "average": 0.0},
     }
+    figure = create_production_chart(empty_dict)
+    assert len(figure.data) == 0
+
+
+def test_format_all_chart_data_produces_expected_structure() -> None:
+    """Test format_all_chart_data returns AllChartsData with expected structure."""
+    chart_data = format_all_chart_data(None, None)
+
+    assert isinstance(chart_data, AllChartsData)
+    assert chart_data.metadata.total_metrics == 5
+    assert chart_data.metadata.data_sources.eod_available is False
+    assert chart_data.metadata.data_sources.front_kpi_available is False
+
+    for metric_model in (
+        chart_data.production_total,
+        chart_data.collection_rate,
+        chart_data.new_patients,
+        chart_data.case_acceptance,
+        chart_data.hygiene_reappointment,
+    ):
+        assert isinstance(metric_model, TimeSeriesData)
+        assert metric_model.metric_name

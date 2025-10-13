@@ -172,7 +172,10 @@ def test_edge_cases():
 
     # Test with null values
     data_with_nulls = create_sample_time_series_data("production", "line", "daily", 5)
-    data_with_nulls["values"][2] = None  # Add null value
+    # Create new list with null value (avoid mutating original)
+    values_with_null = data_with_nulls["values"].copy()
+    values_with_null[2] = None
+    data_with_nulls = {**data_with_nulls, "values": values_with_null}
 
     try:
         create_production_chart(data_with_nulls)

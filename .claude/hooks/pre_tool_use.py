@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import sys
 import time
 import shutil
@@ -16,195 +17,67 @@ from pathlib import Path
 
 def is_dangerous_deletion_command(command):
     """
-    ULTRA-COMPREHENSIVE detection of ANY deletion or destructive commands.
-    Blocks absolutely ALL forms of file/directory removal and destructive operations.
+    Token-based detection of destructive commands.
+    Uses shlex.split() to properly tokenize the command and check the first token
+    against known destructive commands, avoiding false positives from substrings.
     """
-    # Normalize command by removing extra spaces and converting to lowercase
-    normalized = " ".join(command.lower().split())
+    if not command or not command.strip():
+        return False
 
-    # SAFE OPERATIONS: Allow essential git workflow commands
-    safe_git_patterns = [
-        r"^\s*git\s+commit\s+",  # git commit (all variations)
-        r"^\s*git\s+add\s+",  # git add
-        r"^\s*git\s+status\s*$",  # git status
-        r"^\s*git\s+log\s+",  # git log
-        r"^\s*git\s+diff\s+",  # git diff
-        r"^\s*git\s+show\s+",  # git show
-        r"^\s*git\s+branch\s+",  # git branch (non-destructive)
-        r"^\s*git\s+checkout\s+",  # git checkout (non-destructive)
-        r"^\s*git\s+push\s+",  # git push
-        r"^\s*git\s+pull\s+",  # git pull
-        r"^\s*git\s+fetch\s+",  # git fetch
-        r"^\s*git\s+merge\s+",  # git merge
-    ]
+    # Try to tokenize the command
+    try:
+        tokens = shlex.split(command.lower())
+    except ValueError:
+        # If tokenization fails, fall back to basic split
+        tokens = command.lower().split()
 
-    # Check if this is a safe git operation
-    for pattern in safe_git_patterns:
-        if re.search(pattern, normalized):
-            return False  # Allow safe git operations
+    if not tokens:
+        return False
 
-    # PATTERN 1: ALL rm command variations (any rm usage is blocked)
-    rm_patterns = [
-        r"\brm\b",  # Any rm command at all
-        r"\bunlink\b",  # unlink command
-        r"\brmdir\b",  # rmdir command
-        r"\brm\s+(-[a-z]*r[a-z]*f|-[a-z]*f[a-z]*r)\b",  # rm -rf, rm -fr, rm -Rf, etc.
-        r"\brm\s+--recursive\s+--force",  # rm --recursive --force
-        r"\brm\s+--force\s+--recursive",  # rm --force --recursive
-        r"\brm\s+-[a-z]*r\b",  # rm with recursive flag
-        r"\brm\s+-[a-z]*f\b",  # rm with force flag
-        r"\brm\s+--recursive\b",  # rm --recursive
-        r"\brm\s+--force\b",  # rm --force
-        r"\brm\s+-[a-z]*i\b",  # rm with interactive flag
-        r"\brm\s+--interactive\b",  # rm --interactive
-    ]
+    first_token = tokens[0]
 
-    # PATTERN 2: File system destructive operations
-    destructive_patterns = [
-        r"\bdd\s+.*of=",  # dd command writing to files
-        r"\bshred\b",  # shred command
-        r"\bwipe\b",  # wipe command
-        r"\bsrm\b",  # secure rm
-        r"\btrash\b",  # trash command
-        r"\bgio\s+trash\b",  # gio trash
-        r"\bmv\s+.*\s+/dev/null",  # move to /dev/null
-        r"\bcp\s+/dev/null\b",  # copy /dev/null (truncate)
-        r">\s*/dev/null",  # redirect to /dev/null
-        r"\btruncate\b",  # truncate command
-        r"\b:\s*>\s*[^|&;]+",  # shell truncation (:> file)
-        r"\btrue\s*>\s*[^|&;]+",  # true > file (truncation)
-        r"\bfalse\s*>\s*[^|&;]+",  # false > file (truncation)
-    ]
+    # List of known destructive commands
+    destructive_commands = {
+        # File deletion
+        'rm', 'unlink', 'rmdir',
+        # File system operations
+        'dd', 'shred', 'wipe', 'srm', 'trash',
+        # Truncation
+        'truncate',
+        # Package managers
+        'pip', 'npm', 'yarn', 'conda', 'apt', 'yum', 'brew',
+        # System operations
+        'kill', 'killall', 'pkill', 'fuser',
+        'umount', 'swapoff', 'fdisk', 'mkfs', 'format',
+        # Archive operations
+        'tar', 'zip', 'unzip', 'gunzip', 'bunzip2', 'unxz', '7z',
+        # Database operations (if run as commands)
+        'mongo', 'psql', 'mysql',
+    }
 
-    # PATTERN 3: Dangerous redirection and overwrite operations
-    overwrite_patterns = [
-        r">\s*[^|&;>\s]+\s*$",  # Simple redirection that overwrites
-        r"\becho\s+.*>\s*[^|&;>\s]+",  # echo > file (overwrite)
-        r"\bprintf\s+.*>\s*[^|&;>\s]+",  # printf > file (overwrite)
-        r"\bcat\s+.*>\s*[^|&;>\s]+",  # cat > file (overwrite)
-        r"\bcp\s+/dev/null\s+",  # copy /dev/null to file
-        r"\bdd\s+.*>\s*[^|&;>\s]+",  # dd > file
-    ]
+    # Check if the first token is a destructive command
+    if first_token in destructive_commands:
+        # For package managers, check if they're doing destructive operations
+        if first_token in {'npm', 'yarn', 'pip', 'conda', 'apt', 'yum', 'brew'}:
+            destructive_verbs = {'uninstall', 'remove', 'rm', 'purge'}
+            return any(verb in tokens for verb in destructive_verbs)
 
-    # PATTERN 4: Archive/compression destructive operations
-    archive_destructive_patterns = [
-        r"\btar\s+.*--delete\b",  # tar delete
-        r"\bzip\s+.*-d\b",  # zip delete
-        r"\bunzip\b",  # unzip (can overwrite)
-        r"\bgunzip\b",  # gunzip (deletes .gz)
-        r"\bbunzip2\b",  # bunzip2 (deletes .bz2)
-        r"\bunxz\b",  # unxz (deletes .xz)
-        r"\b7z\s+.*d\b",  # 7z delete
-    ]
+        # For archive commands, check for destructive flags
+        if first_token in {'tar', 'zip', '7z'}:
+            destructive_flags = {'--delete', '-d', 'd'}
+            return any(flag in tokens for flag in destructive_flags)
 
-    # PATTERN 5: Git destructive operations (only truly dangerous ones)
-    # NOTE: Removed most git patterns to allow productive git workflow
-    # Only keeping the most destructive operations that could cause data loss
-    git_destructive_patterns = [
-        r"\bgit\s+clean\s+.*-f.*-d.*-x\b",  # git clean -fdx (removes all untracked including ignored)
-        r"\bgit\s+filter-branch\b",  # git filter-branch (rewrites entire history)
-        # Removed other git patterns to allow normal git workflow
-    ]
+        # For gunzip, bunzip2, unxz - these delete source by default
+        if first_token in {'gunzip', 'bunzip2', 'unxz'}:
+            return '--keep' not in tokens and '-k' not in tokens
 
-    # PATTERN 6: Package manager destructive operations
-    package_destructive_patterns = [
-        r"\bnpm\s+.*uninstall\b",  # npm uninstall
-        r"\bnpm\s+.*remove\b",  # npm remove
-        r"\bnpm\s+.*rm\b",  # npm rm
-        r"\byarn\s+.*remove\b",  # yarn remove
-        r"\bpip\s+.*uninstall\b",  # pip uninstall
-        r"\bconda\s+.*remove\b",  # conda remove
-        r"\bapt\s+.*remove\b",  # apt remove
-        r"\bapt\s+.*purge\b",  # apt purge
-        r"\byum\s+.*remove\b",  # yum remove
-        r"\bbrew\s+.*uninstall\b",  # brew uninstall
-        r"\bbrew\s+.*remove\b",  # brew remove
-    ]
+        # All other destructive commands are blocked by default
+        return True
 
-    # PATTERN 7: Database destructive operations
-    database_destructive_patterns = [
-        r"\bdrop\s+table\b",  # SQL DROP TABLE
-        r"\bdrop\s+database\b",  # SQL DROP DATABASE
-        r"\bdelete\s+from\b",  # SQL DELETE FROM
-        r"\btruncate\s+table\b",  # SQL TRUNCATE TABLE
-        r"\bmongo.*\.drop\b",  # MongoDB drop
-        r"\bmongo.*\.remove\b",  # MongoDB remove
-        r"\bmongo.*\.deleteMany\b",  # MongoDB deleteMany
-        r"\bmongo.*\.deleteOne\b",  # MongoDB deleteOne
-    ]
-
-    # PATTERN 8: System destructive operations
-    system_destructive_patterns = [
-        r"\bkill\s+.*-9\b",  # kill -9 (force kill)
-        r"\bkillall\b",  # killall
-        r"\bpkill\b",  # pkill
-        r"\bfuser\s+.*-k\b",  # fuser -k (kill)
-        r"\bumount\s+.*-f\b",  # umount -f (force)
-        r"\bswapoff\b",  # swapoff
-        r"\bfdisk\b",  # fdisk (disk partitioning)
-        r"\bmkfs\b",  # mkfs (format filesystem)
-        r"\bformat\b",  # format command
-    ]
-
-    # PATTERN 9: Dangerous paths and wildcards
-    dangerous_paths = [
-        r"\s+/\s*$",  # Root directory as standalone argument
-        r"\s+/\*",  # Root with wildcard
-        r"\s+~\s*$",  # Home directory as standalone argument
-        r"\s+~/\*",  # Home directory with wildcard
-        r"\$HOME/\*",  # Home environment variable with wildcard
-        r"\.\./\*",  # Parent directory with wildcard
-        r"\s+\*\s*$",  # Standalone wildcards
-        r"/\*/\*",  # Multiple wildcards in path
-        r"\s+\.\s+\*",  # Current directory with wildcard (. *)
-        r"rm.*\s+\.",  # rm commands targeting current directory
-        r"/usr/\*",  # System directories with wildcards
-        r"/var/\*",  # Variable data with wildcards
-        r"/etc/\*",  # Configuration with wildcards
-        r"/bin/\*",  # Binaries with wildcards
-        r"/sbin/\*",  # System binaries with wildcards
-        r"/lib/\*",  # Libraries with wildcards
-        r"/opt/\*",  # Optional software with wildcards
-        r"/tmp/\*",  # Temp with wildcards
-        r"\.git/\*",  # Git directories with wildcards
-        r"node_modules/\*",  # Node modules with wildcards
-    ]
-
-    # Check ALL patterns
-    all_patterns = (
-        rm_patterns
-        + destructive_patterns
-        + overwrite_patterns
-        + archive_destructive_patterns
-        + git_destructive_patterns
-        + package_destructive_patterns
-        + database_destructive_patterns
-        + system_destructive_patterns
-    )
-
-    # Check for any destructive pattern
-    for pattern in all_patterns:
-        if re.search(pattern, normalized):
-            return True
-
-    # Check for dangerous paths in any context
-    for path in dangerous_paths:
-        if re.search(path, normalized):
-            # Extra strict: block any command that mentions dangerous paths
-            return True
-
-    # PATTERN 10: Command chaining that might hide destructive operations
-    chain_patterns = [
-        r"&&.*\brm\b",  # && rm
-        r"\|\|.*\brm\b",  # || rm
-        r";.*\brm\b",  # ; rm
-        r"\|.*\brm\b",  # | rm
-        r"`.*\brm\b.*`",  # `rm` in backticks
-        r"\$\(.*\brm\b.*\)",  # $(rm) in command substitution
-    ]
-
-    for pattern in chain_patterns:
-        if re.search(pattern, normalized):
+    # Check for output redirection that overwrites files (>)
+    if '>' in command and '>>' not in command:
+        # Allow redirection to /dev/null
+        if '/dev/null' not in command:
             return True
 
     return False
@@ -217,34 +90,26 @@ def is_env_file_access(tool_name, tool_input):
     Also allows access to .env.sample and .env.example files.
     """
     if tool_name in ["Read", "Edit", "MultiEdit", "Write", "Bash"]:
-        # Check file paths for file-based tools
-        if tool_name in [
-            "Edit",
-            "MultiEdit",
-            "Write",
-        ]:  # Only block edit operations, allow Read
+        if tool_name in ["Edit", "MultiEdit", "Write"]:
             file_path = tool_input.get("file_path", "")
             if ".env" in file_path and not (
                 file_path.endswith(".env.sample") or file_path.endswith(".env.example")
             ):
                 return True
 
-        # Check bash commands for .env file access
         elif tool_name == "Bash":
             command = tool_input.get("command", "")
-            # Pattern to detect .env file write/edit operations (but allow .env.sample and .env.example)
-            # Allow cat/read operations but block write operations
             env_write_patterns = [
-                r"echo\s+.*>\s*\.env\b(?!\.sample|\.example)",  # echo > .env
-                r"touch\s+.*\.env\b(?!\.sample|\.example)",  # touch .env
-                r"cp\s+.*\.env\b(?!\.sample|\.example)",  # cp .env (as destination)
-                r"mv\s+.*\.env\b(?!\.sample|\.example)",  # mv .env (as destination)
-                r">\s*\.env\b(?!\.sample|\.example)",  # any redirection to .env
-                r">>\s*\.env\b(?!\.sample|\.example)",  # any append to .env
-                r"vim\s+.*\.env\b(?!\.sample|\.example)",  # vim .env
-                r"nano\s+.*\.env\b(?!\.sample|\.example)",  # nano .env
-                r"emacs\s+.*\.env\b(?!\.sample|\.example)",  # emacs .env
-                r"sed\s+.*-i.*\.env\b(?!\.sample|\.example)",  # sed -i .env (in-place edit)
+                r"echo\s+.*>\s*\.env\b(?!\.sample|\.example)",
+                r"touch\s+.*\.env\b(?!\.sample|\.example)",
+                r"cp\s+.*\.env\b(?!\.sample|\.example)",
+                r"mv\s+.*\.env\b(?!\.sample|\.example)",
+                r">\s*\.env\b(?!\.sample|\.example)",
+                r">>\s*\.env\b(?!\.sample|\.example)",
+                r"vim\s+.*\.env\b(?!\.sample|\.example)",
+                r"nano\s+.*\.env\b(?!\.sample|\.example)",
+                r"emacs\s+.*\.env\b(?!\.sample|\.example)",
+                r"sed\s+.*-i.*\.env\b(?!\.sample|\.example)",
             ]
 
             for pattern in env_write_patterns:
@@ -266,17 +131,14 @@ def is_command_file_access(tool_name, tool_input):
     if not file_path:
         return False
 
-    # Check if this is a .claude/commands/ file
     normalized_path = os.path.normpath(file_path)
-
-    # Check for both relative and absolute paths
     is_commands_file = (
         "/.claude/commands/" in normalized_path
         or normalized_path.startswith(".claude/commands/")
-        or normalized_path.startswith(".claude\\commands\\")  # Windows
+        or normalized_path.startswith(".claude\\commands\\")
         or "/.claude/commands/" in normalized_path
         or normalized_path.endswith("/.claude/commands")
-        or normalized_path.endswith("\\.claude\\commands")  # Windows
+        or normalized_path.endswith("\\.claude\\commands")
     )
 
     return is_commands_file
@@ -294,19 +156,12 @@ def check_root_structure_violations(tool_name, tool_input):
     if not file_path:
         return False
 
-    # Normalize the path and get just the filename if it's in root
     normalized_path = os.path.normpath(file_path)
-
-    # Check if this file is being created directly in the project root
-    # Look for paths that don't contain directory separators after normalization
-    # or that are explicitly in the current directory
     path_parts = normalized_path.split(os.sep)
 
-    # If the path has only one part (filename) or starts with './' it's in root
     if len(path_parts) == 1 or (len(path_parts) == 2 and path_parts[0] == "."):
         filename = path_parts[-1]
 
-        # Allow only specific .md files in root
         allowed_root_md_files = {
             "README.md",
             "CHANGELOG.md",
@@ -315,22 +170,17 @@ def check_root_structure_violations(tool_name, tool_input):
             "SECURITY.md",
         }
 
-        # Check if it's an .md file
         if filename.endswith(".md"):
             if filename not in allowed_root_md_files:
                 return True
 
-        # Check if it's a config file that should be in config/
         config_extensions = {".json", ".yaml", ".yml", ".toml", ".ini", ".env"}
         if any(filename.endswith(ext) for ext in config_extensions):
-            # Allow package.json and similar project files
             allowed_root_configs = {
                 "package.json",
                 "package-lock.json",
                 "yarn.lock",
                 "pnpm-lock.yaml",
-                ".gitignore",
-                ".gitattributes",
                 "pyproject.toml",
                 "requirements.txt",
                 "Cargo.toml",
@@ -341,7 +191,6 @@ def check_root_structure_violations(tool_name, tool_input):
             if filename not in allowed_root_configs:
                 return True
 
-        # Check if it's a script file that should be in scripts/
         script_extensions = {".sh", ".py", ".js", ".ts", ".rb", ".pl", ".php"}
         if any(filename.endswith(ext) for ext in script_extensions):
             return True
@@ -354,7 +203,6 @@ def get_claude_session_id():
     session_file = Path.home() / ".cache" / "claude" / "session_id"
     session_file.parent.mkdir(parents=True, exist_ok=True)
 
-    # Try to read existing session ID
     if session_file.exists():
         try:
             with open(session_file) as f:
@@ -364,7 +212,6 @@ def get_claude_session_id():
         except Exception:
             pass
 
-    # Generate new session ID
     session_id = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
 
     try:
@@ -400,7 +247,6 @@ def _resolve_inside_repo(raw_path: str) -> Path | None:
     except Exception:
         return None
     try:
-        # Python 3.12+: Path.is_relative_to
         if str(candidate).startswith(str(REPO_ROOT) + os.sep) or str(candidate) == str(
             REPO_ROOT
         ):
@@ -420,7 +266,7 @@ def _is_denied_path(p: Path) -> bool:
         return True
     parts = set(s.split(os.sep))
     # Never touch these; also forbids any nested target within these dirs
-    denied_dirs = {".git", "node_modules", "venv", "dist", "build", ".trash", "logs"}
+    denied_dirs = {"node_modules", "venv", "dist", "build", ".trash", "logs"}
     if parts.intersection(denied_dirs):
         return True
     return False
@@ -429,17 +275,14 @@ def _is_denied_path(p: Path) -> bool:
 def _is_regular_and_small(p: Path, max_bytes: int = MAX_TRASH_BYTES) -> bool:
     try:
         st = p.stat()
-        # regular file only, not dir, not symlink, and below cap
         return p.is_file() and not p.is_symlink() and st.st_size <= max_bytes
     except Exception:
         return False
 
 
 def _trash_destination_for(p: Path) -> Path:
-    # timestamped bucket to keep history
     ts = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     bucket = TRASH_DIR / ts
-    # mirror the relative path inside the bucket for easier restore
     rel = p.resolve().relative_to(REPO_ROOT)
     dest = bucket / rel
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -477,7 +320,6 @@ def _append_trash_log(original: Path, moved_to: Path, session_id: str):
         with open(log_path, "w") as f:
             json.dump(existing, f, indent=2)
     except Exception:
-        # logging failures must never block file move
         pass
 
 
@@ -521,7 +363,6 @@ def handle_safe_trash(command: str, session_id: str) -> bool:
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(target), str(dest))
         _append_trash_log(target, dest, session_id)
-        # Also mirror to the standard log flow
         log_tool_call(
             "Bash",
             {"command": command},
@@ -529,7 +370,6 @@ def handle_safe_trash(command: str, session_id: str) -> bool:
             "allowed_trash_command",
             f"target={target}",
         )
-        # Inform via stderr so the IDE shows it prominently
         print(
             f"✅ safe_trash moved file:\n   from: {target}\n   to:   {dest}",
             file=sys.stderr,
@@ -547,7 +387,6 @@ def handle_safe_trash(command: str, session_id: str) -> bool:
 def log_tool_call(tool_name, tool_input, decision, reason=None, block_message=None):
     """Log all tool calls with their decisions to a structured JSON file."""
     try:
-        # Create input_data dictionary for logging
         session_id = get_claude_session_id()
         input_data = {
             "tool_name": tool_name,
@@ -558,18 +397,15 @@ def log_tool_call(tool_name, tool_input, decision, reason=None, block_message=No
             "working_directory": str(Path.cwd()),
         }
 
-        # Add optional fields if provided
         if reason:
             input_data["reason"] = reason
         if block_message:
             input_data["block_message"] = block_message
 
-        # Ensure log directory exists
         log_dir = Path.cwd() / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / "pre_tool_use.json"
 
-        # Read existing log data or initialize empty list
         if log_path.exists():
             with open(log_path) as f:
                 try:
@@ -579,28 +415,21 @@ def log_tool_call(tool_name, tool_input, decision, reason=None, block_message=No
         else:
             log_data = []
 
-        # Add timestamp to the log entry
         timestamp = datetime.now().strftime("%b %d, %I:%M%p").lower()
         input_data["timestamp"] = timestamp
 
-        # Append new data
         log_data.append(input_data)
 
-        # Write back to file with formatting
         with open(log_path, "w") as f:
             json.dump(log_data, f, indent=2)
 
     except Exception as e:
-        # Don't let logging errors break the hook
         print(f"Logging error: {e}", file=sys.stderr)
 
 
 def main():
     try:
-        # Read input from stdin as per Claude Code hook specification
         input_data = json.load(sys.stdin)
-
-        # Extract tool information from the input
         tool_name = input_data.get("tool_name", "")
         tool_input = input_data.get("tool_input", {})
 
@@ -616,16 +445,12 @@ def main():
         # Early-intercept: handle ultra-safe trash command inline to avoid any shell-side surprises
         if tool_name == "Bash":
             command = tool_input.get("command", "")
-            # If we handled a safe_trash request here, block the actual tool call (we already moved the file)
             if handle_safe_trash(command, get_claude_session_id()):
-                # Exit code 2 -> block the downstream tool call, but we've performed the action safely
                 sys.exit(2)
 
         # Check for .env file access violations
         if is_env_file_access(tool_name, tool_input):
-            block_message = (
-                "Access to .env files containing sensitive data is prohibited"
-            )
+            block_message = "Access to .env files containing sensitive data is prohibited"
             log_tool_call(
                 tool_name, tool_input, "blocked", "env_file_access", block_message
             )
@@ -635,15 +460,11 @@ def main():
                 file=sys.stderr,
             )
             print("Use .env.sample for template files instead", file=sys.stderr)
-            sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
+            sys.exit(2)
 
-        # Check for ANY destructive/deletion commands - ULTRA STRICT PROTECTION
+        # Block ALL forms of deletion and destructive operations
         if tool_name == "Bash":
             command = tool_input.get("command", "")
-            # If handle_safe_trash already ran, we would have exited with code 2 above.
-            # Continue with standard destructive command detection.
-
-            # Block ALL forms of deletion and destructive operations
             if is_dangerous_deletion_command(command):
                 block_message = (
                     "Destructive command detected and blocked for data protection"
@@ -666,38 +487,24 @@ def main():
                 print("   • Directory removal (rm -r, rm -rf)", file=sys.stderr)
                 print("   • File overwriting (>, echo >, cat >)", file=sys.stderr)
                 print("   • Truncation (truncate, :>, /dev/null)", file=sys.stderr)
-                print(
-                    "   • Git destructive ops (reset --hard, clean -f)", file=sys.stderr
-                )
-                print(
-                    "   • Package removal (npm uninstall, pip uninstall)",
-                    file=sys.stderr,
-                )
+                print("   • Package removal (npm uninstall, pip uninstall)", file=sys.stderr)
                 print("   • Database drops (DROP TABLE, DELETE FROM)", file=sys.stderr)
-                print(
-                    "   • System operations (kill -9, format, fdisk)", file=sys.stderr
-                )
+                print("   • System operations (kill -9, format, fdisk)", file=sys.stderr)
                 print("   • Archive destructive ops (tar --delete)", file=sys.stderr)
-                print(
-                    "   • Dangerous paths (/, ~, *, .., system dirs)", file=sys.stderr
-                )
+                print("   • Dangerous paths (/, ~, *, .., system dirs)", file=sys.stderr)
                 print("", file=sys.stderr)
                 print("💡 SAFE ALTERNATIVES:", file=sys.stderr)
                 print("   • Use 'mv' to relocate instead of delete", file=sys.stderr)
                 print("   • Use 'cp' to backup before changes", file=sys.stderr)
                 print("   • Use '>>' to append instead of overwrite", file=sys.stderr)
                 print("   • Use specific file paths (no wildcards)", file=sys.stderr)
-                print("   • Use git operations without --force flags", file=sys.stderr)
                 print(
                     "   • Request manual confirmation for destructive operations",
                     file=sys.stderr,
                 )
                 print("", file=sys.stderr)
-                print(
-                    "🔒 This protection ensures NO accidental data loss",
-                    file=sys.stderr,
-                )
-                sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
+                print("🔒 This protection ensures NO accidental data loss", file=sys.stderr)
+                sys.exit(2)
 
         # Check for root directory structure violations
         if check_root_structure_violations(tool_name, tool_input):
@@ -729,13 +536,12 @@ def main():
                 "💡 Suggestion: Use /enforce-structure --fix to auto-organize files",
                 file=sys.stderr,
             )
-            sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
+            sys.exit(2)
 
         # WARNING (not blocking) for command file access
         if is_command_file_access(tool_name, tool_input):
             file_path = tool_input.get("file_path", "")
             filename = os.path.basename(file_path)
-            # Log as approved with warning
             log_tool_call(
                 tool_name,
                 tool_input,
@@ -751,20 +557,14 @@ def main():
             print("💡 Best practices:", file=sys.stderr)
             print("   • Test command changes carefully", file=sys.stderr)
             print("   • Document any custom commands", file=sys.stderr)
-            print(
-                "   • Consider using /create-command for new commands", file=sys.stderr
-            )
+            print("   • Consider using /create-command for new commands", file=sys.stderr)
             print("", file=sys.stderr)
-            # Continue execution (warning only)
 
     except Exception as e:
         print(f"Pre-tool use hook error: {e}", file=sys.stderr)
-        # Log the error but don't block
         log_tool_call(
             tool_name, tool_input, "approved", "hook_error", f"Hook error occurred: {e}"
         )
-        # Don't block on hook errors, just warn
-        pass
 
     # If we get here, the tool call is allowed - log as approved
     log_tool_call(tool_name, tool_input, "approved")

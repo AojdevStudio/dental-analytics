@@ -15,7 +15,12 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from apps.backend.types import ConfigData, LocationConfig, SheetConfig
+from core.models.config_models import (
+    AppConfig,
+    DataProviderConfig,
+    LocationSettings,
+    SheetsConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +77,8 @@ class SheetsProvider:
         # Validate all aliases on startup
         self._validate_configuration()
 
-    def _load_config(self, config_path: Path | str | None) -> ConfigData:
-        """Load and validate sheets configuration."""
+    def _load_config(self, config_path: Path | str | None) -> DataProviderConfig:
+        """Load and validate sheets configuration into Pydantic models."""
         if config_path is None:
             config_path = "config/sheets.yml"
 
@@ -86,26 +91,59 @@ class SheetsProvider:
                 # YAML ingestion - OK to use dict[str, Any] for external source
                 raw_config: dict[str, Any] = yaml.safe_load(f)
 
-            # Validate required sections
-            required_sections = ["sheets", "locations", "provider_config"]
-            for section in required_sections:
-                if section not in raw_config:
-                    raise ConfigurationError(f"Missing required section: {section}")
+            # Build Pydantic models from YAML structure
+            locations: dict[str, LocationSettings] = {}
+
+            for loc_name, loc_data in raw_config.get("locations", {}).items():
+                # Each location has eod and front sheet references
+                eod_alias = loc_data.get("eod")
+                front_alias = loc_data.get("front")
+
+                # Get sheet configs from sheets section
+                sheets_section = raw_config.get("sheets", {})
+                eod_sheet_data = sheets_section.get(eod_alias, {})
+                front_sheet_data = sheets_section.get(front_alias, {})
+
+                locations[loc_name] = LocationSettings(
+                    eod_sheet=SheetsConfig(
+                        spreadsheet_id=eod_sheet_data.get("spreadsheet_id", ""),
+                        range_name=eod_sheet_data.get("range", ""),
+                        sheet_name=eod_alias,
+                    ),
+                    front_sheet=SheetsConfig(
+                        spreadsheet_id=front_sheet_data.get("spreadsheet_id", ""),
+                        range_name=front_sheet_data.get("range", ""),
+                        sheet_name=front_alias,
+                    ),
+                )
+
+            provider_section = raw_config.get("provider_config", {})
+            config = DataProviderConfig(
+                locations=locations,
+                credentials_path=provider_section.get(
+                    "credentials_path", "config/credentials.json"
+                ),
+                scopes=provider_section.get(
+                    "scopes",
+                    ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+                ),
+            )
 
             logger.info(
-                f"Loaded configuration with {len(raw_config['sheets'])} sheet aliases"
+                f"Loaded Pydantic configuration with {len(locations)} locations"
             )
-            # After validation, return as ConfigData
-            return cast(ConfigData, raw_config)
+            return config
 
         except yaml.YAMLError as e:
             raise ConfigurationError(f"Invalid YAML configuration: {e}") from e
+        except Exception as e:
+            raise ConfigurationError(f"Failed to parse configuration: {e}") from e
 
     def _init_google_service(self) -> Any:
         """Initialize Google Sheets API service."""
-        provider_config = self.config["provider_config"]
-        credentials_path = provider_config["credentials_path"]
-        scopes = provider_config["scopes"]
+        # Access Pydantic model attributes directly
+        credentials_path = self.config.credentials_path
+        scopes = self.config.scopes
 
         if not Path(credentials_path).exists():
             raise ConfigurationError(f"Credentials file not found: {credentials_path}")
@@ -122,41 +160,56 @@ class SheetsProvider:
             raise ConfigurationError(f"Failed to initialize Google service: {e}") from e
 
     def _validate_configuration(self) -> None:
-        """Validate all sheet aliases are properly configured."""
-        sheets_config = self.config["sheets"]
-
-        for alias, sheet_config in sheets_config.items():
-            required_fields = ["spreadsheet_id", "range"]
-            for field in required_fields:
-                if field not in sheet_config:
-                    raise ConfigurationError(
-                        f"Sheet alias '{alias}' missing required field: {field}"
-                    )
-
-        logger.info(f"Configuration validation passed for {len(sheets_config)} aliases")
+        """Validate all location configurations are properly set up."""
+        # Pydantic models are self-validating at instantiation
+        # This method now just logs successful configuration
+        location_count = len(self.config.locations)
+        logger.info(
+            f"Configuration validation passed for {location_count} locations "
+            f"(Pydantic models validated at construction)"
+        )
 
     def fetch(self, alias: str) -> pd.DataFrame | None:
-        """Fetch data by alias.
+        """Fetch data by alias (location_datatype format).
 
         Args:
             alias: Sheet alias (e.g., 'baytown_eod', 'humble_front')
+                   Format: {location}_{datatype}
 
         Returns:
             DataFrame with sheet data or None if fetch fails
         """
-        if not self.validate_alias(alias):
-            logger.error(f"Invalid alias: {alias}")
+        # Parse alias into location and data type
+        parts = alias.split("_")
+        if len(parts) != 2:
+            logger.error(f"Invalid alias format: {alias}. Expected 'location_datatype'")
             return None
 
-        sheet_config = self.config["sheets"][alias]
-        spreadsheet_id = sheet_config["spreadsheet_id"]
-        range_name = sheet_config["range"]
+        location, data_type = parts[0], parts[1]
+
+        if location not in self.config.locations:
+            logger.error(f"Unknown location: {location}")
+            return None
+
+        location_config = self.config.locations[location]
+
+        # Get appropriate sheet config based on data type
+        if data_type == "eod":
+            sheet_config = location_config.eod_sheet
+        elif data_type == "front":
+            sheet_config = location_config.front_sheet
+        else:
+            logger.error(f"Unknown data type: {data_type}")
+            return None
 
         try:
             result = (
                 self.service.spreadsheets()
                 .values()
-                .get(spreadsheetId=spreadsheet_id, range=range_name)
+                .get(
+                    spreadsheetId=sheet_config.spreadsheet_id,
+                    range=sheet_config.range_name,
+                )
                 .execute()
             )
 
@@ -182,12 +235,21 @@ class SheetsProvider:
             return None
 
     def list_available_aliases(self) -> list[str]:
-        """Get list of available sheet aliases."""
-        return list(self.config["sheets"].keys())
+        """Get list of available sheet aliases in location_datatype format."""
+        aliases = []
+        for location in self.config.locations:
+            aliases.append(f"{location}_eod")
+            aliases.append(f"{location}_front")
+        return aliases
 
     def validate_alias(self, alias: str) -> bool:
-        """Check if alias exists in configuration."""
-        return alias in self.config["sheets"]
+        """Check if alias exists in configuration (location_datatype format)."""
+        parts = alias.split("_")
+        if len(parts) != 2:
+            return False
+
+        location, data_type = parts[0], parts[1]
+        return location in self.config.locations and data_type in ["eod", "front"]
 
     def get_location_aliases(self, location: str, data_type: str) -> str | None:
         """Get alias for location and data type combination.
@@ -197,61 +259,54 @@ class SheetsProvider:
             data_type: Data type ('eod' or 'front')
 
         Returns:
-            Alias string or None if not found
+            Alias string (location_datatype format) or None if not found
         """
-        locations_config = self.config.get("locations", {})
-        location_config_raw = locations_config.get(location.lower())
-
-        if not location_config_raw:
+        if location.lower() not in self.config.locations:
             logger.warning(f"Location not configured: {location}")
             return None
 
-        # Use dict[str, Any] for runtime dynamic key access
-        location_dict = cast(dict[str, Any], location_config_raw)
-
-        if data_type not in location_dict:
-            logger.warning(
-                f"Data type '{data_type}' not configured for location '{location}'"
-            )
+        if data_type not in ["eod", "front"]:
+            logger.warning(f"Invalid data type: {data_type}")
             return None
 
-        return str(location_dict[data_type])
+        return f"{location.lower()}_{data_type}"
 
-    def get_location_info(self, location: str) -> LocationConfig | None:
+    def get_location_info(self, location: str) -> LocationSettings | None:
         """Get location configuration details.
 
         Args:
             location: Location name
 
         Returns:
-            Location configuration or None if not found
+            LocationSettings Pydantic model or None if not found
         """
-        locations_config = self.config.get("locations", {})
-        location_info = locations_config.get(location.lower())
-        if location_info is None:
-            return None
-        # Cast to LocationConfig for return type
-        return location_info
+        return self.config.locations.get(location.lower())
 
-    def get_spreadsheet_info(self, alias: str) -> SheetConfig | None:
+    def get_spreadsheet_info(self, alias: str) -> SheetsConfig | None:
         """Get spreadsheet details for an alias.
 
         Args:
-            alias: Sheet alias
+            alias: Sheet alias (location_datatype format)
 
         Returns:
-            Dictionary with spreadsheet_id and range, or None if not found
+            SheetsConfig Pydantic model or None if not found
         """
         if not self.validate_alias(alias):
             return None
 
-        sheet_config = self.config["sheets"][alias]
-        # Construct SheetConfig explicitly
-        result: SheetConfig = {
-            "spreadsheet_id": sheet_config["spreadsheet_id"],
-            "range": sheet_config["range"],
-        }
-        return result
+        parts = alias.split("_")
+        location, data_type = parts[0], parts[1]
+
+        location_config = self.config.locations.get(location)
+        if not location_config:
+            return None
+
+        if data_type == "eod":
+            return location_config.eod_sheet
+        elif data_type == "front":
+            return location_config.front_sheet
+        else:
+            return None
 
 
 def build_sheets_provider(config_path: Path | str | None = None) -> SheetsProvider:

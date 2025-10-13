@@ -129,6 +129,10 @@ ignore = [
 "test_*.py" = ["S101", "T201", "ARG001"]
 "tests/*.py" = ["S101", "T201", "ARG001"]
 ".old-files/*" = ["ALL"]  # Exclude archived obsolete files from linting
+# Story 3.2 migration - allow unused imports during Pydantic migration
+"apps/backend/chart_data.py" = ["F401"]  # Unused imports during migration
+"apps/backend/data_providers.py" = ["F401"]  # Unused imports during migration
+"apps/backend/metrics.py" = ["F401"]  # Unused imports during migration
 
 [tool.mypy]
 python_version = "3.10"
