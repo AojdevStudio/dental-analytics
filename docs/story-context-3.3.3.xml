@@ -1,0 +1,247 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.3</storyId>
+    <title>Testing, Cleanup & Documentation</title>
+    <status>Approved</status>
+    <generatedAt>2025-10-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/ossieirondi/Projects/unified-dental/dental-analytics/.conductor/da-nang/docs/stories/story-3.3-testing-cleanup-documentation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer maintaining the dental analytics backend</asA>
+    <iWant>all tests updated to use Pydantic models, TypedDicts deleted, and migration documented</iWant>
+    <soThat>Phase 1 is complete with a single, validated type system and comprehensive documentation</soThat>
+    <tasks>
+      <task id="1" status="pending">Pre-Migration Validation (15 min)</task>
+      <task id="2" status="pending">Update test_chart_data.py (1 hour)</task>
+      <task id="3" status="pending">Update test_metrics.py (45 min)</task>
+      <task id="4" status="pending">Update test_data_sources.py (30 min)</task>
+      <task id="5" status="pending">Update Remaining Test Files (1 hour)</task>
+      <task id="6" status="pending">Cleanup apps/backend/types.py (30 min)</task>
+      <task id="7" status="pending">Final Validation (1 hour)</task>
+      <task id="8" status="pending">Documentation Updates (1 hour)</task>
+      <task id="9" status="pending">Git & Story Completion (15 min)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">tests/test_chart_data.py updated to use Pydantic attribute access</criterion>
+    <criterion id="AC2">tests/test_metrics.py updated to verify simplified wrapper</criterion>
+    <criterion id="AC3">tests/test_data_sources.py updated for Pydantic config models</criterion>
+    <criterion id="AC4">tests/test_advanced_charts.py updated for Pydantic</criterion>
+    <criterion id="AC5">tests/test_chart_integration.py updated for Pydantic</criterion>
+    <criterion id="AC6">tests/test_plotly_charts.py updated for Pydantic</criterion>
+    <criterion id="AC7">All 321+ tests passing after migration</criterion>
+    <criterion id="AC8">Test coverage maintained at ≥90% for backend modules</criterion>
+    <criterion id="AC9">apps/backend/types.py reduced to 4 historical TypedDicts only</criterion>
+    <criterion id="AC10">All 13 chart/config TypedDicts deleted from types.py</criterion>
+    <criterion id="AC11">Clear Phase 3 migration markers added to remaining TypedDicts</criterion>
+    <criterion id="AC12">File size reduced from ~500 lines to ~80 lines</criterion>
+    <criterion id="AC13">Full test suite passes</criterion>
+    <criterion id="AC14">Coverage ≥90% for all backend modules</criterion>
+    <criterion id="AC15">MyPy type checking passes (zero TypedDict-related errors)</criterion>
+    <criterion id="AC16">Ruff linting passes (zero warnings)</criterion>
+    <criterion id="AC17">CLAUDE.md updated with Phase 1 completion status</criterion>
+    <criterion id="AC18">Migration roadmap updated in backend-migration-roadmap.md</criterion>
+    <criterion id="AC19">Migration summary documented with baseline comparisons</criterion>
+    <criterion id="AC20">Manual validation checklist completed and documented</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>specs/phase-1-typeddict-elimination.md</path>
+        <title>Phase 1: TypedDict Elimination Specification</title>
+        <section>Test Migration Patterns</section>
+        <snippet>Complete migration spec including test patterns for dictionary → attribute access, type assertions, and error checking</snippet>
+      </doc>
+      <doc>
+        <path>docs/roadmap/backend-migration-roadmap.md</path>
+        <title>Backend Migration Roadmap</title>
+        <section>Phase 1 Status and Targets</section>
+        <snippet>Phase 1 objectives, success criteria, and baseline comparisons for TypedDict elimination</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/backend/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Coverage Goals and Test Organization</section>
+        <snippet>≥90% coverage requirements, pytest configuration, test organization patterns</snippet>
+      </doc>
+      <doc>
+        <path>CLAUDE.md</path>
+        <title>Project Configuration</title>
+        <section>Strict Typing with Narrow Expectations</section>
+        <snippet>Type system conventions, Pydantic model usage, TypedDict migration status</snippet>
+      </doc>
+      <doc>
+        <path>core/models/chart_models.py</path>
+        <title>Chart Pydantic Models</title>
+        <section>ProcessedChartData, ChartStats, ChartConfig models</section>
+        <snippet>11 Pydantic models replacing chart TypedDicts created in Story 3.1</snippet>
+      </doc>
+      <doc>
+        <path>core/models/config_models.py</path>
+        <title>Configuration Pydantic Models</title>
+        <section>DataProviderConfig, SheetsConfig, LocationSettings models</section>
+        <snippet>4 Pydantic models replacing config TypedDicts created in Story 3.1</snippet>
+      </doc>
+      <doc>
+        <path>core/models/kpi_models.py</path>
+        <title>KPI Pydantic Models</title>
+        <section>KPIResponse, KPIValue, CalculationResult models</section>
+        <snippet>Existing KPI models that tests should use for validation</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>tests/test_chart_data.py</path>
+        <kind>test</kind>
+        <symbol>test_process_production_data_for_chart</symbol>
+        <lines>30-50</lines>
+        <reason>Primary chart test file - needs dictionary access → Pydantic attribute access conversion</reason>
+      </file>
+      <file>
+        <path>tests/test_metrics.py</path>
+        <kind>test</kind>
+        <symbol>test_get_all_kpis</symbol>
+        <lines>15-40</lines>
+        <reason>Metrics wrapper tests - needs to verify KPIResponse Pydantic returns</reason>
+      </file>
+      <file>
+        <path>tests/test_data_sources.py</path>
+        <kind>test</kind>
+        <symbol>test_sheets_config_validation</symbol>
+        <lines>20-35</lines>
+        <reason>Config tests - needs Pydantic validation testing</reason>
+      </file>
+      <file>
+        <path>tests/test_advanced_charts.py</path>
+        <kind>test</kind>
+        <symbol>test_chart_statistics</symbol>
+        <lines>25-45</lines>
+        <reason>Advanced chart tests - needs Pydantic attribute access</reason>
+      </file>
+      <file>
+        <path>tests/test_chart_integration.py</path>
+        <kind>test</kind>
+        <symbol>test_end_to_end_chart_flow</symbol>
+        <lines>30-60</lines>
+        <reason>Integration tests - needs Pydantic model validation</reason>
+      </file>
+      <file>
+        <path>tests/test_plotly_charts.py</path>
+        <kind>test</kind>
+        <symbol>test_plotly_chart_generation</symbol>
+        <lines>15-35</lines>
+        <reason>Plotly tests - needs Pydantic attribute access</reason>
+      </file>
+      <file>
+        <path>apps/backend/types.py</path>
+        <kind>model</kind>
+        <symbol>ChartConfig, ProcessedChartData (13 TypedDicts total)</symbol>
+        <lines>1-500</lines>
+        <reason>Target for cleanup - reduce to 4 historical TypedDicts (~80 lines)</reason>
+      </file>
+      <file>
+        <path>apps/backend/metrics.py</path>
+        <kind>service</kind>
+        <symbol>get_all_kpis, get_kpi_service</symbol>
+        <lines>1-50</lines>
+        <reason>Simplified wrapper - tests need to verify Pydantic returns</reason>
+      </file>
+      <file>
+        <path>core/models/chart_models.py</path>
+        <kind>model</kind>
+        <symbol>ProcessedChartData, ChartStats, ChartConfig</symbol>
+        <lines>1-200</lines>
+        <reason>Target Pydantic models for test imports and attribute access</reason>
+      </file>
+      <file>
+        <path>core/models/config_models.py</path>
+        <kind>model</kind>
+        <symbol>SheetsConfig, DataProviderConfig, LocationSettings</symbol>
+        <lines>1-100</lines>
+        <reason>Target Pydantic models for config test validation</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pydantic" version=">=2.6">Runtime validation and type enforcement for models</package>
+        <package name="pandas" version=">=2.1">Data processing and analysis</package>
+        <package name="pytest" version=">=7.4.0">Test framework</package>
+        <package name="pytest-cov" version=">=4.1.0">Coverage reporting (≥90% target)</package>
+        <package name="pytest-mock" version=">=3.11.0">Mocking utilities for tests</package>
+      </python>
+      <tooling>
+        <tool name="mypy">Type checking - must pass with zero TypedDict errors</tool>
+        <tool name="ruff">Linting - must pass with zero warnings</tool>
+        <tool name="black">Code formatting</tool>
+        <tool name="uv">Package manager and task runner</tool>
+      </tooling>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <rule>All test assertions must use Pydantic attribute access (result.field) not dictionary access (result["field"])</rule>
+    <rule>Type assertions must use isinstance(result, PydanticModel) not isinstance(result, dict)</rule>
+    <rule>apps/backend/types.py must retain exactly 4 historical TypedDicts for Phase 3</rule>
+    <rule>Test coverage must remain ≥90% after all changes</rule>
+    <rule>No test deletions allowed - only updates to access patterns</rule>
+    <rule>MyPy and Ruff must pass with zero errors/warnings</rule>
+    <rule>All changes must maintain backward compatibility with existing data flow</rule>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>ProcessedChartData</name>
+      <kind>Pydantic Model</kind>
+      <signature>ProcessedChartData(dates: list[str], values: list[float], statistics: ChartStats, error: str | None)</signature>
+      <path>core/models/chart_models.py</path>
+    </interface>
+    <interface>
+      <name>KPIResponse</name>
+      <kind>Pydantic Model</kind>
+      <signature>KPIResponse(location: str, values: dict[str, float | None], availability: str)</signature>
+      <path>core/models/kpi_models.py</path>
+    </interface>
+    <interface>
+      <name>SheetsConfig</name>
+      <kind>Pydantic Model</kind>
+      <signature>SheetsConfig(spreadsheet_id: str, range_name: str)</signature>
+      <path>core/models/config_models.py</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      pytest framework with ≥90% coverage target for all backend modules (apps/backend, core, services).
+      Test organization: tests/ directory with unit/ and integration/ subdirectories.
+      Fixtures in conftest.py for shared test data (sample_eod_data, sample_front_kpi_data).
+      Quality gates: Black formatting, Ruff linting (zero warnings), MyPy type checking (zero errors).
+      Test execution: `uv run pytest --cov=apps/backend --cov=core --cov=services --cov-report=term-missing`
+      Manual validation required for: calendar boundaries, aggregation totals, date filtering, Pydantic validation.
+    </standards>
+    <locations>
+      tests/*.py - Main test files
+      tests/unit/models/ - Pydantic model tests
+      tests/unit/transformers/ - Transformer tests
+      tests/unit/business_rules/ - Validation rules tests
+      tests/integration/ - Service orchestration tests
+    </locations>
+    <ideas>
+      <test ac="AC1">Verify test_chart_data.py uses result.error not result["error"]</test>
+      <test ac="AC1">Verify test_chart_data.py uses result.statistics.total not result["statistics"]["total"]</test>
+      <test ac="AC1">Verify isinstance(result, ProcessedChartData) replaces isinstance(result, dict)</test>
+      <test ac="AC2">Verify get_all_kpis returns KPIResponse Pydantic model</test>
+      <test ac="AC2">Verify get_kpi_service() returns singleton instance</test>
+      <test ac="AC3">Verify SheetsConfig validation raises ValidationError for empty spreadsheet_id</test>
+      <test ac="AC3">Verify config attribute access uses result.spreadsheet_id not result["spreadsheet_id"]</test>
+      <test ac="AC7">Run full test suite and verify all 321+ tests pass</test>
+      <test ac="AC8">Check coverage report shows ≥90% for apps/backend, core, services</test>
+      <test ac="AC13">pytest --cov passes with no failures</test>
+      <test ac="AC15">mypy apps/backend/ core/ services/ passes with zero errors</test>
+      <test ac="AC16">ruff check passes with zero warnings</test>
+      <test ac="AC20">Manual validation: calendar boundaries, aggregation totals, date filtering, Pydantic validation</test>
+    </ideas>
+  </tests>
+</story-context>
