@@ -3,6 +3,10 @@
 Contains collection rate, new patients, case acceptance, and
 hygiene reappointment charts. Includes the main dispatcher function
 create_chart_from_data.
+
+Story 3.3.1: All chart builders updated to consume TimeSeriesData.time_series
+after Phase 1 Pydantic migration (Story 3.3). Each builder extracts dates/values
+from the time_series field, with legacy fallback for backward compatibility.
 """
 
 from __future__ import annotations
@@ -42,7 +46,7 @@ def _to_dict(chart_data: BaseModel) -> dict[str, Any]:
     Returns:
         Dictionary representation for Plotly
     """
-    return chart_data.model_dump()
+    return chart_data.model_dump()  # type: ignore[no-any-return]
 
 
 def create_collection_rate_chart(
@@ -62,17 +66,37 @@ def create_collection_rate_chart(
     if format_options is None:
         format_options = {}
 
+    # Story 3.3.1: Extract from TimeSeriesData.time_series after Pydantic migration.
+    # The format_collection_rate_chart_data() function now returns TimeSeriesData
+    # with data in the time_series field, not top-level dates/values.
+    time_series = chart_dict.get("time_series")
+
+    # Fallback for legacy data shape (safety check)
+    if not time_series and chart_dict.get("dates") and chart_dict.get("values"):
+        time_series = [
+            {"date": date, "value": value}
+            for date, value in zip(
+                chart_dict["dates"],
+                chart_dict["values"],
+                strict=False,
+            )
+        ]
+
+    if not time_series:
+        log.warning("chart.collection_rate_no_data")
+        return create_base_figure()
+
+    # Extract dates and values from Pydantic time_series
+    dates = [point["date"] for point in time_series]
+    raw_values = [point["value"] for point in time_series]
+    clean_values = [value for value in raw_values if value is not None]
+
     log.info(
         "chart.collection_rate_creation_started",
-        data_points=len(chart_dict.get("dates", [])),
+        data_points=len(dates),
     )
 
     fig = create_base_figure()
-
-    # Data validation
-    dates = chart_dict.get("dates", [])
-    raw_values = chart_dict.get("values", [])
-    clean_values = [value for value in raw_values if value is not None]
 
     if not dates or not clean_values:
         log.warning("chart.collection_rate_no_data")
@@ -175,16 +199,36 @@ def create_new_patients_chart(
     if format_options is None:
         format_options = {}
 
+    # Story 3.3.1: Extract from TimeSeriesData.time_series after Pydantic migration.
+    # The format_new_patients_chart_data() function now returns TimeSeriesData
+    # with data in the time_series field, not top-level dates/values.
+    time_series = chart_dict.get("time_series")
+
+    # Fallback for legacy data shape (safety check)
+    if not time_series and chart_dict.get("dates") and chart_dict.get("values"):
+        time_series = [
+            {"date": date, "value": value}
+            for date, value in zip(
+                chart_dict["dates"],
+                chart_dict["values"],
+                strict=False,
+            )
+        ]
+
+    if not time_series:
+        log.warning("chart.new_patients_no_data")
+        return create_base_figure()
+
+    # Extract dates and values from Pydantic time_series
+    dates = [point["date"] for point in time_series]
+    values = [point["value"] for point in time_series]
+
     log.info(
         "chart.new_patients_creation_started",
-        data_points=len(chart_dict.get("dates", [])),
+        data_points=len(dates),
     )
 
     fig = create_base_figure()
-
-    # Data validation
-    dates = chart_dict.get("dates", [])
-    values = chart_dict.get("values", [])
 
     if not dates or not values:
         log.warning("chart.new_patients_no_data")
@@ -266,17 +310,37 @@ def create_case_acceptance_chart(
     if format_options is None:
         format_options = {}
 
+    # Story 3.3.1: Extract from TimeSeriesData.time_series after Pydantic migration.
+    # The format_case_acceptance_chart_data() function now returns TimeSeriesData
+    # with data in the time_series field, not top-level dates/values.
+    time_series = chart_dict.get("time_series")
+
+    # Fallback for legacy data shape (safety check)
+    if not time_series and chart_dict.get("dates") and chart_dict.get("values"):
+        time_series = [
+            {"date": date, "value": value}
+            for date, value in zip(
+                chart_dict["dates"],
+                chart_dict["values"],
+                strict=False,
+            )
+        ]
+
+    if not time_series:
+        log.warning("chart.case_acceptance_no_data")
+        return create_base_figure()
+
+    # Extract dates and values from Pydantic time_series
+    dates = [point["date"] for point in time_series]
+    raw_values = [point["value"] for point in time_series]
+    values = [value for value in raw_values if value is not None]
+
     log.info(
         "chart.case_acceptance_creation_started",
-        data_points=len(chart_dict.get("dates", [])),
+        data_points=len(dates),
     )
 
     fig = create_base_figure()
-
-    # Data validation
-    dates = chart_dict.get("dates", [])
-    raw_values = chart_dict.get("values", [])
-    values = [value for value in raw_values if value is not None]
 
     if not dates or not values:
         log.warning("chart.case_acceptance_no_data")
@@ -365,17 +429,37 @@ def create_hygiene_reappointment_chart(
     if format_options is None:
         format_options = {}
 
+    # Story 3.3.1: Extract from TimeSeriesData.time_series after Pydantic migration.
+    # The format_hygiene_reappointment_chart_data() function now returns TimeSeriesData
+    # with data in the time_series field, not top-level dates/values.
+    time_series = chart_dict.get("time_series")
+
+    # Fallback for legacy data shape (safety check)
+    if not time_series and chart_dict.get("dates") and chart_dict.get("values"):
+        time_series = [
+            {"date": date, "value": value}
+            for date, value in zip(
+                chart_dict["dates"],
+                chart_dict["values"],
+                strict=False,
+            )
+        ]
+
+    if not time_series:
+        log.warning("chart.hygiene_reappointment_no_data")
+        return create_base_figure()
+
+    # Extract dates and values from Pydantic time_series
+    dates = [point["date"] for point in time_series]
+    raw_values = [point["value"] for point in time_series]
+    values = [value for value in raw_values if value is not None]
+
     log.info(
         "chart.hygiene_reappointment_creation_started",
-        data_points=len(chart_dict.get("dates", [])),
+        data_points=len(dates),
     )
 
     fig = create_base_figure()
-
-    # Data validation
-    dates = chart_dict.get("dates", [])
-    raw_values = chart_dict.get("values", [])
-    values = [value for value in raw_values if value is not None]
 
     if not dates or not values:
         log.warning("chart.hygiene_reappointment_no_data")
