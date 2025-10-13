@@ -51,22 +51,12 @@ def test_chart_production_imports():
 
 
 def test_backend_metrics_imports():
-    """Verify backend metrics can be imported."""
-    from apps.backend.metrics import (
-        calculate_case_acceptance,
-        calculate_collection_rate,
-        calculate_hygiene_reappointment,
-        calculate_new_patients,
-        calculate_production_total,
-        get_all_kpis,
-    )
+    """Verify backend metrics can be imported (Story 3.3 - Pydantic wrapper)."""
+    from apps.backend.metrics import get_all_kpis, get_kpi_service
 
-    assert callable(calculate_production_total)
-    assert callable(calculate_collection_rate)
-    assert callable(calculate_new_patients)
-    assert callable(calculate_case_acceptance)
-    assert callable(calculate_hygiene_reappointment)
+    # Story 3.3: Individual calculator functions removed, replaced with get_all_kpis()
     assert callable(get_all_kpis)
+    assert callable(get_kpi_service)
 
 
 def test_data_sources_imports():
@@ -74,3 +64,5 @@ def test_data_sources_imports():
     from apps.backend.data_sources import SheetsProvider
 
     assert callable(SheetsProvider)
+
+# type: ignore-file

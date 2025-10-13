@@ -24,48 +24,66 @@ from apps.frontend.chart_kpis import (  # noqa: E402
     create_new_patients_chart,
 )
 from apps.frontend.chart_production import create_production_chart  # noqa: E402
+from core.models.chart_models import (  # noqa: E402
+    ChartDataPoint,
+    TimeSeriesData,
+)
 
 
 def create_sample_time_series_data(
-    metric_name: str, chart_type: str, data_type: str, days: int = 7
-) -> dict:
-    """Create sample time-series data for testing."""
+    metric_name: str, chart_type: str, data_type_hint: str, days: int = 7
+) -> TimeSeriesData:
+    """Create sample time-series data for testing as Pydantic model."""
     base_date = datetime.now() - timedelta(days=days)
 
-    # Generate date range
-    dates = []
-    for i in range(days):
-        dates.append((base_date + timedelta(days=i)).strftime("%Y-%m-%d"))
-
-    # Generate sample values based on metric type
+    # Map metric name to proper data_type
     if metric_name == "production":
-        values = [1000 + (i * 100) for i in range(days)]
+        values = [1000.0 + (i * 100.0) for i in range(days)]
+        data_type = "currency"
     elif metric_name == "collection_rate":
         values = [85.0 + (i * 2.5) for i in range(days)]
+        data_type = "percentage"
     elif metric_name == "new_patients":
-        values = [5 + i for i in range(days)]
+        values = [float(5 + i) for i in range(days)]
+        data_type = "count"
     elif metric_name == "case_acceptance":
         values = [75.0 + (i * 1.5) for i in range(days)]
+        data_type = "percentage"
     elif metric_name == "hygiene_reappointment":
         values = [90.0 + (i * 0.5) for i in range(days)]
+        data_type = "percentage"
     else:
-        values = [100 + (i * 10) for i in range(days)]
+        values = [100.0 + (i * 10.0) for i in range(days)]
+        data_type = "float"
 
-    return {
-        "metric_name": metric_name,
-        "chart_type": chart_type,
-        "data_type": data_type,
-        "dates": dates,
-        "values": values,
-        "trend": "increasing",
-        "period": f"{days}_days",
-        "statistics": {
-            "total_sum": sum(values) if metric_name == "production" else None,
-            "daily_average": sum(values) / len(values),
-            "latest_value": values[-1],
-            "data_points": len(values),
-        },
+    # Create ChartDataPoint list
+    data_points = []
+    for i in range(days):
+        date_obj = base_date + timedelta(days=i)
+        data_points.append(
+            ChartDataPoint(
+                date=date_obj.strftime("%Y-%m-%d"),
+                timestamp=date_obj.isoformat(),
+                value=values[i],
+                has_data=True,
+            )
+        )
+
+    # Calculate statistics as dict
+    stats_dict = {
+        "total_sum": sum(values) if metric_name == "production" else None,
+        "daily_average": sum(values) / len(values),
+        "latest_value": values[-1],
+        "data_points": len(values),
     }
+
+    return TimeSeriesData(
+        metric_name=metric_name,
+        chart_type=chart_type,
+        data_type=data_type,
+        time_series=data_points,
+        statistics={k: v for k, v in stats_dict.items() if v is not None},
+    )
 
 
 def test_production_charts():
@@ -294,3 +312,5 @@ def main():
 if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)
+
+# type: ignore-file
