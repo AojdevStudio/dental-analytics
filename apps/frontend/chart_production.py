@@ -21,12 +21,13 @@ from apps.frontend.chart_utils import (
     format_currency_hover,
     handle_empty_data,
 )
+from core.models.chart_models import TimeSeriesData
 
 log = structlog.get_logger()
 
 
 def create_production_chart(
-    chart_data: dict[str, Any] | None,
+    chart_data: TimeSeriesData | dict[str, Any] | None,
     show_trend: bool = True,
     timeframe: str = "daily",
 ) -> Figure:
@@ -43,28 +44,42 @@ def create_production_chart(
     if chart_data is None:
         return handle_empty_data("Production Total")
 
-    if not isinstance(chart_data, dict):
-        raise TypeError("chart_data must be a dictionary or None")
-
-    metadata = chart_data.get("metadata", {})
-    format_options = chart_data.get("format_options", {})
-    time_series = chart_data.get("time_series")
-
-    # Fallback for legacy data shape that uses separate lists
-    if not time_series and chart_data.get("dates") and chart_data.get("values"):
+    # Handle both Pydantic models and dictionaries
+    if isinstance(chart_data, TimeSeriesData):
+        # TimeSeriesData has time_series attribute with ChartDataPoint objects
+        time_series_data = chart_data.time_series
+        format_options = chart_data.format_options
+        # Convert ChartDataPoint objects to dicts for compatibility
         time_series = [
-            {"date": date, "value": value}
-            for date, value in zip(
-                chart_data["dates"],
-                chart_data["values"],
-                strict=False,
-            )
+            {"date": point.date, "value": point.value} for point in time_series_data
         ]
+        metadata = {}  # TimeSeriesData doesn't have metadata field
+    elif isinstance(chart_data, dict):
+        metadata = chart_data.get("metadata", {})
+        format_options = chart_data.get("format_options", {})
+        time_series = chart_data.get("time_series")
+
+        # Fallback for legacy data shape that uses separate lists
+        if not time_series and chart_data.get("dates") and chart_data.get("values"):
+            time_series = [
+                {"date": date, "value": value}
+                for date, value in zip(
+                    chart_data["dates"],
+                    chart_data["values"],
+                    strict=False,
+                )
+            ]
+    else:
+        raise TypeError("chart_data must be a TimeSeriesData, dict, or None")
 
     if not time_series:
         return handle_empty_data("Production Total")
 
-    aggregation_value = chart_data.get("aggregation") or metadata.get("aggregation")
+    # Handle aggregation field - TimeSeriesData doesn't have aggregation
+    if isinstance(chart_data, TimeSeriesData):
+        aggregation_value = None  # TimeSeriesData doesn't have aggregation field
+    else:
+        aggregation_value = chart_data.get("aggregation") or metadata.get("aggregation")
 
     if timeframe != "daily" and not aggregation_value:
         log.warning(
@@ -123,9 +138,12 @@ def create_production_chart(
     # Update layout with timeframe info
     title_text = f"{timeframe.capitalize()} Production Total"
     if aggregation_value:
-        title_text += (
-            f" ({chart_data.get('data_points', len(time_series))} data points)"
+        data_points = (
+            chart_data.statistics.data_points
+            if isinstance(chart_data, TimeSeriesData)
+            else chart_data.get("data_points", len(time_series))
         )
+        title_text += f" ({data_points} data points)"
 
     fig.update_layout(
         title={
