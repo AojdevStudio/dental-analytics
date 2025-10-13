@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ChartDataPoint(BaseModel):
@@ -296,6 +296,53 @@ class ChartsMetadata(BaseModel):
         default_factory=DataSourceInfo, description="Data source status"
     )
     total_metrics: int = Field(default=0, ge=0, description="Processed metric count")
+
+
+class AllChartsData(BaseModel):
+    """Container for all chart outputs with metadata aggregation.
+
+    This replaces the previous ``dict[str, TimeSeriesData | ChartsMetadata]`` return
+    from ``format_all_chart_data`` so consumers receive a fully validated Pydantic
+    model. The helper ``to_dict`` method exists solely for temporary compatibility
+    with legacy call sites and will be removed in a future cleanup story.
+    """
+
+    production_total: TimeSeriesData = Field(
+        ..., description="Production total time series chart"
+    )
+    collection_rate: TimeSeriesData = Field(
+        ..., description="Collection rate time series chart"
+    )
+    new_patients: TimeSeriesData = Field(
+        ..., description="New patients time series chart"
+    )
+    case_acceptance: TimeSeriesData = Field(
+        ..., description="Case acceptance time series chart"
+    )
+    hygiene_reappointment: TimeSeriesData = Field(
+        ..., description="Hygiene reappointment time series chart"
+    )
+    metadata: ChartsMetadata = Field(
+        ..., description="Metadata describing chart generation context"
+    )
+
+    model_config = ConfigDict(
+        frozen=False,
+        validate_assignment=True,
+        extra="forbid",
+    )
+
+    def to_dict(self) -> dict[str, TimeSeriesData | ChartsMetadata]:
+        """Convert to legacy dictionary structure for phased migrations."""
+
+        return {
+            "production_total": self.production_total,
+            "collection_rate": self.collection_rate,
+            "new_patients": self.new_patients,
+            "case_acceptance": self.case_acceptance,
+            "hygiene_reappointment": self.hygiene_reappointment,
+            "metadata": self.metadata,
+        }
 
 
 class MultiLocationKPIs(BaseModel):

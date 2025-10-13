@@ -13,6 +13,7 @@ from apps.backend.chart_data import (
     format_all_chart_data,
     validate_chart_data,
 )
+from core.models.chart_models import AllChartsData
 from config.data_sources import (
     get_data_source_config,
     get_historical_date_range,
@@ -56,16 +57,21 @@ class TestHistoricalDataIntegrationFlow:
 
         # Step 5: Generate chart data
         chart_data = format_all_chart_data(mock_eod_data, mock_front_kpi_data)
+        assert isinstance(chart_data, AllChartsData)
 
         # Step 6: Validate complete chart structure
-        for metric_name, metric_data in chart_data.items():
-            if metric_name == "metadata":
-                continue
-            assert validate_chart_data(metric_data)
+        for metric_model in (
+            chart_data.production_total,
+            chart_data.collection_rate,
+            chart_data.new_patients,
+            chart_data.case_acceptance,
+            chart_data.hygiene_reappointment,
+        ):
+            assert validate_chart_data(metric_model)
 
         # Step 7: Verify operational day logic reflected in data
-        assert chart_data["metadata"]["data_sources"]["eod_available"] is True
-        assert chart_data["metadata"]["data_sources"]["front_kpi_available"] is True
+        assert chart_data.metadata.data_sources.eod_available is True
+        assert chart_data.metadata.data_sources.front_kpi_available is True
 
     def test_missing_data_handling_workflow(self) -> None:
         """Test workflow when some data sources are unavailable."""
@@ -80,20 +86,21 @@ class TestHistoricalDataIntegrationFlow:
 
         # Generate chart data with missing front KPI data
         chart_data = format_all_chart_data(mock_eod_data, None)
+        assert isinstance(chart_data, AllChartsData)
 
         # EOD-based metrics should have data
-        assert len(chart_data["production_total"]["time_series"]) > 0
-        assert len(chart_data["collection_rate"]["time_series"]) > 0
-        assert len(chart_data["new_patients"]["time_series"]) > 0
+        assert len(chart_data.production_total.time_series) > 0
+        assert len(chart_data.collection_rate.time_series) > 0
+        assert len(chart_data.new_patients.time_series) > 0
 
         # Front KPI metrics should show graceful degradation
-        assert "error" in chart_data["case_acceptance"]
-        assert "error" in chart_data["hygiene_reappointment"]
+        assert chart_data.case_acceptance.error is not None
+        assert chart_data.hygiene_reappointment.error is not None
 
         # Metadata should reflect partial availability
-        metadata = chart_data["metadata"]
-        assert metadata["data_sources"]["eod_available"] is True
-        assert metadata["data_sources"]["front_kpi_available"] is False
+        metadata = chart_data.metadata
+        assert metadata.data_sources.eod_available is True
+        assert metadata.data_sources.front_kpi_available is False
 
     def test_data_source_configuration_integration(self) -> None:
         """Test integration between data source config and chart generation."""
@@ -124,10 +131,11 @@ class TestHistoricalDataIntegrationFlow:
 
         # Chart formatting should work with configured column names
         chart_data = format_all_chart_data(test_data, None)
-        production_chart = chart_data["production_total"]
+        assert isinstance(chart_data, AllChartsData)
+        production_chart = chart_data.production_total
 
-        assert len(production_chart["time_series"]) == 2
-        assert production_chart["time_series"][0]["value"] == 1000.0
+        assert len(production_chart.time_series) == 2
+        assert production_chart.time_series[0].value == 1000.0
 
     def test_weekend_gap_handling(self) -> None:
         """Test handling of weekend gaps in time-series data."""
@@ -154,13 +162,14 @@ class TestHistoricalDataIntegrationFlow:
         )
 
         chart_data = format_all_chart_data(mock_data, None)
+        assert isinstance(chart_data, AllChartsData)
 
         # Chart should handle weekend gap gracefully
-        production_series = chart_data["production_total"]["time_series"]
+        production_series = chart_data.production_total.time_series
         assert len(production_series) == 3
 
         # Verify dates are correctly processed (no Sunday data)
-        dates = [point["date"] for point in production_series]
+        dates = [point.date for point in production_series]
         assert "2025-09-19" in dates  # Friday
         assert "2025-09-20" in dates  # Saturday
         assert "2025-09-21" not in dates  # Sunday (no data)
@@ -193,23 +202,36 @@ class TestHistoricalDataIntegrationFlow:
         )
 
         chart_data = format_all_chart_data(problematic_data, None)
+        assert isinstance(chart_data, AllChartsData)
 
         # Chart should handle data quality issues gracefully
-        production_series = chart_data["production_total"]["time_series"]
+        production_series = chart_data.production_total.time_series
 
         # Should process only valid data points
-        valid_points = [p for p in production_series if p["has_data"]]
-        invalid_points = [p for p in production_series if not p["has_data"]]
+        valid_points = [p for p in production_series if p.has_data]
+        invalid_points = [p for p in production_series if not p.has_data]
 
         # Should have some valid and some invalid points
         assert len(valid_points) > 0
         assert len(invalid_points) > 0
 
         # Statistics should reflect data quality
-        stats = chart_data["production_total"]["statistics"]
-        assert stats["valid_points"] == len(valid_points)
-        assert stats["missing_points"] == len(invalid_points)
-        assert stats["coverage_percentage"] < 100.0  # Due to missing data
+        stats = chart_data.production_total.statistics
+        if stats is None:
+            valid_count = 0
+            missing_count = 0
+            coverage = 0.0
+        elif isinstance(stats, dict):
+            valid_count = stats.get("valid_points", 0)
+            missing_count = stats.get("missing_points", 0)
+            coverage = stats.get("coverage_percentage", 0.0)
+        else:
+            valid_count = getattr(stats, "valid_points", 0)
+            missing_count = getattr(stats, "missing_points", 0)
+            coverage = getattr(stats, "coverage_percentage", 0.0)
+        assert valid_count == len(valid_points)
+        assert missing_count == len(invalid_points)
+        assert coverage < 100.0  # Due to missing data
 
     def test_performance_with_large_dataset(self) -> None:
         """Test performance and memory usage with larger datasets."""
@@ -228,22 +250,28 @@ class TestHistoricalDataIntegrationFlow:
 
         # Process large dataset
         chart_data = format_all_chart_data(large_eod_data, large_front_kpi_data)
+        assert isinstance(chart_data, AllChartsData)
 
         # Verify all data is processed
-        for metric_name in [
-            "production_total",
-            "collection_rate",
-            "new_patients",
-            "case_acceptance",
-            "hygiene_reappointment",
-        ]:
-            metric_data = chart_data[metric_name]
-            assert len(metric_data["time_series"]) == len(operational_days)
+        for metric_model in (
+            chart_data.production_total,
+            chart_data.collection_rate,
+            chart_data.new_patients,
+            chart_data.case_acceptance,
+            chart_data.hygiene_reappointment,
+        ):
+            assert len(metric_model.time_series) == len(operational_days)
 
         # Verify statistics are calculated correctly
-        production_stats = chart_data["production_total"]["statistics"]
-        assert production_stats["total_points"] == len(operational_days)
-        assert production_stats["valid_points"] > 0
+        production_stats = chart_data.production_total.statistics
+        if isinstance(production_stats, dict):
+            total_points = production_stats.get("total_points", 0)
+            valid_points = production_stats.get("valid_points", 0)
+        else:
+            total_points = getattr(production_stats, "total_points", 0)
+            valid_points = getattr(production_stats, "valid_points", 0)
+        assert total_points == len(operational_days)
+        assert valid_points > 0
 
     def _create_mock_eod_data(self, operational_days: list[datetime]) -> pd.DataFrame:
         """Create mock EOD data for testing."""
@@ -303,21 +331,25 @@ class TestErrorHandlingIntegration:
 
         # 2. Completely empty/null data
         chart_data = format_all_chart_data(None, None)
+        assert isinstance(chart_data, AllChartsData)
 
         # Should still return valid structure with error indicators
-        assert "metadata" in chart_data
-        assert chart_data["metadata"]["data_sources"]["eod_available"] is False
-        assert chart_data["metadata"]["data_sources"]["front_kpi_available"] is False
+        assert chart_data.metadata.data_sources.eod_available is False
+        assert chart_data.metadata.data_sources.front_kpi_available is False
 
         # 3. Malformed DataFrames
         malformed_df = pd.DataFrame({"wrong_columns": [1, 2, 3]})
         chart_data = format_all_chart_data(malformed_df, malformed_df)
+        assert isinstance(chart_data, AllChartsData)
 
         # Should handle missing columns gracefully
-        for metric in ["production_total", "collection_rate", "new_patients"]:
-            metric_data = chart_data[metric]
+        for metric_model in (
+            chart_data.production_total,
+            chart_data.collection_rate,
+            chart_data.new_patients,
+        ):
             # Should either have error or empty time series
-            assert "error" in metric_data or len(metric_data["time_series"]) == 0
+            assert metric_model.error is not None or len(metric_model.time_series) == 0
 
     def test_data_validation_integration(self) -> None:
         """Test data validation integration across modules."""
@@ -334,17 +366,18 @@ class TestErrorHandlingIntegration:
         )
 
         chart_data = format_all_chart_data(edge_case_data, None)
+        assert isinstance(chart_data, AllChartsData)
 
         # Should handle infinite values gracefully
-        collection_series = chart_data["collection_rate"]["time_series"]
+        collection_series = chart_data.collection_rate.time_series
 
         # Infinite production values should be handled
         # Collection rate calculation should handle infinite denominators
         for point in collection_series:
-            if point["has_data"]:
-                assert isinstance(point["value"], int | float)
+            if point.has_data:
+                assert isinstance(point.value, (int, float))
                 assert not (
-                    point["value"] == float("inf") or point["value"] == -float("inf")
+                    point.value == float("inf") or point.value == -float("inf")
                 )
 
 
@@ -411,16 +444,29 @@ class TestRealWorldScenarios:
         )
 
         chart_data = format_all_chart_data(sparse_data, None)
+        assert isinstance(chart_data, AllChartsData)
 
         # Should handle sparse data gracefully
-        production_stats = chart_data["production_total"]["statistics"]
-        assert production_stats["total_points"] == 2
-        assert production_stats["valid_points"] == 2
-        assert production_stats["coverage_percentage"] == 100.0
+        production_stats = chart_data.production_total.statistics
+        if isinstance(production_stats, dict):
+            total_points = production_stats.get("total_points")
+            valid_points = production_stats.get("valid_points")
+            coverage = production_stats.get("coverage_percentage")
+        else:
+            total_points = getattr(production_stats, "total_points", None)
+            valid_points = getattr(production_stats, "valid_points", None)
+            coverage = getattr(production_stats, "coverage_percentage", None)
+        assert total_points == 2
+        assert valid_points == 2
+        assert coverage == 100.0
 
         # Charts should still be valid with limited data
-        for metric in ["production_total", "collection_rate", "new_patients"]:
-            assert validate_chart_data(chart_data[metric])
+        for metric_model in (
+            chart_data.production_total,
+            chart_data.collection_rate,
+            chart_data.new_patients,
+        ):
+            assert validate_chart_data(metric_model)
 
     def test_high_volume_practice_scenario(self) -> None:
         """Test handling of high-volume practice data."""
@@ -435,13 +481,14 @@ class TestRealWorldScenarios:
         )
 
         chart_data = format_all_chart_data(high_volume_data, None)
+        assert isinstance(chart_data, AllChartsData)
 
         # Should handle large values correctly
-        production_point = chart_data["production_total"]["time_series"][0]
-        assert production_point["value"] == 50000.0
+        production_point = chart_data.production_total.time_series[0]
+        assert production_point.value == 50000.0
 
-        collection_rate_point = chart_data["collection_rate"]["time_series"][0]
-        assert abs(collection_rate_point["value"] - 96.0) < 0.1  # 96% rate
+        collection_rate_point = chart_data.collection_rate.time_series[0]
+        assert abs(collection_rate_point.value - 96.0) < 0.1  # 96% rate
 
-        new_patients_point = chart_data["new_patients"]["time_series"][0]
-        assert new_patients_point["value"] == 25
+        new_patients_point = chart_data.new_patients.time_series[0]
+        assert new_patients_point.value == 25

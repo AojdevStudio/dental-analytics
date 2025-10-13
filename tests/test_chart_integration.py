@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
-
 import pytest
 from plotly.graph_objects import Figure
 
@@ -18,7 +16,7 @@ from apps.frontend.chart_kpis import (
 )
 from apps.frontend.chart_production import create_production_chart
 from apps.frontend.chart_utils import validate_chart_data_structure
-from core.models.chart_models import SummaryStatistics, TimeSeriesData
+from core.models.chart_models import AllChartsData, SummaryStatistics, TimeSeriesData
 
 
 @pytest.fixture()
@@ -99,27 +97,21 @@ def test_production_chart_factory_accepts_empty_dict() -> None:
     assert len(figure.data) == 0
 
 
-def test_format_all_chart_data_produces_expected_keys() -> None:
-    """Test format_all_chart_data returns dict with expected structure."""
-    chart_data: dict[str, Any] = format_all_chart_data(None, None)
-    expected_keys = {
-        "production_total",
-        "collection_rate",
-        "new_patients",
-        "case_acceptance",
-        "hygiene_reappointment",
-        "metadata",
-    }
-    assert expected_keys.issubset(chart_data.keys())
+def test_format_all_chart_data_produces_expected_structure() -> None:
+    """Test format_all_chart_data returns AllChartsData with expected structure."""
+    chart_data = format_all_chart_data(None, None)
 
-    # Access metadata dict (Pydantic model serialized to dict)
-    metadata: Any = chart_data["metadata"]
-    assert isinstance(metadata, dict)
-    assert metadata.get("total_metrics") == 5
+    assert isinstance(chart_data, AllChartsData)
+    assert chart_data.metadata.total_metrics == 5
+    assert chart_data.metadata.data_sources.eod_available is False
+    assert chart_data.metadata.data_sources.front_kpi_available is False
 
-    data_sources: Any = metadata.get("data_sources")
-    assert isinstance(data_sources, dict)
-    assert data_sources == {
-        "eod_available": False,
-        "front_kpi_available": False,
-    }
+    for metric_model in (
+        chart_data.production_total,
+        chart_data.collection_rate,
+        chart_data.new_patients,
+        chart_data.case_acceptance,
+        chart_data.hygiene_reappointment,
+    ):
+        assert isinstance(metric_model, TimeSeriesData)
+        assert metric_model.metric_name

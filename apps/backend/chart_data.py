@@ -14,6 +14,7 @@ import structlog
 from pydantic import ValidationError
 
 from core.models.chart_models import (
+    AllChartsData,
     ChartDataPoint,
     ChartMetaInfo,
     ChartsMetadata,
@@ -183,33 +184,24 @@ def process_time_series_data(
     return time_series
 
 
-def validate_chart_data(
-    chart_data: TimeSeriesData | dict[str, Any]
-) -> bool:
-    """Validate chart data structure integrity using Pydantic validation."""
+def validate_chart_data(chart_data: TimeSeriesData) -> bool:
+    """Validate chart data structure integrity for Pydantic instances."""
 
-    # Pydantic models are self-validating at instantiation
-    # This function now serves as a compatibility wrapper
     try:
-        # If we have a Pydantic model, it's already validated
-        if isinstance(chart_data, TimeSeriesData):
-            log.debug("chart_data.validation_passed", metric=chart_data.metric_name)
-            return True
-
-        TimeSeriesData.model_validate(chart_data)
-        metric_name = (
-            chart_data.get("metric_name")
-            if isinstance(chart_data, dict)
-            else None
-        )
-        log.warning("chart_data.dict_input_validated", metric=metric_name)
-        return True
+        chart_data.model_validate(chart_data.model_dump())
     except ValidationError as error:
         log.error("chart_data.validation_error", errors=error.errors())
         return False
-    except Exception as error:  # pragma: no cover - defensive safeguard
-        log.error("chart_data.validation_error", error=str(error))
+    except AttributeError:
+        log.error(
+            "chart_data.validation_error",
+            error="Expected TimeSeriesData instance",
+            received_type=type(chart_data).__name__,
+        )
         return False
+
+    log.debug("chart_data.validation_passed", metric=chart_data.metric_name)
+    return True
 
 
 def process_production_data_for_chart(df: pd.DataFrame) -> ProcessedChartData:
@@ -827,28 +819,24 @@ def create_empty_chart_data(
     return create_empty_processed_chart_data(error_message, date_column)
 
 
-def validate_processed_chart_data(
-    data: ProcessedChartData | dict[str, Any]
-) -> bool:
+def validate_processed_chart_data(data: ProcessedChartData) -> bool:
     """Validate processed chart data structure via Pydantic enforcement."""
 
     try:
-        if isinstance(data, ProcessedChartData):
-            log.debug(
-                "chart_data.validation_passed", metric_dates=len(data.dates)
-            )
-            return True
-
-        ProcessedChartData.model_validate(data)
-        log.warning("chart_data.dict_input_validated")
-        return True
-
+        data.model_validate(data.model_dump())
     except ValidationError as error:
         log.error("chart_data.validation_error", errors=error.errors())
         return False
-    except Exception as error:  # pragma: no cover - defensive safeguard
-        log.error("chart_data.validation_error", error=str(error))
+    except AttributeError:
+        log.error(
+            "chart_data.validation_error",
+            error="Expected ProcessedChartData instance",
+            received_type=type(data).__name__,
+        )
         return False
+
+    log.debug("chart_data.validation_passed", metric_dates=len(data.dates))
+    return True
 
 
 def aggregate_to_weekly(
@@ -1454,36 +1442,34 @@ def format_all_chart_data(
     eod_df: pd.DataFrame | None,
     front_kpi_df: pd.DataFrame | None,
     date_column: str = "Submission Date",
-) -> dict[str, TimeSeriesData | ChartsMetadata]:
+) -> AllChartsData:
     """Format all KPI data for chart visualization."""
 
     log.info("chart_data.formatting_all_metrics")
 
-    chart_data: dict[str, TimeSeriesData | ChartsMetadata] = {
-        "production_total": format_production_chart_data(eod_df, date_column),
-        "collection_rate": format_collection_rate_chart_data(eod_df, date_column),
-        "new_patients": format_new_patients_chart_data(eod_df, date_column),
-        "case_acceptance": format_case_acceptance_chart_data(front_kpi_df, date_column),
-        "hygiene_reappointment": format_hygiene_reappointment_chart_data(
+    chart_data = AllChartsData(
+        production_total=format_production_chart_data(eod_df, date_column),
+        collection_rate=format_collection_rate_chart_data(eod_df, date_column),
+        new_patients=format_new_patients_chart_data(eod_df, date_column),
+        case_acceptance=format_case_acceptance_chart_data(front_kpi_df, date_column),
+        hygiene_reappointment=format_hygiene_reappointment_chart_data(
             front_kpi_df, date_column
         ),
-    }
-
-    metadata = ChartsMetadata(
-        generated_at=datetime.now().isoformat(),
-        data_sources=DataSourceInfo(
-            eod_available=eod_df is not None and not eod_df.empty,
-            front_kpi_available=front_kpi_df is not None and not front_kpi_df.empty,
+        metadata=ChartsMetadata(
+            generated_at=datetime.now().isoformat(),
+            data_sources=DataSourceInfo(
+                eod_available=eod_df is not None and not eod_df.empty,
+                front_kpi_available=front_kpi_df is not None and not front_kpi_df.empty,
+            ),
+            total_metrics=5,
         ),
-        total_metrics=5,
     )
-    chart_data["metadata"] = metadata
 
     log.info(
         "chart_data.formatting_complete",
-        metrics_count=metadata.total_metrics,
-        eod_available=metadata.data_sources.eod_available,
-        front_kpi_available=metadata.data_sources.front_kpi_available,
+        metrics_count=chart_data.metadata.total_metrics,
+        eod_available=chart_data.metadata.data_sources.eod_available,
+        front_kpi_available=chart_data.metadata.data_sources.front_kpi_available,
     )
 
     return chart_data

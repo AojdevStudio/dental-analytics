@@ -23,8 +23,15 @@ from apps.backend.chart_data import (
     safe_float_conversion,
     safe_int_conversion,
     validate_chart_data,
+    validate_processed_chart_data,
 )
-from core.models.chart_models import ChartDataPoint, TimeSeriesData
+from core.models.chart_models import (
+    AllChartsData,
+    ChartDataPoint,
+    ChartMetaInfo,
+    ProcessedChartData,
+    TimeSeriesData,
+)
 
 
 class TestSafeConversions:
@@ -494,22 +501,20 @@ class TestAllChartDataFormatting:
         """Test formatting all chart data with complete datasets."""
         chart_data = format_all_chart_data(sample_eod_data, sample_front_kpi_data)
 
-        expected_metrics = [
-            "production_total",
-            "collection_rate",
-            "new_patients",
-            "case_acceptance",
-            "hygiene_reappointment",
-        ]
+        assert isinstance(chart_data, AllChartsData)
 
-        for metric in expected_metrics:
-            assert metric in chart_data
-            metric_data = chart_data[metric]
+        for metric_name, metric_data in [
+            ("production_total", chart_data.production_total),
+            ("collection_rate", chart_data.collection_rate),
+            ("new_patients", chart_data.new_patients),
+            ("case_acceptance", chart_data.case_acceptance),
+            ("hygiene_reappointment", chart_data.hygiene_reappointment),
+        ]:
             assert isinstance(metric_data, TimeSeriesData)
-            assert metric_data.metric_name
+            assert metric_data.metric_name, metric_name
             assert isinstance(metric_data.time_series, list)
 
-        metadata = chart_data["metadata"]
+        metadata = chart_data.metadata
         assert metadata.total_metrics == 5
         assert metadata.data_sources.eod_available is True
         assert metadata.data_sources.front_kpi_available is True
@@ -520,14 +525,15 @@ class TestAllChartDataFormatting:
         """Test formatting all chart data with partial datasets."""
         chart_data = format_all_chart_data(sample_eod_data, None)
 
-        assert len(chart_data["production_total"].time_series) > 0
-        assert len(chart_data["collection_rate"].time_series) > 0
-        assert len(chart_data["new_patients"].time_series) > 0
+        assert isinstance(chart_data, AllChartsData)
+        assert len(chart_data.production_total.time_series) > 0
+        assert len(chart_data.collection_rate.time_series) > 0
+        assert len(chart_data.new_patients.time_series) > 0
 
-        assert chart_data["case_acceptance"].error is not None
-        assert chart_data["hygiene_reappointment"].error is not None
+        assert chart_data.case_acceptance.error is not None
+        assert chart_data.hygiene_reappointment.error is not None
 
-        metadata = chart_data["metadata"]
+        metadata = chart_data.metadata
         assert metadata.data_sources.eod_available is True
         assert metadata.data_sources.front_kpi_available is False
 
@@ -535,18 +541,19 @@ class TestAllChartDataFormatting:
         """Test formatting all chart data with no datasets."""
         chart_data = format_all_chart_data(None, None)
 
-        for metric in [
-            "production_total",
-            "collection_rate",
-            "new_patients",
-            "case_acceptance",
-            "hygiene_reappointment",
-        ]:
-            metric_data = chart_data[metric]
+        assert isinstance(chart_data, AllChartsData)
+
+        for metric_data in (
+            chart_data.production_total,
+            chart_data.collection_rate,
+            chart_data.new_patients,
+            chart_data.case_acceptance,
+            chart_data.hygiene_reappointment,
+        ):
             assert isinstance(metric_data, TimeSeriesData)
             assert metric_data.error is not None or len(metric_data.time_series) == 0
 
-        metadata = chart_data["metadata"]
+        metadata = chart_data.metadata
         assert metadata.data_sources.eod_available is False
         assert metadata.data_sources.front_kpi_available is False
 
@@ -572,41 +579,66 @@ class TestChartDataValidation:
         )
 
         assert validate_chart_data(valid_data) is True
-        assert validate_chart_data(valid_data.model_dump()) is True
 
-    def test_validate_missing_required_fields(self) -> None:
-        """Test validation with missing required fields."""
-        invalid_data = {
-            "metric_name": "Test Metric",
-            # Missing chart_type, data_type, time_series
-        }
+    def test_validate_chart_data_rejects_non_model(self) -> None:
+        """Ensure non-Pydantic inputs are rejected."""
+        invalid_input = {"metric_name": "Test Metric"}
 
-        assert validate_chart_data(invalid_data) is False
+        assert validate_chart_data(invalid_input) is False
 
-    def test_validate_invalid_time_series(self) -> None:
-        """Test validation with invalid time series structure."""
-        invalid_data = {
-            "metric_name": "Test Metric",
-            "chart_type": "line",
-            "data_type": "currency",
-            "time_series": [
-                {"value": 100.0},
-                "invalid_point",
-            ],
-        }
+    def test_validate_chart_data_detects_invalid_model(self) -> None:
+        """Ensure invalid Pydantic instances fail validation."""
+        invalid_model = TimeSeriesData.model_construct(  # type: ignore[arg-type]
+            metric_name="Invalid Metric",
+            chart_type="invalid",  # type: ignore[assignment]
+            data_type="currency",
+            time_series=[],
+            format_options={},
+            statistics=None,
+            error=None,
+        )
 
-        assert validate_chart_data(invalid_data) is False
+        assert validate_chart_data(invalid_model) is False
 
-    def test_validate_empty_time_series(self) -> None:
-        """Test validation with empty but valid time series."""
-        valid_data = {
-            "metric_name": "Test Metric",
-            "chart_type": "line",
-            "data_type": "currency",
-            "time_series": [],
-        }
 
-        assert validate_chart_data(valid_data) is True
+class TestProcessedChartDataValidation:
+    """Test processed chart data validation consistency."""
+
+    def test_validate_valid_processed_chart_data(self) -> None:
+        """Validate that proper ProcessedChartData instances pass."""
+        processed = ProcessedChartData(
+            dates=["2025-09-15"],
+            values=[100.0],
+            metadata=ChartMetaInfo(
+                date_column="Submission Date",
+                date_range="2025-09-15 to 2025-09-15",
+                error=None,
+                aggregation="daily",
+                business_days_only=False,
+                date_filter=None,
+                filtered_data_points=1,
+            ),
+            error=None,
+        )
+
+        assert validate_processed_chart_data(processed) is True
+
+    def test_validate_processed_chart_data_rejects_non_model(self) -> None:
+        """Ensure non-Pydantic inputs are rejected for processed data."""
+        invalid_input = {"dates": [], "values": []}
+
+        assert validate_processed_chart_data(invalid_input) is False
+
+    def test_validate_processed_chart_data_detects_invalid_model(self) -> None:
+        """Ensure invalid ProcessedChartData instances fail validation."""
+        invalid_model = ProcessedChartData.model_construct(  # type: ignore[arg-type]
+            dates=["2025-09-15"],
+            values=[100.0],
+            metadata=None,  # type: ignore[arg-type]
+            error=None,
+        )
+
+        assert validate_processed_chart_data(invalid_model) is False
 
 
 class TestEdgeCasesAndErrorHandling:
@@ -689,16 +721,23 @@ class TestIntegrationWithExistingFixtures:
         all_charts = format_all_chart_data(sample_eod_data, sample_front_kpi_data)
 
         # Verify each chart has valid structure
-        for metric_name, chart_data in all_charts.items():
-            if metric_name == "metadata":
-                continue
+        for metric_name, chart_model in [
+            ("production_total", all_charts.production_total),
+            ("collection_rate", all_charts.collection_rate),
+            ("new_patients", all_charts.new_patients),
+            ("case_acceptance", all_charts.case_acceptance),
+            ("hygiene_reappointment", all_charts.hygiene_reappointment),
+        ]:
+            assert validate_chart_data(chart_model), metric_name
+            assert chart_model.metric_name is not None
+            assert isinstance(chart_model.time_series, list)
 
-            assert validate_chart_data(chart_data)
-            assert chart_data.metric_name is not None
-            assert isinstance(chart_data.time_series, list)
+        # Verify metadata integrity
+        metadata = all_charts.metadata
+        assert metadata.total_metrics == 5
 
         # Verify specific data from fixtures is processed correctly
-        production_chart = all_charts["production_total"]
+        production_chart = all_charts.production_total
         assert len(production_chart.time_series) == 3
 
         # Check that the production values are present

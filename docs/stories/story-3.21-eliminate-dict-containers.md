@@ -493,7 +493,8 @@ Tests passing dict inputs will fail (expected, fixed in Story 3.3).
 _To be populated during implementation_
 
 ### Debug Log References
-_To be populated during implementation_
+- 2025-10-09: Plan for AC1-3 — add `AllChartsData` model in `core/models/chart_models.py`, wire up `ConfigDict`, include legacy `.to_dict()` helper, then run `uv run mypy core/models/chart_models.py` to confirm type safety.
+- 2025-10-09: Plan for AC4-9 — switch `format_all_chart_data` to return `AllChartsData`, prune dict unions from validation helpers, and adjust frontend consumers before running focused lint/type checks.
 
 ### Completion Notes List
 _To be populated during implementation_
