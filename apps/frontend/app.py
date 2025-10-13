@@ -33,11 +33,11 @@ from apps.backend.data_providers import SheetsProvider  # noqa: E402
 from apps.frontend.chart_kpis import create_chart_from_data  # noqa: E402
 from core.business_rules.calendar import BusinessCalendar  # noqa: E402
 from core.business_rules.validation_rules import KPIValidationRules  # noqa: E402
+from core.models.chart_models import AllChartsData  # noqa: E402
 from core.models.kpi_models import (  # noqa: E402
     DataAvailabilityStatus,
     KPIResponse,
 )
-from core.models.chart_models import AllChartsData  # noqa: E402
 from core.transformers.sheets_transformer import SheetsToKPIInputs  # noqa: E402
 
 # New KPIService and dependencies (Story 3.0: Checkpoint 3)
