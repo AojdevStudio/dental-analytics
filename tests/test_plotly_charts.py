@@ -86,7 +86,7 @@ def create_sample_time_series_data(
     )
 
 
-def test_production_charts():
+def test_production_charts() -> None:
     """Test production chart rendering."""
     print("🧪 Testing Production Charts...")
 
@@ -94,10 +94,11 @@ def test_production_charts():
     sample_data = create_sample_time_series_data("production", "line", "daily", 7)
 
     try:
-        create_production_chart(sample_data)
+        # create_production_chart expects dict, not Pydantic model
+        create_production_chart(sample_data.model_dump())
         print("   ✅ Daily production chart works")
 
-        # Test with create_chart_from_data
+        # Test with create_chart_from_data (accepts Pydantic model)
         create_chart_from_data(sample_data)
         print("   ✅ Generic chart creator works")
 
@@ -108,13 +109,13 @@ def test_production_charts():
     monthly_data = create_sample_time_series_data("production", "bar", "monthly", 12)
 
     try:
-        create_production_chart(monthly_data)
+        create_production_chart(monthly_data.model_dump())
         print("   ✅ Monthly production chart works")
     except Exception as exc:
         pytest.fail(f"Monthly production chart failed: {exc}")
 
 
-def test_collection_rate_charts():
+def test_collection_rate_charts() -> None:
     """Test collection rate chart rendering."""
     print("🧪 Testing Collection Rate Charts...")
 
@@ -127,7 +128,7 @@ def test_collection_rate_charts():
         pytest.fail(f"Collection rate chart failed: {exc}")
 
 
-def test_new_patients_charts():
+def test_new_patients_charts() -> None:
     """Test new patients chart rendering."""
     print("🧪 Testing New Patients Charts...")
 
@@ -140,7 +141,7 @@ def test_new_patients_charts():
         pytest.fail(f"New patients chart failed: {exc}")
 
 
-def test_case_acceptance_charts():
+def test_case_acceptance_charts() -> None:
     """Test case acceptance chart rendering."""
     print("🧪 Testing Case Acceptance Charts...")
 
@@ -153,7 +154,7 @@ def test_case_acceptance_charts():
         pytest.fail(f"Case acceptance chart failed: {exc}")
 
 
-def test_hygiene_reappointment_charts():
+def test_hygiene_reappointment_charts() -> None:
     """Test hygiene reappointment chart rendering."""
     print("🧪 Testing Hygiene Reappointment Charts...")
 
@@ -168,7 +169,7 @@ def test_hygiene_reappointment_charts():
         pytest.fail(f"Hygiene reappointment chart failed: {exc}")
 
 
-def test_edge_cases():
+def test_edge_cases() -> None:
     """Test edge cases for chart rendering."""
     print("🧪 Testing Edge Cases...")
 
@@ -190,13 +191,13 @@ def test_edge_cases():
 
     # Test with null values
     data_with_nulls = create_sample_time_series_data("production", "line", "daily", 5)
-    # Create new list with null value (avoid mutating original)
-    values_with_null = data_with_nulls["values"].copy()
-    values_with_null[2] = None
-    data_with_nulls = {**data_with_nulls, "values": values_with_null}
+    # Convert to dict and modify
+    data_dict = data_with_nulls.model_dump()
+    # Modify time_series to have null value
+    data_dict["time_series"][2]["value"] = None
 
     try:
-        create_production_chart(data_with_nulls)
+        create_production_chart(data_dict)
         print("✅ Null values handling works")
     except Exception as exc:
         pytest.fail(f"Null values handling failed: {exc}")
@@ -206,7 +207,7 @@ def test_edge_cases():
 
     start_time = datetime.now()
     try:
-        create_production_chart(large_data)
+        create_production_chart(large_data.model_dump())
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
         print(f"✅ Large dataset (365 days) rendered in {duration:.2f}s")
@@ -214,14 +215,14 @@ def test_edge_cases():
         pytest.fail(f"Large dataset rendering failed: {exc}")
 
 
-def test_chart_interactivity():
+def test_chart_interactivity() -> None:
     """Test chart interactivity features."""
     print("🧪 Testing Chart Interactivity...")
 
     sample_data = create_sample_time_series_data("production", "line", "daily", 30)
 
     try:
-        fig = create_production_chart(sample_data)
+        fig = create_production_chart(sample_data.model_dump())
 
         # Check if chart has proper configuration
         if hasattr(fig, "layout"):
@@ -235,7 +236,7 @@ def test_chart_interactivity():
         pytest.fail(f"Chart interactivity failed: {exc}")
 
 
-def test_all_chart_types():
+def test_all_chart_types() -> None:
     """Test all chart type combinations."""
     print("🧪 Testing All Chart Type Combinations...")
 
@@ -254,8 +255,10 @@ def test_all_chart_types():
 
             # Try specific chart creator first
             if metric == "production":
-                create_production_chart(sample_data)
+                # create_production_chart expects dict
+                create_production_chart(sample_data.model_dump())
             elif metric == "collection_rate":
+                # Other chart builders accept Pydantic models
                 create_collection_rate_chart(sample_data)
             elif metric == "new_patients":
                 create_new_patients_chart(sample_data)
@@ -272,8 +275,12 @@ def test_all_chart_types():
     print(f"✅ {len(chart_configs)}/{len(chart_configs)} chart combinations work")
 
 
-def main():
-    """Run all chart rendering tests."""
+def main() -> bool:
+    """Run all chart rendering tests.
+
+    Returns:
+        True if all tests passed, False otherwise
+    """
     print("🚀 Starting Plotly Chart Rendering Tests...\n")
 
     tests = [
@@ -312,5 +319,3 @@ def main():
 if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)
-
-# type: ignore-file
