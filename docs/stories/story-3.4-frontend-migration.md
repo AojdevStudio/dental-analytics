@@ -65,8 +65,8 @@
 
 ### **Documentation (AC 17-18)**
 
-17. ✅ CLAUDE.md updated with Phase 1 COMPLETE status (frontend migration included)
-18. ✅ Story 3.4 completion summary documented with frontend migration details
+17. ✅ **COMPLETE** - CLAUDE.md updated with Phase 1 COMPLETE status (frontend migration included)
+18. ✅ **COMPLETE** - Story 3.4 completion summary documented with frontend migration details
 
 ## Tasks / Subtasks
 
@@ -671,18 +671,18 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 Story 3.4 successfully completed all acceptance criteria:
 - ✅ AC 1-5: All frontend files migrated to Pydantic attribute access
 - ✅ AC 6-9: All tests passing, no dictionary patterns in primary code paths
-- ✅ AC 10-13: Dashboard validation (manual smoke test pending)
+- ⏳ AC 10-13: Dashboard validation (manual smoke test pending)
 - ✅ AC 14-16: Quality gates (Ruff, Black) passing
-- ✅ AC 17-18: Documentation updates (pending CLAUDE.md update)
+- ✅ AC 17-18: Documentation updates COMPLETE (CLAUDE.md updated, story summary in Dev Agent Record)
 
 **Migration Strategy:**
 Used a hybrid approach supporting both `TimeSeriesData` (Pydantic) and `dict` for maximum compatibility. The backend `format_*_chart_data()` functions return `TimeSeriesData` models, so frontend functions now accept both types.
 
 **Next Steps:**
-1. Run manual dashboard smoke test (Baytown + Humble locations)
-2. Update CLAUDE.md with Phase 1 COMPLETE status
-3. Create completion summary document
-4. Commit and create pull request
+1. ⏳ Run manual dashboard smoke test (Baytown + Humble locations) - PENDING
+2. ✅ Update CLAUDE.md with Phase 1 COMPLETE status - DONE (commit abc255a)
+3. ✅ Completion summary in Dev Agent Record - DONE
+4. ⏳ Push branch and create pull request - PENDING
 
 ### File List
 **Modified:**
