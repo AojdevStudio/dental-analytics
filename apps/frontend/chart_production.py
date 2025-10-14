@@ -139,7 +139,7 @@ def create_production_chart(
     title_text = f"{timeframe.capitalize()} Production Total"
     if aggregation_value:
         data_points = (
-            chart_data.statistics.data_points
+            chart_data.statistics.total_points
             if isinstance(chart_data, TimeSeriesData)
             else chart_data.get("data_points", len(time_series))
         )
