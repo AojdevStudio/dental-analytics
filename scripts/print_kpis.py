@@ -6,7 +6,8 @@ Usage examples:
   uv run python scripts/print_kpis.py --json         # JSON output
   uv run python scripts/print_kpis.py --metrics production_total collection_rate
   uv run python scripts/print_kpis.py --show-raw eod --show-raw front
-  uv run python scripts/print_kpis.py --spreadsheet-id YOUR_SHEET_ID
+  uv run python scripts/print_kpis.py --location humble
+  uv run python scripts/print_kpis.py --location both
 """
 
 from __future__ import annotations
@@ -14,9 +15,11 @@ from __future__ import annotations
 import argparse
 import json
 from collections.abc import Iterable
+from datetime import date
 
 from apps.backend.data_providers import build_sheets_provider
-from apps.backend.metrics import get_all_kpis, get_combined_kpis
+from apps.backend.metrics import get_all_kpis
+from core.models.kpi_models import KPIResponse
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,6 +71,17 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def kpi_response_to_dict(response: KPIResponse) -> dict[str, float | None]:
+    """Convert KPIResponse Pydantic model to dictionary of values."""
+    return {
+        "production_total": response.values.production_total.value,
+        "collection_rate": response.values.collection_rate.value,
+        "new_patients": response.values.new_patients.value,
+        "case_acceptance": response.values.case_acceptance.value,
+        "hygiene_reappointment": response.values.hygiene_reappointment.value,
+    }
+
+
 def filter_metrics(
     all_kpis: dict[str, float | None], names: Iterable[str] | None
 ) -> dict[str, float | None]:
@@ -78,7 +92,21 @@ def filter_metrics(
 
 def print_pretty(kpis: dict[str, float | None]) -> None:
     for name, value in kpis.items():
-        print(f"{name:22} -> {value}")
+        if value is not None:
+            # Format production_total as currency, rates as percentages
+            if name == "production_total":
+                formatted_value = f"${value:,.2f}"
+            elif name in [
+                "collection_rate",
+                "case_acceptance",
+                "hygiene_reappointment",
+            ]:
+                formatted_value = f"{value:.1f}%"
+            else:
+                formatted_value = f"{value:.0f}"
+            print(f"{name:22} -> {formatted_value}")
+        else:
+            print(f"{name:22} -> Data Unavailable")
 
 
 def print_raw(show_raw: list[str] | None, location: str = "baytown") -> None:
@@ -108,10 +136,15 @@ def main() -> None:
 
     if args.location == "both":
         # Get KPIs for both locations
-        all_kpis = get_combined_kpis()
+        locations = ["baytown", "humble"]
 
-        for location, kpis in all_kpis.items():
-            filtered_kpis = filter_metrics(kpis, args.metrics)
+        for location in locations:
+            # Get KPIResponse from the service
+            response = get_all_kpis(location, target_date=date.today())
+
+            # Convert to dictionary
+            kpis_dict = kpi_response_to_dict(response)
+            filtered_kpis = filter_metrics(kpis_dict, args.metrics)
 
             if args.json:
                 print(f"# {location.title()} KPIs")
@@ -119,6 +152,10 @@ def main() -> None:
                 print()  # Empty line between locations
             else:
                 print(f"\n=== {location.title()} KPIs ===")
+                print(f"Status: {response.availability.value}")
+                if response.validation_summary:
+                    print(f"⚠️  Validation Issues: {len(response.validation_summary)}")
+                print()
                 print_pretty(filtered_kpis)
                 print()
 
@@ -127,16 +164,25 @@ def main() -> None:
                 print_raw(args.show_raw, location)
     else:
         # Get KPIs for single location
-        kpis = get_all_kpis(args.location)
-        kpis = filter_metrics(kpis, args.metrics)
+        response = get_all_kpis(args.location, target_date=date.today())
+
+        # Convert to dictionary
+        kpis_dict = kpi_response_to_dict(response)
+        filtered_kpis = filter_metrics(kpis_dict, args.metrics)
 
         if not args.json:
             print(f"=== {args.location.title()} KPIs ===")
+            print(f"Status: {response.availability.value}")
+            if response.validation_summary:
+                print(f"⚠️  Validation Issues: {len(response.validation_summary)}")
+                for issue in response.validation_summary:
+                    print(f"  - [{issue.severity.value}] {issue.message}")
+            print()
 
         if args.json:
-            print(json.dumps(kpis, indent=args.indent))
+            print(json.dumps(filtered_kpis, indent=args.indent))
         else:
-            print_pretty(kpis)
+            print_pretty(filtered_kpis)
 
         print_raw(args.show_raw, args.location)
 

@@ -8,7 +8,7 @@ repos:
         language_version: python3
         args: [--line-length=88]
         files: '\.py$'
-        exclude: '^(\.venv/|\.claude/|logs/).*'
+        exclude: '^(\.venv/|\.claude/|\.conductor/|\.cursor/|\.gemini/|\.github/|\.mypy_cache/|\.playwright-mcp/|\.pytest_cache/|\.ruff_cache/|\.serena/|\.uv_cache/|\.uv-cache/|ai-docs/|bmad/|docs/|logs/|planning/|specs/).*'
 
   # Ruff linting and import sorting
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -17,7 +17,7 @@ repos:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
         files: '\.py$'
-        exclude: '^(\.venv/|\.claude/|logs/).*'
+        exclude: '^(\.venv/|\.claude/|\.conductor/|\.cursor/|\.gemini/|\.github/|\.mypy_cache/|\.playwright-mcp/|\.pytest_cache/|\.ruff_cache/|\.serena/|\.uv_cache/|\.uv-cache/|ai-docs/|bmad/|docs/|logs/|planning/|specs/).*'
 
   # MyPy type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -27,23 +27,23 @@ repos:
         args: [--ignore-missing-imports, --disallow-untyped-defs]
         additional_dependencies: [pandas-stubs, types-requests]
         files: '^(backend/|tests/).*\.py$'
-        exclude: '^(\.venv/|\.claude/|logs/).*'
+        exclude: '^(\.venv/|\.claude/|\.conductor/|\.cursor/|\.gemini/|\.github/|\.mypy_cache/|\.playwright-mcp/|\.pytest_cache/|\.ruff_cache/|\.serena/|\.uv_cache/|\.uv-cache/|ai-docs/|bmad/|docs/|logs/|planning/|specs/).*'
 
   # Basic file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: '^(\.venv/|\.claude/|logs/).*'
+        exclude: '^(\.venv/|\.claude/|\.conductor/|\.cursor/|\.gemini/|\.github/|\.mypy_cache/|\.playwright-mcp/|\.pytest_cache/|\.ruff_cache/|\.serena/|\.uv_cache/|\.uv-cache/|ai-docs/|bmad/|docs/|logs/|planning/|specs/).*'
       - id: end-of-file-fixer
-        exclude: '^(\.venv/|\.claude/|logs/).*'
+        exclude: '^(\.venv/|\.claude/|\.conductor/|\.cursor/|\.gemini/|\.github/|\.mypy_cache/|\.playwright-mcp/|\.pytest_cache/|\.ruff_cache/|\.serena/|\.uv_cache/|\.uv-cache/|ai-docs/|bmad/|docs/|logs/|planning/|specs/).*'
       - id: check-yaml
-        exclude: '^(\.venv/|\.claude/|logs/).*'
+        exclude: '^(\.venv/|\.claude/|\.conductor/|\.cursor/|\.gemini/|\.github/|\.mypy_cache/|\.playwright-mcp/|\.pytest_cache/|\.ruff_cache/|\.serena/|\.uv_cache/|\.uv-cache/|ai-docs/|bmad/|docs/|logs/|planning/|specs/).*'
       - id: check-added-large-files
         args: ['--maxkb=500']
       - id: check-merge-conflict
       - id: debug-statements
-        exclude: '^(\.venv/|\.claude/|logs/).*'
+        exclude: '^(\.venv/|\.claude/|\.conductor/|\.cursor/|\.gemini/|\.github/|\.mypy_cache/|\.playwright-mcp/|\.pytest_cache/|\.ruff_cache/|\.serena/|\.uv_cache/|\.uv-cache/|ai-docs/|bmad/|docs/|logs/|planning/|specs/).*'
 
   # Import validation hook
   - repo: local
