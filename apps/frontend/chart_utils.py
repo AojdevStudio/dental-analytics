@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
+from core.models.chart_models import ProcessedChartData, TimeSeriesData
+
 logger = logging.getLogger(__name__)
 
 
@@ -325,16 +327,35 @@ def format_chart_data_for_display(
     return {"dates": dates, "values": values, "chart_type": chart_type}
 
 
-def validate_chart_data_structure(chart_data: dict[str, Any]) -> bool:
+def validate_chart_data_structure(
+    chart_data: dict[str, Any] | ProcessedChartData | TimeSeriesData,
+) -> bool:
     """
     Validate chart data structure for both new and legacy formats.
 
     Args:
-        chart_data: Dictionary containing chart data
+        chart_data: Dictionary, ProcessedChartData, or TimeSeriesData
+            containing chart data
 
     Returns:
         True if data structure is valid
     """
+    # Handle TimeSeriesData Pydantic model (most common for charts)
+    if isinstance(chart_data, TimeSeriesData):
+        time_series = chart_data.time_series
+        # time_series is list of ChartDataPoint objects, always valid structure
+        return isinstance(time_series, list)
+
+    # Handle ProcessedChartData Pydantic model
+    if isinstance(chart_data, ProcessedChartData):
+        # ProcessedChartData has dates and values lists, not time_series
+        return (
+            isinstance(chart_data.dates, list)
+            and isinstance(chart_data.values, list)
+            and len(chart_data.dates) == len(chart_data.values)
+        )
+
+    # If not ProcessedChartData, must be dict
     if not isinstance(chart_data, dict):
         return False  # type: ignore[unreachable]  # Runtime safety check
 
