@@ -156,8 +156,23 @@ st.markdown("---")
 
 # Cache function for chart data (Story 2.3: Performance Optimization)
 @st.cache_data(ttl=300)  # 5 minute cache
-def load_chart_data(location: str) -> AllChartsData | None:
-    """Load chart data with caching for performance."""
+def load_chart_data(
+    location: str, timeframe: Literal["daily", "weekly", "monthly"] = "daily"
+) -> AllChartsData | None:
+    """Load chart data with caching for performance.
+
+    Args:
+        location: Location identifier ('baytown' or 'humble')
+        timeframe: Aggregation level ('daily', 'weekly', or 'monthly')
+
+    Returns:
+        AllChartsData with charts aggregated to the specified timeframe,
+        or None on error
+
+    Note:
+        Streamlit's @st.cache_data automatically includes both location and timeframe
+        in the cache key, creating separate cached entries for each combination.
+    """
     try:
         provider = SheetsProvider()
         eod_alias = f"{location}_eod"
@@ -173,7 +188,7 @@ def load_chart_data(location: str) -> AllChartsData | None:
         )
 
         if eod_df is not None and front_df is not None:
-            return format_all_chart_data(eod_df, front_df)
+            return format_all_chart_data(eod_df, front_df, timeframe=timeframe)
     except Exception as e:
         st.error(f"Error loading chart data: {e}")
     return None
@@ -212,8 +227,8 @@ with st.spinner(f"Loading {location.title()} KPI data from Google Sheets..."):
         # Use cached functions for better performance
         kpi_response = load_kpi_data(location)
 
-        # Load chart data for interactive visualizations
-        chart_data = load_chart_data(location)
+        # Note: chart_data will be loaded after timeframe selector (below)
+        chart_data = None
 
         # Check if location is closed
         if kpi_response.availability == DataAvailabilityStatus.EXPECTED_CLOSURE:
@@ -373,7 +388,7 @@ st.markdown("## 📊 **Interactive KPI Charts**")
 st.markdown("Explore your data with interactive charts featuring zoom, hover, and pan.")
 
 # Time Range Selector (Story 2.3) - Moved to be contextual with charts
-timeframe = st.radio(
+timeframe_selection = st.radio(
     "📊 **Chart Time Range:**",
     options=["daily", "weekly", "monthly"],
     format_func=lambda x: x.capitalize(),
@@ -382,6 +397,13 @@ timeframe = st.radio(
     help="Select the time aggregation for historical charts",
     index=0,  # Default to daily view
 )
+
+# Type-safe cast for timeframe (radio only returns these 3 values)
+timeframe: Literal["daily", "weekly", "monthly"] = timeframe_selection  # type: ignore[assignment]
+
+# Load chart data with selected timeframe (Story 3.5)
+with st.spinner(f"Loading {timeframe} chart data..."):
+    chart_data = load_chart_data(location, timeframe)
 
 # Chart display with tabs for organized viewing
 tab1, tab2, tab3, tab4, tab5 = st.tabs(

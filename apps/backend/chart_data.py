@@ -7,7 +7,7 @@ gaps in time series, and operational day logic.
 
 from collections.abc import Callable
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 import pandas as pd
 import structlog
@@ -1080,9 +1080,7 @@ def calculate_chart_statistics(time_series: list[ChartDataPoint]) -> SummaryStat
     total_points = len(time_series)
     valid_points = len(valid_values)
     missing_points = total_points - valid_points
-    coverage_percentage = (
-        (valid_points / total_points) * 100 if total_points else 0.0
-    )
+    coverage_percentage = (valid_points / total_points) * 100 if total_points else 0.0
 
     stats = SummaryStatistics(
         total_points=total_points,
@@ -1438,23 +1436,236 @@ def format_hygiene_reappointment_chart_data(
     )
 
 
+def _time_series_to_processed(
+    series: TimeSeriesData, df: pd.DataFrame
+) -> ProcessedChartData:
+    """Internal adapter: TimeSeriesData → ProcessedChartData.
+
+    Extracts dates/values from TimeSeriesData and wraps them in ProcessedChartData
+    so existing aggregate_to_weekly/monthly functions can operate on them.
+
+    Args:
+        series: TimeSeriesData instance to convert
+        df: DataFrame with 'date' and 'value' columns extracted from time_series
+
+    Returns:
+        ProcessedChartData ready for aggregation functions
+    """
+    # Extract statistics as dict (handle both dict and ChartStats instances)
+    stats_dict = series.statistics if isinstance(series.statistics, dict) else {}
+
+    # Get date_column and aggregation from format_options (flat structure)
+    date_column_raw = series.format_options.get("date_column", "date")
+    date_column = str(date_column_raw) if date_column_raw is not None else "date"
+
+    aggregation_raw = series.format_options.get("aggregation")
+    # Only accept string aggregation values ('daily', 'weekly', 'monthly')
+    aggregation: Literal["daily", "weekly", "monthly"] | None = None
+    if isinstance(aggregation_raw, str) and aggregation_raw in (
+        "daily",
+        "weekly",
+        "monthly",
+    ):
+        aggregation = aggregation_raw  # type: ignore[assignment]
+
+    return ProcessedChartData(
+        dates=df["date"].dt.strftime("%Y-%m-%d").tolist(),
+        values=df["value"].tolist(),
+        statistics=ChartStats(
+            total=stats_dict.get("total", 0.0),
+            average=stats_dict.get("average", 0.0),
+            minimum=stats_dict.get("minimum", 0.0),
+            maximum=stats_dict.get("maximum", 0.0),
+            data_points=int(stats_dict.get("data_points", len(df))),
+        ),
+        metadata=ChartMetaInfo(
+            date_column=date_column,
+            date_range=(
+                f"{df['date'].min():%Y-%m-%d} to {df['date'].max():%Y-%m-%d}"
+                if not df.empty
+                else "No data"
+            ),
+            error=None,
+            aggregation=aggregation,
+            business_days_only=None,
+            date_filter=None,
+            filtered_data_points=None,
+        ),
+        error=None,
+    )
+
+
+def _processed_to_time_series(
+    processed: ProcessedChartData,
+    original_series: TimeSeriesData,
+    aggregation: str,
+) -> TimeSeriesData:
+    """Internal adapter: ProcessedChartData → TimeSeriesData.
+
+    Rebuilds TimeSeriesData from aggregated ProcessedChartData, preserving
+    metric_name, chart_type, data_type, and format_options while updating
+    time_series points, statistics, and metadata.aggregation.
+
+    Args:
+        processed: Aggregated ProcessedChartData from weekly/monthly functions
+        original_series: Original TimeSeriesData to preserve metadata from
+        aggregation: Aggregation level applied ('weekly' or 'monthly')
+
+    Returns:
+        New TimeSeriesData with aggregated data and updated metadata
+    """
+    # Rebuild time_series points from aggregated data
+    new_points = [
+        ChartDataPoint(
+            date=date,
+            timestamp=pd.Timestamp(date).isoformat(),
+            value=value,
+            has_data=True,
+        )
+        for date, value in zip(processed.dates, processed.values, strict=False)
+    ]
+
+    # Extract statistics from ProcessedChartData
+    stats = processed.statistics
+    new_stats = {
+        "total": stats.total,
+        "average": stats.average,
+        "minimum": stats.minimum,
+        "maximum": stats.maximum,
+        "data_points": stats.data_points,
+    }
+
+    # Preserve original format_options but add aggregation field
+    format_opts = dict(original_series.format_options)
+    format_opts["aggregation"] = aggregation
+
+    # Return new TimeSeriesData with updated content
+    return TimeSeriesData(
+        metric_name=original_series.metric_name,
+        chart_type=original_series.chart_type,
+        data_type=original_series.data_type,
+        time_series=new_points,
+        statistics=new_stats,
+        format_options=format_opts,
+        error=None,
+    )
+
+
+def aggregate_time_series(
+    series: TimeSeriesData,
+    timeframe: Literal["daily", "weekly", "monthly"] = "daily",
+    *,
+    business_days_only: bool = True,
+) -> TimeSeriesData:
+    """Return a new TimeSeriesData aggregated to the requested cadence.
+
+    Uses adapter functions to convert between TimeSeriesData and ProcessedChartData,
+    allowing reuse of existing aggregation logic without exposing ProcessedChartData
+    to consumers.
+
+    Args:
+        series: TimeSeriesData to aggregate
+        timeframe: Target aggregation level ('daily', 'weekly', or 'monthly')
+        business_days_only: If True, exclude weekends before aggregating
+
+    Returns:
+        New TimeSeriesData aggregated to the specified timeframe with updated
+        metadata.aggregation field
+
+    Examples:
+        >>> daily_data = format_production_chart_data(eod_df)
+        >>> weekly_data = aggregate_time_series(daily_data, "weekly")
+        >>> assert len(weekly_data.time_series) < len(daily_data.time_series)
+        >>> assert weekly_data.format_options["aggregation"] == "weekly"
+    """
+    # Pass-through for daily or empty series
+    if timeframe == "daily" or not series.time_series:
+        return series
+
+    # Convert TimeSeriesData to DataFrame for processing
+    df = pd.DataFrame(
+        {
+            "date": pd.to_datetime([point.date for point in series.time_series]),
+            "value": pd.to_numeric([point.value for point in series.time_series]),
+        }
+    ).dropna(subset=["date"])
+
+    if df.empty:
+        log.warning(
+            "chart_data.aggregate_time_series.empty_data",
+            metric=series.metric_name,
+            timeframe=timeframe,
+        )
+        return series
+
+    # Convert to ProcessedChartData (adapter function)
+    processed = _time_series_to_processed(series, df)
+
+    # Apply existing aggregation logic
+    if timeframe == "weekly":
+        aggregated = aggregate_to_weekly(processed, business_days_only)
+    else:  # monthly
+        aggregated = aggregate_to_monthly(processed, business_days_only)
+
+    # Convert back to TimeSeriesData with updated metadata (adapter function)
+    result = _processed_to_time_series(aggregated, series, aggregation=timeframe)
+
+    log.info(
+        "chart_data.aggregate_time_series.success",
+        metric=series.metric_name,
+        timeframe=timeframe,
+        original_points=len(series.time_series),
+        aggregated_points=len(result.time_series),
+        business_days_only=business_days_only,
+    )
+
+    return result
+
+
 def format_all_chart_data(
     eod_df: pd.DataFrame | None,
     front_kpi_df: pd.DataFrame | None,
     date_column: str = "Submission Date",
+    timeframe: Literal["daily", "weekly", "monthly"] = "daily",
 ) -> AllChartsData:
-    """Format all KPI data for chart visualization."""
+    """Format all KPI data for chart visualization.
 
-    log.info("chart_data.formatting_all_metrics")
+    Args:
+        eod_df: End-of-day billing data DataFrame
+        front_kpi_df: Front desk KPI data DataFrame
+        date_column: Column name to use for date filtering
+        timeframe: Aggregation level for chart data ('daily', 'weekly', or 'monthly')
 
+    Returns:
+        AllChartsData with all 5 KPI charts, aggregated to the specified timeframe
+    """
+    log.info(
+        "chart_data.formatting_all_metrics",
+        timeframe=timeframe,
+    )
+
+    # Build daily charts first
+    production_chart = format_production_chart_data(eod_df, date_column)
+    collection_chart = format_collection_rate_chart_data(eod_df, date_column)
+    new_patients_chart = format_new_patients_chart_data(eod_df, date_column)
+    case_acceptance_chart = format_case_acceptance_chart_data(front_kpi_df, date_column)
+    hygiene_chart = format_hygiene_reappointment_chart_data(front_kpi_df, date_column)
+
+    # Apply aggregation uniformly to all charts if not daily
+    if timeframe != "daily":
+        production_chart = aggregate_time_series(production_chart, timeframe)
+        collection_chart = aggregate_time_series(collection_chart, timeframe)
+        new_patients_chart = aggregate_time_series(new_patients_chart, timeframe)
+        case_acceptance_chart = aggregate_time_series(case_acceptance_chart, timeframe)
+        hygiene_chart = aggregate_time_series(hygiene_chart, timeframe)
+
+    # Build AllChartsData with aggregated charts
     chart_data = AllChartsData(
-        production_total=format_production_chart_data(eod_df, date_column),
-        collection_rate=format_collection_rate_chart_data(eod_df, date_column),
-        new_patients=format_new_patients_chart_data(eod_df, date_column),
-        case_acceptance=format_case_acceptance_chart_data(front_kpi_df, date_column),
-        hygiene_reappointment=format_hygiene_reappointment_chart_data(
-            front_kpi_df, date_column
-        ),
+        production_total=production_chart,
+        collection_rate=collection_chart,
+        new_patients=new_patients_chart,
+        case_acceptance=case_acceptance_chart,
+        hygiene_reappointment=hygiene_chart,
         metadata=ChartsMetadata(
             generated_at=datetime.now().isoformat(),
             data_sources=DataSourceInfo(
@@ -1468,6 +1679,7 @@ def format_all_chart_data(
     log.info(
         "chart_data.formatting_complete",
         metrics_count=chart_data.metadata.total_metrics,
+        timeframe=timeframe,
         eod_available=chart_data.metadata.data_sources.eod_available,
         front_kpi_available=chart_data.metadata.data_sources.front_kpi_available,
     )

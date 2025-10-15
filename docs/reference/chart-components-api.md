@@ -86,6 +86,129 @@ def format_hygiene_reappointment_chart_data(
 **Chart Type**: Line chart
 **Data Type**: Percentage (0-100%)
 
+## Chart Aggregation Functions (Story 3.5)
+
+### aggregate_time_series
+
+```python
+def aggregate_time_series(
+    series: TimeSeriesData,
+    timeframe: Literal["daily", "weekly", "monthly"] = "daily",
+    *,
+    business_days_only: bool = True,
+) -> TimeSeriesData
+```
+
+**Purpose**: Aggregates TimeSeriesData to weekly or monthly cadence using existing aggregation logic.
+
+**Parameters**:
+- `series`: TimeSeriesData instance to aggregate
+- `timeframe`: Target aggregation level ('daily', 'weekly', or 'monthly')
+- `business_days_only`: If True, exclude weekends before aggregating (default: True)
+
+**Returns**: New TimeSeriesData instance with:
+- Aggregated time_series points (reduced count)
+- Updated statistics (total, average, min, max, data_points)
+- `format_options["aggregation"]` field set to timeframe value
+
+**Behavior**:
+- `"daily"`: Pass-through (returns data unchanged)
+- `"weekly"`: Reduces ~80 daily points to ~11-12 weekly sums
+- `"monthly"`: Reduces ~80 daily points to 2-3 monthly sums
+
+**Type Safety**: Maintains TimeSeriesData → TimeSeriesData contract (Pydantic validated)
+
+**Usage Example**:
+```python
+from apps.backend.chart_data import format_production_chart_data, aggregate_time_series
+
+# Get daily production data
+daily_chart = format_production_chart_data(eod_df)
+
+# Aggregate to weekly view
+weekly_chart = aggregate_time_series(daily_chart, "weekly")
+
+# Verify aggregation applied
+assert len(weekly_chart.time_series) < len(daily_chart.time_series)
+assert weekly_chart.format_options["aggregation"] == "weekly"
+```
+
+### format_all_chart_data (Updated)
+
+```python
+def format_all_chart_data(
+    eod_df: pd.DataFrame | None,
+    front_kpi_df: pd.DataFrame | None,
+    date_column: str = "Submission Date",
+    timeframe: Literal["daily", "weekly", "monthly"] = "daily",
+) -> AllChartsData
+```
+
+**New Parameter** (Story 3.5):
+- `timeframe`: Aggregation level for all chart data ('daily', 'weekly', or 'monthly')
+
+**Returns**: AllChartsData with all 5 KPI charts aggregated uniformly to the specified timeframe
+
+**Behavior**:
+1. Build daily charts for all 5 KPIs
+2. If `timeframe != "daily"`, apply `aggregate_time_series()` to each chart
+3. Return AllChartsData with aggregated charts
+
+**Implementation Notes**:
+- Single aggregation point ensures consistency across all charts
+- Pydantic validation enforces type safety (TimeSeriesData only)
+- No chart-specific logic; uniform aggregation for all metrics
+
+### Internal Adapter Functions
+
+These functions are internal to the aggregation implementation and should not be called directly:
+
+#### _time_series_to_processed
+
+```python
+def _time_series_to_processed(
+    series: TimeSeriesData,
+    df: pd.DataFrame
+) -> ProcessedChartData
+```
+
+**Purpose**: Converts TimeSeriesData to ProcessedChartData for reusing existing aggregation functions.
+
+**Parameters**:
+- `series`: TimeSeriesData to convert
+- `df`: DataFrame with 'date' and 'value' columns
+
+**Returns**: ProcessedChartData ready for `aggregate_to_weekly` or `aggregate_to_monthly`
+
+#### _processed_to_time_series
+
+```python
+def _processed_to_time_series(
+    processed: ProcessedChartData,
+    original_series: TimeSeriesData,
+    aggregation: str,
+) -> TimeSeriesData
+```
+
+**Purpose**: Rebuilds TimeSeriesData from aggregated ProcessedChartData.
+
+**Parameters**:
+- `processed`: Aggregated ProcessedChartData from weekly/monthly functions
+- `original_series`: Original TimeSeriesData to preserve metadata from
+- `aggregation`: Aggregation level applied ('weekly' or 'monthly')
+
+**Returns**: New TimeSeriesData with:
+- Aggregated time_series points
+- Updated statistics
+- Preserved metric_name, chart_type, data_type
+- Updated `format_options["aggregation"]` field
+
+**Design Rationale**:
+- Reuses validated `aggregate_to_weekly()` and `aggregate_to_monthly()` logic
+- Keeps ProcessedChartData internal (never exposed to consumers)
+- Maintains type safety throughout the aggregation pipeline
+- No duplication of complex grouping/aggregation math
+
 ## Chart Creation Functions
 
 ### Base Chart Creation
