@@ -1,0 +1,154 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>5</storyId>
+    <title>Chart Timeframe Aggregation Fix</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/ossieirondi/Projects/unified-dental/dental-analytics/.conductor/olympia/docs/stories/story-3.5-chart-timeframe-aggregation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>practice manager analyzing KPI trends</asA>
+    <iWant>the chart timeframe selector (Daily/Weekly/Monthly) to actually aggregate the data</iWant>
+    <soThat>I can view meaningful weekly and monthly summaries instead of seeing misleading daily data points with incorrect labels</soThat>
+    <tasks>
+      <task id="1" ac="1">Implement backend aggregation helper</task>
+      <task id="2" ac="2">Update format_all_chart_data pipeline</task>
+      <task id="3" ac="3">Frontend timeframe threading</task>
+      <task id="4" ac="4">Testing and validation</task>
+      <task id="5">Documentation updates</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="Backend Aggregation Helper">
+      - New aggregate_time_series() function accepts TimeSeriesData, timeframe, and business_days_only flag
+      - Uses internal adapter functions (_time_series_to_processed and _processed_to_time_series) to reuse existing aggregation logic
+      - Returns aggregated TimeSeriesData with updated time_series points and statistics
+      - Updates metadata.aggregation field to silence frontend warning
+      - Timeframe "daily" returns data unchanged (pass-through)
+    </criterion>
+    <criterion id="2" title="Uniform Application to All Charts">
+      - format_all_chart_data() accepts timeframe parameter
+      - Applies aggregate_time_series() to all 5 KPI charts uniformly
+      - No chart-specific logic; single aggregation point for consistency
+      - Pydantic validation passes (TimeSeriesData → AllChartsData contract preserved)
+    </criterion>
+    <criterion id="3" title="Frontend Integration">
+      - load_chart_data() accepts and passes timeframe to backend
+      - Streamlit cache key includes timeframe for separate cached entries
+      - UI timeframe selector passes value to load_chart_data()
+      - No changes to chart rendering code (TimeSeriesData structure unchanged)
+    </criterion>
+    <criterion id="4" title="Data Validation">
+      - Daily view: ~80 data points (raw daily values)
+      - Weekly view: ~11-12 data points (weekly sums, not averages)
+      - Monthly view: 2-3 data points (monthly sums, not averages)
+      - Chart x-axis labels reflect aggregation period appropriately
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-chart-aggregation-fix.md" title="Technical Specification: Chart Timeframe Aggregation Fix" section="Solution Overview">
+        Complete architectural solution using adapter pattern to convert TimeSeriesData ↔ ProcessedChartData. Defines aggregate_time_series() with business_days_only parameter, reusing existing aggregate_to_weekly/monthly logic.
+      </doc>
+      <doc path="docs/chart-aggregation-fix.md" title="Chart Aggregation Bug Report" section="Root Cause">
+        Bug analysis showing timeframe parameter received but never used. Existing aggregate functions operate on ProcessedChartData, requiring adapter functions to maintain TimeSeriesData contract.
+      </doc>
+      <doc path="docs/architecture/fullstack-architecture.md" title="Dental Analytics Full-Stack Architecture" section="Architecture (Story 3.0: 5-Layer Design)">
+        5-layer architecture: Presentation → Service → Core → Data Access → Data Sources. Backend aggregation preserves layer boundaries. All chart data uses Pydantic models (TimeSeriesData, AllChartsData).
+      </doc>
+      <doc path="core/models/chart_models.py" title="Chart Data Models" section="TimeSeriesData and AllChartsData">
+        Pydantic models for chart data. TimeSeriesData contains time_series list of ChartDataPoint, statistics dict, and format_options with metadata.aggregation field. AllChartsData requires 5 TimeSeriesData fields (production_total, collection_rate, new_patients, case_acceptance, hygiene_reappointment).
+      </doc>
+      <doc path="docs/architecture/backend/testing-strategy.md" title="Comprehensive Testing Strategy" section="Backend Testing Strategy">
+        pytest with 95%+ coverage target for core calculators. Unit tests for transformer edge cases, integration tests for service flows. Manual Chrome DevTools verification for frontend. Coverage goals: ≥95% core, ≥90% services.
+      </doc>
+      <doc path="CLAUDE.md" title="Project Guidelines" section="Architecture (Story 3.0: 5-Layer Design)">
+        Phase 1 complete: 100% Pydantic adoption. core/ uses Pydantic models exclusively. Pure functions in calculators (no side effects). Dependency injection in services. Strict typing with narrow expectations - NEVER use Any except for YAML ingestion.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="apps/backend/chart_data.py" kind="module" symbol="format_all_chart_data" lines="1441-1469" reason="Entry point for chart data formatting. Needs timeframe parameter added and aggregate_time_series() calls for all 5 charts."/>
+      <artifact path="apps/backend/chart_data.py" kind="function" symbol="aggregate_to_weekly" lines="842" reason="Existing weekly aggregation logic to be reused via adapter pattern. Operates on ProcessedChartData."/>
+      <artifact path="apps/backend/chart_data.py" kind="function" symbol="aggregate_to_monthly" lines="919" reason="Existing monthly aggregation logic to be reused via adapter pattern. Operates on ProcessedChartData."/>
+      <artifact path="apps/frontend/app.py" kind="function" symbol="load_chart_data" lines="159-177" reason="Frontend cache entry point. Needs timeframe parameter added to signature and passed to format_all_chart_data(). Cache key automatically includes args."/>
+      <artifact path="apps/frontend/chart_production.py" kind="module" symbol="create_production_chart" lines="84-88" reason="Logs aggregation_unavailable warning when metadata.aggregation is None. Will be silenced when adapter updates metadata field."/>
+      <artifact path="core/models/chart_models.py" kind="class" symbol="TimeSeriesData" lines="166-204" reason="Pydantic model for chart data. Contains time_series: list[ChartDataPoint], statistics dict, format_options with metadata.aggregation field."/>
+      <artifact path="core/models/chart_models.py" kind="class" symbol="ProcessedChartData" lines="125-163" reason="Intermediate model used by existing aggregation functions. Adapters will convert TimeSeriesData ↔ ProcessedChartData."/>
+      <artifact path="core/models/chart_models.py" kind="class" symbol="AllChartsData" lines="310-324" reason="Container requiring 5 TimeSeriesData fields. Pydantic validation ensures type safety after aggregation."/>
+      <artifact path="core/models/chart_models.py" kind="class" symbol="ChartDataPoint" lines="18-58" reason="Individual time series point with date, timestamp, value, has_data. Used to rebuild time_series list after aggregation."/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pydantic" version=">=2.0">Strict validation for TimeSeriesData, ProcessedChartData, AllChartsData models</package>
+        <package name="pandas" version=">=2.1">DataFrame operations for aggregation logic</package>
+        <package name="streamlit" version=">=1.30">Frontend caching with automatic cache key generation from function args</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture" source="CLAUDE.md">Backend aggregation only - frontend receives aggregated TimeSeriesData, no aggregation logic in UI layer</constraint>
+    <constraint type="type-safety" source="CLAUDE.md">100% Pydantic adoption - no dict[str, Any] or TypedDict for new code. Use Pydantic models exclusively.</constraint>
+    <constraint type="pure-functions" source="CLAUDE.md">aggregate_time_series() must be pure (no side effects, no state mutation). Returns new TimeSeriesData instance.</constraint>
+    <constraint type="adapter-pattern" source="tech-spec">ProcessedChartData is internal only. Use _time_series_to_processed and _processed_to_time_series adapters to bridge types without exposing ProcessedChartData to consumers.</constraint>
+    <constraint type="contract-preservation" source="core/models/chart_models.py">AllChartsData requires exactly 5 TimeSeriesData fields. Aggregation must preserve this contract - no type switching to ProcessedChartData in return values.</constraint>
+    <constraint type="code-reuse" source="tech-spec">Must reuse existing aggregate_to_weekly() and aggregate_to_monthly() functions. Do NOT duplicate grouping/aggregation logic.</constraint>
+    <constraint type="metadata-update" source="apps/frontend/chart_production.py">Must update format_options.metadata.aggregation field to silence frontend warning at line 84-88.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="aggregate_time_series" kind="function" signature="(series: TimeSeriesData, timeframe: Literal['daily', 'weekly', 'monthly'] = 'daily', *, business_days_only: bool = True) -> TimeSeriesData" path="apps/backend/chart_data.py">
+      Main aggregation entry point. Converts TimeSeriesData to ProcessedChartData via adapter, calls existing aggregation logic, converts back with updated metadata.
+    </interface>
+    <interface name="_time_series_to_processed" kind="function" signature="(series: TimeSeriesData, df: pd.DataFrame) -> ProcessedChartData" path="apps/backend/chart_data.py">
+      Internal adapter. Extracts dates/values from TimeSeriesData and wraps in ProcessedChartData for existing aggregation functions.
+    </interface>
+    <interface name="_processed_to_time_series" kind="function" signature="(processed: ProcessedChartData, original_series: TimeSeriesData, aggregation: str) -> TimeSeriesData" path="apps/backend/chart_data.py">
+      Internal adapter. Rebuilds TimeSeriesData from aggregated ProcessedChartData, preserving metric_name, chart_type, data_type, and format_options while updating time_series points, statistics, and metadata.aggregation.
+    </interface>
+    <interface name="format_all_chart_data" kind="function" signature="(eod_df: pd.DataFrame | None, front_kpi_df: pd.DataFrame | None, date_column: str = 'Submission Date', timeframe: Literal['daily', 'weekly', 'monthly'] = 'daily') -> AllChartsData" path="apps/backend/chart_data.py:1441">
+      Chart formatting entry point. Needs timeframe parameter added. After building daily charts, conditionally applies aggregate_time_series() to all 5 if timeframe != 'daily'.
+    </interface>
+    <interface name="load_chart_data" kind="function" signature="(location: str, timeframe: str = 'daily') -> AllChartsData | None" path="apps/frontend/app.py:159">
+      Frontend cache entry point decorated with @st.cache_data(ttl=300). Needs timeframe parameter added and passed to format_all_chart_data(). Streamlit automatically includes args in cache key.
+    </interface>
+    <interface name="aggregate_to_weekly" kind="function" signature="(processed: ProcessedChartData, business_days_only: bool) -> ProcessedChartData" path="apps/backend/chart_data.py:842">
+      Existing weekly aggregation logic. Operates on ProcessedChartData. Will be called by aggregate_time_series() via adapter pattern.
+    </interface>
+    <interface name="aggregate_to_monthly" kind="function" signature="(processed: ProcessedChartData, business_days_only: bool) -> ProcessedChartData" path="apps/backend/chart_data.py:919">
+      Existing monthly aggregation logic. Operates on ProcessedChartData. Will be called by aggregate_time_series() via adapter pattern.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest framework with 95%+ coverage target for new aggregate_time_series() function. Unit tests for adapter functions (_time_series_to_processed, _processed_to_time_series). Integration tests verify all 5 charts receive aggregation. Test business_days_only flag behavior. Mock ProcessedChartData responses from existing aggregation functions. Manual Chrome DevTools testing for visual verification (data point counts, axis labels, aggregated values). Run ./scripts/quality-check.sh for comprehensive validation (Black, Ruff, MyPy, pytest, coverage).
+    </standards>
+    <locations>
+      <location path="tests/unit/test_chart_aggregation.py" type="new">Comprehensive unit tests for aggregation logic and adapter functions</location>
+      <location path="tests/integration/" type="existing">Integration tests for service-level flows</location>
+      <location path="tests/unit/transformers/" type="existing">Transformer edge case tests</location>
+    </locations>
+    <ideas>
+      <idea ac="1" test="test_aggregate_time_series_daily_passthrough">Daily timeframe should return data unchanged (identity function)</idea>
+      <idea ac="1" test="test_aggregate_time_series_weekly_reduces_points">Weekly aggregation should reduce ~80 daily points to ~11-12 weekly points</idea>
+      <idea ac="1" test="test_aggregate_time_series_monthly_reduces_points">Monthly aggregation should reduce ~80 daily points to 2-3 monthly points</idea>
+      <idea ac="1" test="test_aggregate_time_series_preserves_type">Output must be valid TimeSeriesData (Pydantic validation passes automatically)</idea>
+      <idea ac="1" test="test_aggregate_time_series_updates_metadata">Verify format_options.metadata.aggregation field is set to timeframe value</idea>
+      <idea ac="1" test="test_aggregate_time_series_business_days_only_flag">Test with business_days_only=True and False, verify different results</idea>
+      <idea ac="1" test="test_time_series_to_processed_adapter">Verify adapter correctly extracts dates/values and constructs ProcessedChartData</idea>
+      <idea ac="1" test="test_processed_to_time_series_adapter">Verify adapter rebuilds TimeSeriesData with correct time_series points and statistics</idea>
+      <idea ac="2" test="test_format_all_chart_data_applies_to_all_charts">All 5 charts (production, collection, new_patients, case_acceptance, hygiene) must have metadata.aggregation updated</idea>
+      <idea ac="2" test="test_format_all_chart_data_pydantic_validation">AllChartsData Pydantic validation must pass after aggregation</idea>
+      <idea ac="3" test="test_load_chart_data_cache_key_includes_timeframe">Verify Streamlit creates separate cache entries for (location, 'daily'), (location, 'weekly'), (location, 'monthly')</idea>
+      <idea ac="4" test="manual_verify_data_point_counts">Chrome DevTools: Count points in daily (~80), weekly (~11-12), monthly (2-3) views</idea>
+      <idea ac="4" test="manual_verify_aggregated_values">Chrome DevTools: Verify weekly total ≈ sum of 7 constituent daily values</idea>
+      <idea ac="4" test="manual_verify_warning_silenced">Browser console: Confirm no 'aggregation_unavailable' warnings logged</idea>
+    </ideas>
+  </tests>
+</story-context>
