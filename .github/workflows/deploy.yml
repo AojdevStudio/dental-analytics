@@ -59,7 +59,7 @@ jobs:
         echo "Deploying version: $VERSION"
 
     - name: Set up uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v6
       with:
         version: "0.5.20"
 
@@ -119,7 +119,7 @@ jobs:
         echo "Commit: ${{ github.sha }}"
 
     - name: Set up uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v6
       with:
         version: "0.5.20"
 
@@ -248,7 +248,7 @@ jobs:
         echo "Time: $(date -u)"
 
     - name: Set up uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v6
       with:
         version: "0.5.20"
 
