@@ -94,7 +94,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload security audit results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       if: always()
       with:
         name: security-audit
@@ -116,7 +116,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload Bandit report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       if: always()
       with:
         name: bandit-report
@@ -160,14 +160,14 @@ jobs:
           --junitxml=test-results-${{ matrix.python-version }}.xml
 
     - name: Upload test results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       if: always()
       with:
         name: test-results-${{ matrix.python-version }}
         path: test-results-${{ matrix.python-version }}.xml
 
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       if: matrix.python-version == '3.11'  # Only upload once
       with:
         name: coverage-report
@@ -274,7 +274,7 @@ jobs:
           --benchmark-min-rounds=5
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: benchmark-results
         path: benchmark-results.json
@@ -354,7 +354,7 @@ jobs:
         uv run twine check dist/*
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: dist-packages
         path: dist/
@@ -524,7 +524,7 @@ jobs:
         echo "📈 Quality metrics collection completed"
 
     - name: Upload quality metrics
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: quality-metrics
         path: quality-metrics.json

@@ -137,7 +137,7 @@ jobs:
         echo "Quality metrics report generated"
 
     - name: Upload quality metrics
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: quality-metrics-${{ github.run_number }}
         path: |
@@ -303,7 +303,7 @@ jobs:
         EOF
 
     - name: Upload performance results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: performance-results-${{ github.run_number }}
         path: |
@@ -409,7 +409,7 @@ jobs:
         EOF
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: security-reports-${{ github.run_number }}
         path: |
@@ -517,7 +517,7 @@ jobs:
         echo "Application metrics collected"
 
     - name: Upload deployment monitoring data
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: deployment-monitoring-${{ github.run_number }}
         path: |
@@ -630,7 +630,7 @@ jobs:
         EOF
 
     - name: Upload consolidated report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: consolidated-metrics-report
         path: consolidated-metrics-report.json
