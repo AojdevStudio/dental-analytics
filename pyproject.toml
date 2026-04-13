@@ -60,14 +60,14 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
-    "black>=25.1.0",
+    "black>=26.3.1",
     "faker>=37.6.0",
-    "mypy>=1.17.1",
-    "pre-commit>=4.3.0",
+    "mypy>=1.20.1",
+    "pre-commit>=4.5.1",
     "pytest>=8.4.2",
     "pytest-cov>=6.2.1",
     "pytest-mock>=3.15.0",
-    "ruff>=0.12.12",
+    "ruff>=0.15.10",
     "flake8>=7.0.0",
     "plotly-stubs>=0.0.6",
 ]
